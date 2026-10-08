@@ -114,14 +114,6 @@ export const storageService = {
 
         if (!error && data) {
           const mapped = data.map(mapRowToVendedor);
-          // Si está vacía la nube por primera vez, subimos demo inicial
-          if (mapped.length === 0) {
-            for (const v of initialVendedores) {
-              await supabase.from('vendedores').upsert(mapVendedorToRow(v));
-            }
-            await AsyncStorage.setItem(VENDEDORES_KEY, JSON.stringify(initialVendedores));
-            return initialVendedores;
-          }
           await AsyncStorage.setItem(VENDEDORES_KEY, JSON.stringify(mapped));
           return mapped;
         }
@@ -134,12 +126,12 @@ export const storageService = {
     try {
       const data = await AsyncStorage.getItem(VENDEDORES_KEY);
       if (!data) {
-        await AsyncStorage.setItem(VENDEDORES_KEY, JSON.stringify(initialVendedores));
-        return initialVendedores;
+        await AsyncStorage.setItem(VENDEDORES_KEY, JSON.stringify([]));
+        return [];
       }
       return JSON.parse(data);
     } catch {
-      return initialVendedores;
+      return [];
     }
   },
 
@@ -190,13 +182,6 @@ export const storageService = {
 
         if (!error && data) {
           const mapped = data.map(mapRowToComprador);
-          if (mapped.length === 0) {
-            for (const c of initialCompradores) {
-              await supabase.from('compradores').upsert(mapCompradorToRow(c));
-            }
-            await AsyncStorage.setItem(COMPRADORES_KEY, JSON.stringify(initialCompradores));
-            return initialCompradores;
-          }
           await AsyncStorage.setItem(COMPRADORES_KEY, JSON.stringify(mapped));
           return mapped;
         }
@@ -208,12 +193,12 @@ export const storageService = {
     try {
       const data = await AsyncStorage.getItem(COMPRADORES_KEY);
       if (!data) {
-        await AsyncStorage.setItem(COMPRADORES_KEY, JSON.stringify(initialCompradores));
-        return initialCompradores;
+        await AsyncStorage.setItem(COMPRADORES_KEY, JSON.stringify([]));
+        return [];
       }
       return JSON.parse(data);
     } catch {
-      return initialCompradores;
+      return [];
     }
   },
 
