@@ -18,6 +18,7 @@ import {
   TipoGestoria,
   EstadoRegistro,
   CanalContacto,
+  TurnoDescansoDeseado,
 } from '../types';
 import { colors } from '../theme/colors';
 import { calculateMatch } from '../services/matchEngine';
@@ -40,6 +41,7 @@ const DIAS_LIBRANZA: DiaLibranza[] = [
   'VIERNES',
   'SABADO',
   'DOMINGO',
+  'LIBRE_24H',
 ];
 
 export const CompradorModal: React.FC<CompradorModalProps> = ({
@@ -57,6 +59,7 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
   const [perfil, setPerfil] = useState<TipoPerfil>('PARTICULAR');
 
   const [diaLibranzaDeseada, setDiaLibranzaDeseada] = useState<DiaLibranza>('CUALQUIERA');
+  const [turnoDescansoDeseado, setTurnoDescansoDeseado] = useState<TurnoDescansoDeseado>('INDIFERENTE');
   const [precioMaximo, setPrecioMaximo] = useState('');
 
   // Financiación / Carga
@@ -85,6 +88,7 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
       setContactoOrigen(compradorToEdit.contactoOrigen || '');
       setPerfil(compradorToEdit.perfil);
       setDiaLibranzaDeseada(compradorToEdit.diaLibranzaDeseada);
+      setTurnoDescansoDeseado(compradorToEdit.turnoDescansoDeseado || 'INDIFERENTE');
       setPrecioMaximo(compradorToEdit.precioMaximo ? String(compradorToEdit.precioMaximo) : '');
       setAceptaConPrestamo(compradorToEdit.aceptaConPrestamo);
       setPuedeSenalizarYa(compradorToEdit.puedeSenalizarYa);
@@ -102,6 +106,7 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
       setContactoOrigen('');
       setPerfil('PARTICULAR');
       setDiaLibranzaDeseada('CUALQUIERA');
+      setTurnoDescansoDeseado('INDIFERENTE');
       setPrecioMaximo('');
       setAceptaConPrestamo('INDIFERENTE');
       setPuedeSenalizarYa(false);
@@ -129,6 +134,7 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
       fechaCreacion: new Date().toISOString(),
       perfil,
       diaLibranzaDeseada,
+      turnoDescansoDeseado,
       precioMaximo: pMax || 999999,
       aceptaConPrestamo,
       puedeSenalizarYa,
@@ -150,6 +156,7 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
     telefono,
     perfil,
     diaLibranzaDeseada,
+    turnoDescansoDeseado,
     precioMaximo,
     aceptaConPrestamo,
     puedeSenalizarYa,
@@ -179,6 +186,7 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
       fechaCreacion: compradorToEdit ? compradorToEdit.fechaCreacion : new Date().toISOString(),
       perfil,
       diaLibranzaDeseada,
+      turnoDescansoDeseado,
       precioMaximo: precioNum,
       aceptaConPrestamo,
       puedeSenalizarYa,
@@ -367,11 +375,58 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
                         onPress={() => setDiaLibranzaDeseada(dia)}
                       >
                         <Text style={[styles.diaBtnText, isSelected && styles.diaBtnTextActive]}>
-                          {dia === 'CUALQUIERA' ? 'CUALQUIERA / INDIFERENTE' : dia}
+                          {dia === 'CUALQUIERA' ? 'CUALQUIERA / INDIFERENTE' : dia === 'LIBRE_24H' ? '24H / LIBRE' : dia}
                         </Text>
                       </TouchableOpacity>
                     );
                   })}
+                </View>
+              </View>
+
+              {/* RÉGIMEN DE TURNO / FIN DE SEMANA */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Turno de Fin de Semana (Par o Impar)</Text>
+                <View style={styles.selectorRow}>
+                  <TouchableOpacity
+                    style={[styles.selectorBtn, turnoDescansoDeseado === 'INDIFERENTE' && styles.selectorBtnActive]}
+                    onPress={() => setTurnoDescansoDeseado('INDIFERENTE')}
+                  >
+                    <Text style={[styles.selectorText, turnoDescansoDeseado === 'INDIFERENTE' && styles.selectorTextActive]}>
+                      🔘 Indiferente
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.selectorBtn, turnoDescansoDeseado === 'PAR' && styles.selectorBtnActive]}
+                    onPress={() => setTurnoDescansoDeseado('PAR')}
+                  >
+                    <Text style={[styles.selectorText, turnoDescansoDeseado === 'PAR' && styles.selectorTextActive]}>
+                      🔢 Busca PAR
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.selectorBtn, turnoDescansoDeseado === 'IMPAR' && styles.selectorBtnActive]}
+                    onPress={() => setTurnoDescansoDeseado('IMPAR')}
+                  >
+                    <Text style={[styles.selectorText, turnoDescansoDeseado === 'IMPAR' && styles.selectorTextActive]}>
+                      🔢 Busca IMPAR
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.selectorBtn, turnoDescansoDeseado === 'ROTATIVO' && styles.selectorBtnActive]}
+                    onPress={() => setTurnoDescansoDeseado('ROTATIVO')}
+                  >
+                    <Text style={[styles.selectorText, turnoDescansoDeseado === 'ROTATIVO' && styles.selectorTextActive]}>
+                      🔄 Finde alterno
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.selectorBtn, turnoDescansoDeseado === 'LIBRE_24H' && styles.selectorBtnActive]}
+                    onPress={() => setTurnoDescansoDeseado('LIBRE_24H')}
+                  >
+                    <Text style={[styles.selectorText, turnoDescansoDeseado === 'LIBRE_24H' && styles.selectorTextActive]}>
+                      🟢 Solo 24h
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
 

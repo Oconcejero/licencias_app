@@ -203,9 +203,11 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                   </View>
 
                   <View style={styles.specBox}>
-                    <Text style={styles.specLabel}>Libranza</Text>
+                    <Text style={styles.specLabel}>Libranza y Turno</Text>
                     <View style={[styles.dayPill, { backgroundColor: colors.libranza[vendedor.diaLibranza] || colors.primary }]}>
-                      <Text style={styles.dayPillText}>{vendedor.diaLibranza}</Text>
+                      <Text style={styles.dayPillText}>
+                        {vendedor.diaLibranza === 'LIBRE_24H' ? '24H LIBRE' : `${vendedor.diaLibranza} (${vendedor.turnoDescanso || 'PAR'})`}
+                      </Text>
                     </View>
                   </View>
 
@@ -374,7 +376,11 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                   <View style={styles.specBox}>
                     <Text style={styles.specLabel}>Libranza Buscada</Text>
                     <View style={[styles.dayPill, { backgroundColor: colors.libranza[comprador.diaLibranzaDeseada] || colors.primary }]}>
-                      <Text style={styles.dayPillText}>{comprador.diaLibranzaDeseada}</Text>
+                      <Text style={styles.dayPillText}>
+                        {comprador.diaLibranzaDeseada === 'LIBRE_24H'
+                          ? '24H LIBRE'
+                          : `${comprador.diaLibranzaDeseada} (${comprador.turnoDescansoDeseado || 'Indiferente'})`}
+                      </Text>
                     </View>
                   </View>
 

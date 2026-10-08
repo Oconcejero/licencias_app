@@ -39,6 +39,7 @@ export const colors = {
     VIERNES: '#F59E0B',
     SABADO: '#06B6D4',
     DOMINGO: '#6366F1',
+    LIBRE_24H: '#10B981',
     CUALQUIERA: '#64748B',
   },
 

@@ -20,19 +20,40 @@ export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchS
     };
   }
 
-  // 1. LIBRANZA (Hasta 35 puntos)
-  let libranzaEncaja = false;
+  // 1. LIBRANZA Y TURNO (Hasta 35 puntos: 25 por día + 10 por turno Par/Impar)
+  let diaEncaja = false;
+  let turnoEncaja = false;
+
+  // 1.1 Día entre semana
   if (comprador.diaLibranzaDeseada === 'CUALQUIERA' || comprador.diaLibranzaDeseada === vendedor.diaLibranza) {
-    libranzaEncaja = true;
-    score += 35;
+    diaEncaja = true;
+    score += 25;
     if (comprador.diaLibranzaDeseada === 'CUALQUIERA') {
       razones.push(`Comprador busca cualquier libranza (Vendedor tiene ${vendedor.diaLibranza})`);
     } else {
       razones.push(`Día de libranza coincide exactamente: ${vendedor.diaLibranza}`);
     }
   } else {
-    alertas.push(`Libranza diferente: Vendedor tiene ${vendedor.diaLibranza}, comprador prefiere ${comprador.diaLibranzaDeseada}`);
+    alertas.push(`Libranza semanal diferente: Vendedor tiene ${vendedor.diaLibranza}, comprador prefiere ${comprador.diaLibranzaDeseada}`);
   }
+
+  // 1.2 Turno de fin de semana (Par / Impar / Rotativo / Libre 24h)
+  const turnoVend = vendedor.turnoDescanso || 'PAR';
+  const turnoComp = comprador.turnoDescansoDeseado || 'INDIFERENTE';
+
+  if (turnoComp === 'INDIFERENTE') {
+    turnoEncaja = true;
+    score += 10;
+    razones.push(`Comprador acepta cualquier turno de fin de semana (Vendedor es ${turnoVend})`);
+  } else if (turnoComp === turnoVend) {
+    turnoEncaja = true;
+    score += 10;
+    razones.push(`Turno de fin de semana coincide exactamente: ${turnoVend}`);
+  } else {
+    alertas.push(`Turno fin de semana dispar: Vendedor es ${turnoVend}, comprador busca ${turnoComp}`);
+  }
+
+  const libranzaEncaja = diaEncaja && turnoEncaja;
 
   // 2. PRECIO (Hasta 35 puntos)
   const diferenciaPrecio = vendedor.precio - comprador.precioMaximo;
@@ -142,6 +163,7 @@ export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchS
     diferenciaPrecio,
     precioEncaja,
     libranzaEncaja,
+    turnoEncaja,
     cocheEncaja,
     cargaEncaja,
   };

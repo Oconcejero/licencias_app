@@ -1,4 +1,8 @@
-export type DiaLibranza = 'LUNES' | 'MARTES' | 'MIERCOLES' | 'JUEVES' | 'VIERNES' | 'SABADO' | 'DOMINGO' | 'CUALQUIERA';
+export type DiaLibranza = 'LUNES' | 'MARTES' | 'MIERCOLES' | 'JUEVES' | 'VIERNES' | 'SABADO' | 'DOMINGO' | 'LIBRE_24H' | 'CUALQUIERA';
+
+export type TurnoDescanso = 'PAR' | 'IMPAR' | 'ROTATIVO' | 'LIBRE_24H';
+
+export type TurnoDescansoDeseado = 'INDIFERENTE' | 'PAR' | 'IMPAR' | 'ROTATIVO' | 'LIBRE_24H';
 
 export type TipoPerfil = 'PARTICULAR' | 'INTERMEDIARIO';
 
@@ -31,6 +35,7 @@ export interface Vendedor {
   fechaCreacion: string;
   perfil: TipoPerfil;
   diaLibranza: DiaLibranza;
+  turnoDescanso?: TurnoDescanso;
   cargaLicencia: TipoCarga;
   detalleCargaLicencia?: string;
   
@@ -58,6 +63,7 @@ export interface Comprador {
   perfil: TipoPerfil;
   
   diaLibranzaDeseada: DiaLibranza;
+  turnoDescansoDeseado?: TurnoDescansoDeseado;
   precioMaximo: number;
   
   aceptaConPrestamo: boolean | 'INDIFERENTE';
@@ -81,6 +87,7 @@ export interface MatchScore {
   diferenciaPrecio: number; // vendedor.precio - comprador.precioMaximo
   precioEncaja: boolean;
   libranzaEncaja: boolean;
+  turnoEncaja?: boolean;
   cocheEncaja: boolean;
   cargaEncaja: boolean;
 }

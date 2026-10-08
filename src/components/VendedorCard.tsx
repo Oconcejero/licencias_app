@@ -56,7 +56,11 @@ export const VendedorCard: React.FC<VendedorCardProps> = ({
             <Text style={styles.name}>{vendedor.nombre}</Text>
             <View style={styles.badgesRow}>
               <View style={[styles.dayBadge, { backgroundColor: colors.libranza[vendedor.diaLibranza] || colors.primary }]}>
-                <Text style={styles.dayText}>LIBRANZA {vendedor.diaLibranza}</Text>
+                <Text style={styles.dayText}>
+                  {vendedor.diaLibranza === 'LIBRE_24H'
+                    ? '24H LIBRE'
+                    : `LIBRANZA ${vendedor.diaLibranza} • ${vendedor.turnoDescanso || 'PAR'}`}
+                </Text>
               </View>
               <View style={styles.perfilBadge}>
                 <Text style={styles.perfilText}>{vendedor.perfil}</Text>

@@ -32,6 +32,7 @@ function mapVendedorToRow(v: Vendedor, includeCanal = true) {
   if (includeCanal) {
     row.canal_contacto = v.canalContacto || 'TELEFONO';
     row.contacto_origen = v.contactoOrigen || null;
+    row.turno_descanso = v.turnoDescanso || 'PAR';
   }
   return row;
 }
@@ -46,6 +47,7 @@ function mapRowToVendedor(row: any): Vendedor {
     fechaCreacion: row.fecha_creacion || new Date().toISOString(),
     perfil: row.perfil || 'PARTICULAR',
     diaLibranza: row.dia_libranza || 'LUNES',
+    turnoDescanso: row.turno_descanso || 'PAR',
     cargaLicencia: row.carga_licencia || 'SIN_CARGA',
     detalleCargaLicencia: row.detalle_carga_licencia || undefined,
     vendeConCoche: Boolean(row.vende_con_coche),
@@ -82,6 +84,7 @@ function mapCompradorToRow(c: Comprador, includeCanal = true) {
   if (includeCanal) {
     row.canal_contacto = c.canalContacto || 'TELEFONO';
     row.contacto_origen = c.contactoOrigen || null;
+    row.turno_descanso_deseado = c.turnoDescansoDeseado || 'INDIFERENTE';
   }
   return row;
 }
@@ -100,6 +103,7 @@ function mapRowToComprador(row: any): Comprador {
     fechaCreacion: row.fecha_creacion || new Date().toISOString(),
     perfil: row.perfil || 'PARTICULAR',
     diaLibranzaDeseada: row.dia_libranza_deseada || 'CUALQUIERA',
+    turnoDescansoDeseado: row.turno_descanso_deseado || 'INDIFERENTE',
     precioMaximo: Number(row.precio_maximo) || 0,
     aceptaConPrestamo: aceptaPrestamo,
     puedeSenalizarYa: Boolean(row.puede_senalizar_ya),
@@ -153,8 +157,8 @@ export const storageService = {
     if (supabase) {
       try {
         const { error } = await supabase.from('vendedores').upsert(mapVendedorToRow(vendedor, true));
-        if (error && (error.message?.includes('canal_contacto') || error.message?.includes('contacto_origen'))) {
-          // Si las columnas aún no están migradas en Supabase, reintentar sin ellas
+        if (error) {
+          // Si faltan columnas en Supabase, reintentar con las columnas estándar
           await supabase.from('vendedores').upsert(mapVendedorToRow(vendedor, false));
         }
       } catch (e) {
@@ -224,8 +228,8 @@ export const storageService = {
     if (supabase) {
       try {
         const { error } = await supabase.from('compradores').upsert(mapCompradorToRow(comprador, true));
-        if (error && (error.message?.includes('canal_contacto') || error.message?.includes('contacto_origen'))) {
-          // Si las columnas aún no están migradas en Supabase, reintentar sin ellas
+        if (error) {
+          // Si faltan columnas en Supabase, reintentar con las columnas estándar
           await supabase.from('compradores').upsert(mapCompradorToRow(comprador, false));
         }
       } catch (e) {

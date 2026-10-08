@@ -70,3 +70,7 @@ ALTER TABLE public.vendedores ADD COLUMN IF NOT EXISTS contacto_origen TEXT;
 
 ALTER TABLE public.compradores ADD COLUMN IF NOT EXISTS canal_contacto TEXT DEFAULT 'TELEFONO';
 ALTER TABLE public.compradores ADD COLUMN IF NOT EXISTS contacto_origen TEXT;
+
+-- 6. ACTUALIZACIÓN TURNO DE DESCANSO / LIBRANZA (Par / Impar / Rotativo / 24h)
+ALTER TABLE public.vendedores ADD COLUMN IF NOT EXISTS turno_descanso TEXT DEFAULT 'PAR';
+ALTER TABLE public.compradores ADD COLUMN IF NOT EXISTS turno_descanso_deseado TEXT DEFAULT 'INDIFERENTE';

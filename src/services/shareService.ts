@@ -47,7 +47,7 @@ export const shareService = {
 👤 *PARTE COMPRADORA:*
 • *Titular:* ${comprador.nombre}
 ${formatContactoComprador}
-• *Libranza requerida:* ${comprador.diaLibranzaDeseada}
+• *Libranza requerida:* ${comprador.diaLibranzaDeseada}${comprador.turnoDescansoDeseado && comprador.turnoDescansoDeseado !== 'INDIFERENTE' ? ' (Turno ' + comprador.turnoDescansoDeseado + ')' : ''}
 • *Presupuesto máximo:* ${comprador.precioMaximo.toLocaleString()} €
 • *Disponibilidad de señal:* ${comprador.puedeSenalizarYa ? '🔥 SÍ, DISPONIBLE PARA SEÑALIZAR DE INMEDIATO' : 'Pendiente de acordar'}
 • *Requerimiento vehículo:* ${cocheComprador}
@@ -56,7 +56,7 @@ ${comprador.notas ? `• *Observaciones:* ${comprador.notas}\n` : ''}
 🚗 *PARTE VENDEDORA:*
 • *Titular:* ${vendedor.nombre}
 ${formatContactoVendedor}
-• *Día libranza:* ${vendedor.diaLibranza}
+• *Día libranza:* ${vendedor.diaLibranza}${vendedor.diaLibranza !== 'LIBRE_24H' ? ' (Turno ' + (vendedor.turnoDescanso || 'PAR') + ')' : ''}
 • *Precio salida:* ${vendedor.precio.toLocaleString()} € (${vendedor.precioNegociable ? 'Negociable' : 'Precio fijo'})
 • *Situación de cargas:* ${cargaVendedor}
 • *Vehículo:* ${cocheVendedor}
@@ -81,7 +81,7 @@ Se remite la información de ambas partes para valoración, contacto directo y f
     return `🚕 *EXPEDIENTE DE LICENCIA EN VENTA:*
 • *Titular:* ${vendedor.nombre}
 ${contacto}
-• *Libranza:* ${vendedor.diaLibranza}
+• *Libranza:* ${vendedor.diaLibranza}${vendedor.diaLibranza !== 'LIBRE_24H' ? ' (Turno ' + (vendedor.turnoDescanso || 'PAR') + ')' : ''}
 • *Precio:* ${vendedor.precio.toLocaleString()} € (${vendedor.precioNegociable ? 'Negociable' : 'Precio fijo'})
 • *Carga Licencia:* ${vendedor.cargaLicencia === 'SIN_CARGA' ? 'Libre' : vendedor.detalleCargaLicencia || 'Con préstamo'}
 • *Vehículo:* ${coche}
@@ -98,7 +98,7 @@ Se remite la ficha para incorporación a cartera y búsqueda de contraparte.`;
     return `👤 *EXPEDIENTE DE COMPRADOR ACTIVO:*
 • *Interesado:* ${comprador.nombre}
 ${contacto}
-• *Libranza solicitada:* ${comprador.diaLibranzaDeseada}
+• *Libranza solicitada:* ${comprador.diaLibranzaDeseada}${comprador.turnoDescansoDeseado && comprador.turnoDescansoDeseado !== 'INDIFERENTE' ? ' (Turno ' + comprador.turnoDescansoDeseado + ')' : ''}
 • *Presupuesto máximo:* ${comprador.precioMaximo.toLocaleString()} €
 • *Disponibilidad de señal:* ${comprador.puedeSenalizarYa ? '🔥 SÍ, LISTO PARA SEÑALIZAR' : 'No'}
 • *Preferencia vehículo:* ${comprador.buscaConCoche}

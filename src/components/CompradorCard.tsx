@@ -58,7 +58,15 @@ export const CompradorCard: React.FC<CompradorCardProps> = ({
             <Text style={styles.name}>{comprador.nombre}</Text>
             <View style={styles.badgesRow}>
               <View style={[styles.dayBadge, { backgroundColor: colors.libranza[comprador.diaLibranzaDeseada] || colors.primary }]}>
-                <Text style={styles.dayText}>BUSCA {comprador.diaLibranzaDeseada}</Text>
+                <Text style={styles.dayText}>
+                  {comprador.diaLibranzaDeseada === 'CUALQUIERA'
+                    ? (comprador.turnoDescansoDeseado && comprador.turnoDescansoDeseado !== 'INDIFERENTE'
+                        ? `LIBRANZA CUALQUIERA • ${comprador.turnoDescansoDeseado}`
+                        : 'BUSCA CUALQUIERA')
+                    : comprador.diaLibranzaDeseada === 'LIBRE_24H'
+                    ? 'BUSCA 24H LIBRE'
+                    : `BUSCA ${comprador.diaLibranzaDeseada}${comprador.turnoDescansoDeseado && comprador.turnoDescansoDeseado !== 'INDIFERENTE' ? ' • ' + comprador.turnoDescansoDeseado : ''}`}
+                </Text>
               </View>
               <View style={styles.perfilBadge}>
                 <Text style={styles.perfilText}>{comprador.perfil}</Text>

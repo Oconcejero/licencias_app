@@ -9,7 +9,7 @@ import {
   ScrollView,
   Switch,
 } from 'react-native';
-import { Vendedor, DiaLibranza, TipoPerfil, TipoCarga, CondicionVenta, EstadoRegistro, CanalContacto } from '../types';
+import { Vendedor, DiaLibranza, TipoPerfil, TipoCarga, CondicionVenta, EstadoRegistro, CanalContacto, TurnoDescanso } from '../types';
 import { colors } from '../theme/colors';
 
 interface VendedorModalProps {
@@ -27,6 +27,7 @@ const DIAS_LIBRANZA: DiaLibranza[] = [
   'VIERNES',
   'SABADO',
   'DOMINGO',
+  'LIBRE_24H',
 ];
 
 export const VendedorModal: React.FC<VendedorModalProps> = ({
@@ -41,6 +42,7 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
   const [contactoOrigen, setContactoOrigen] = useState('');
   const [perfil, setPerfil] = useState<TipoPerfil>('PARTICULAR');
   const [diaLibranza, setDiaLibranza] = useState<DiaLibranza>('LUNES');
+  const [turnoDescanso, setTurnoDescanso] = useState<TurnoDescanso>('PAR');
   const [cargaLicencia, setCargaLicencia] = useState<TipoCarga>('SIN_CARGA');
   const [detalleCargaLicencia, setDetalleCargaLicencia] = useState('');
 
@@ -72,6 +74,7 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
       setContactoOrigen(vendedorToEdit.contactoOrigen || '');
       setPerfil(vendedorToEdit.perfil);
       setDiaLibranza(vendedorToEdit.diaLibranza);
+      setTurnoDescanso(vendedorToEdit.turnoDescanso || 'PAR');
       setCargaLicencia(vendedorToEdit.cargaLicencia);
       setDetalleCargaLicencia(vendedorToEdit.detalleCargaLicencia || '');
       setVendeConCoche(vendedorToEdit.vendeConCoche);
@@ -103,6 +106,7 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
       setContactoOrigen('');
       setPerfil('PARTICULAR');
       setDiaLibranza('LUNES');
+      setTurnoDescanso('PAR');
       setCargaLicencia('SIN_CARGA');
       setDetalleCargaLicencia('');
       setVendeConCoche(false);
@@ -141,6 +145,7 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
       fechaCreacion: vendedorToEdit ? vendedorToEdit.fechaCreacion : new Date().toISOString(),
       perfil,
       diaLibranza,
+      turnoDescanso,
       cargaLicencia,
       detalleCargaLicencia: cargaLicencia !== 'SIN_CARGA' ? detalleCargaLicencia.trim() : undefined,
       vendeConCoche,
@@ -321,7 +326,7 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
               <Text style={styles.sectionTitle}>2. DATOS DE LA LICENCIA</Text>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Día de Libranza</Text>
+                <Text style={styles.label}>Día de Libranza Semanal</Text>
                 <View style={styles.diasRow}>
                   {DIAS_LIBRANZA.map(dia => {
                     const isSelected = diaLibranza === dia;
@@ -335,11 +340,50 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
                         onPress={() => setDiaLibranza(dia)}
                       >
                         <Text style={[styles.diaBtnText, isSelected && styles.diaBtnTextActive]}>
-                          {dia}
+                          {dia === 'LIBRE_24H' ? '24H / LIBRE' : dia}
                         </Text>
                       </TouchableOpacity>
                     );
                   })}
+                </View>
+              </View>
+
+              {/* RÉGIMEN DE TURNO / FIN DE SEMANA */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Régimen de Turno / Fin de Semana (Par o Impar)</Text>
+                <View style={styles.selectorRow}>
+                  <TouchableOpacity
+                    style={[styles.selectorBtn, turnoDescanso === 'PAR' && styles.selectorBtnActive]}
+                    onPress={() => setTurnoDescanso('PAR')}
+                  >
+                    <Text style={[styles.selectorText, turnoDescanso === 'PAR' && styles.selectorTextActive]}>
+                      🔢 PAR (Finde Par)
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.selectorBtn, turnoDescanso === 'IMPAR' && styles.selectorBtnActive]}
+                    onPress={() => setTurnoDescanso('IMPAR')}
+                  >
+                    <Text style={[styles.selectorText, turnoDescanso === 'IMPAR' && styles.selectorTextActive]}>
+                      🔢 IMPAR (Finde Impar)
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.selectorBtn, turnoDescanso === 'ROTATIVO' && styles.selectorBtnActive]}
+                    onPress={() => setTurnoDescanso('ROTATIVO')}
+                  >
+                    <Text style={[styles.selectorText, turnoDescanso === 'ROTATIVO' && styles.selectorTextActive]}>
+                      🔄 Finde alterno
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.selectorBtn, turnoDescanso === 'LIBRE_24H' && styles.selectorBtnActive]}
+                    onPress={() => setTurnoDescanso('LIBRE_24H')}
+                  >
+                    <Text style={[styles.selectorText, turnoDescanso === 'LIBRE_24H' && styles.selectorTextActive]}>
+                      🟢 Libre / 24h
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
 
