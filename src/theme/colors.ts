@@ -37,10 +37,12 @@ export const colors = {
     MIERCOLES: '#EC4899',
     JUEVES: '#10B981',
     VIERNES: '#F59E0B',
-    SABADO: '#06B6D4',
-    DOMINGO: '#6366F1',
+    EUROTAXI: '#06B6D4', // Cyan llamativo para Eurotaxi (PMR)
+    ELECTRICO_SIN_LIBRANZA: '#14B8A6', // Verde turquesa eléctrico CERO
     LIBRE_24H: '#10B981',
     CUALQUIERA: '#64748B',
+    SABADO: '#06B6D4',
+    DOMINGO: '#6366F1',
   },
 
   // Canales de captación / plataformas

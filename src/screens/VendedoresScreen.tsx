@@ -51,7 +51,7 @@ export const VendedoresScreen: React.FC<VendedoresScreenProps> = ({
     });
   }, [vendedores, search, selectedDia, filterCoche]);
 
-  const DIAS_OPCIONES = ['TODOS', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
+  const DIAS_OPCIONES = ['TODOS', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'EUROTAXI', 'ELECTRICO_SIN_LIBRANZA'];
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -100,7 +100,11 @@ export const VendedoresScreen: React.FC<VendedoresScreenProps> = ({
               onPress={() => setSelectedDia(dia)}
             >
               <Text style={[styles.diaChipText, isActive && styles.diaChipTextActive]}>
-                {dia}
+                {dia === 'EUROTAXI'
+                  ? '♿ EUROTAXI'
+                  : dia === 'ELECTRICO_SIN_LIBRANZA'
+                  ? '⚡ ELÉCTRICO'
+                  : dia}
               </Text>
             </TouchableOpacity>
           );

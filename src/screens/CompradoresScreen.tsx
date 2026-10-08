@@ -54,7 +54,7 @@ export const CompradoresScreen: React.FC<CompradoresScreenProps> = ({
     });
   }, [compradores, search, selectedDia, onlyHot, filterGestoria]);
 
-  const DIAS_OPCIONES = ['TODOS', 'CUALQUIERA', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
+  const DIAS_OPCIONES = ['TODOS', 'CUALQUIERA', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'EUROTAXI', 'ELECTRICO_SIN_LIBRANZA'];
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -103,7 +103,11 @@ export const CompradoresScreen: React.FC<CompradoresScreenProps> = ({
               onPress={() => setSelectedDia(dia)}
             >
               <Text style={[styles.diaChipText, isActive && styles.diaChipTextActive]}>
-                {dia}
+                {dia === 'EUROTAXI'
+                  ? '♿ EUROTAXI'
+                  : dia === 'ELECTRICO_SIN_LIBRANZA'
+                  ? '⚡ ELÉCTRICO'
+                  : dia}
               </Text>
             </TouchableOpacity>
           );

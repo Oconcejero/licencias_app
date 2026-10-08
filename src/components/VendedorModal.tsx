@@ -35,9 +35,8 @@ const DIAS_LIBRANZA: DiaLibranza[] = [
   'MIERCOLES',
   'JUEVES',
   'VIERNES',
-  'SABADO',
-  'DOMINGO',
-  'LIBRE_24H',
+  'EUROTAXI',
+  'ELECTRICO_SIN_LIBRANZA',
 ];
 
 export const VendedorModal: React.FC<VendedorModalProps> = ({
@@ -375,10 +374,21 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
                           styles.diaBtn,
                           isSelected && { backgroundColor: colors.libranza[dia] || colors.primary, borderColor: colors.libranza[dia] },
                         ]}
-                        onPress={() => setDiaLibranza(dia)}
+                        onPress={() => {
+                          setDiaLibranza(dia);
+                          if (dia === 'EUROTAXI' || dia === 'ELECTRICO_SIN_LIBRANZA') {
+                            setTurnoDescanso('LIBRE_24H');
+                          } else if (turnoDescanso === 'LIBRE_24H') {
+                            setTurnoDescanso('PAR');
+                          }
+                        }}
                       >
                         <Text style={[styles.diaBtnText, isSelected && styles.diaBtnTextActive]}>
-                          {dia === 'LIBRE_24H' ? '24H / LIBRE' : dia}
+                          {dia === 'EUROTAXI'
+                            ? '♿ EUROTAXI'
+                            : dia === 'ELECTRICO_SIN_LIBRANZA'
+                            ? '⚡ ELÉCTRICO (Sin libranza)'
+                            : dia}
                         </Text>
                       </TouchableOpacity>
                     );

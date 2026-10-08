@@ -39,9 +39,8 @@ const DIAS_LIBRANZA: DiaLibranza[] = [
   'MIERCOLES',
   'JUEVES',
   'VIERNES',
-  'SABADO',
-  'DOMINGO',
-  'LIBRE_24H',
+  'EUROTAXI',
+  'ELECTRICO_SIN_LIBRANZA',
 ];
 
 export const CompradorModal: React.FC<CompradorModalProps> = ({
@@ -372,10 +371,23 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
                             borderColor: colors.libranza[dia] || colors.primary,
                           },
                         ]}
-                        onPress={() => setDiaLibranzaDeseada(dia)}
+                        onPress={() => {
+                          setDiaLibranzaDeseada(dia);
+                          if (dia === 'EUROTAXI' || dia === 'ELECTRICO_SIN_LIBRANZA') {
+                            setTurnoDescansoDeseado('LIBRE_24H');
+                          } else if (turnoDescansoDeseado === 'LIBRE_24H') {
+                            setTurnoDescansoDeseado('INDIFERENTE');
+                          }
+                        }}
                       >
                         <Text style={[styles.diaBtnText, isSelected && styles.diaBtnTextActive]}>
-                          {dia === 'CUALQUIERA' ? 'CUALQUIERA / INDIFERENTE' : dia === 'LIBRE_24H' ? '24H / LIBRE' : dia}
+                          {dia === 'CUALQUIERA'
+                            ? 'CUALQUIERA'
+                            : dia === 'EUROTAXI'
+                            ? '♿ EUROTAXI'
+                            : dia === 'ELECTRICO_SIN_LIBRANZA'
+                            ? '⚡ ELÉCTRICO (Sin libranza)'
+                            : dia}
                         </Text>
                       </TouchableOpacity>
                     );

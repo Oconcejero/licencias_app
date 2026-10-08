@@ -220,7 +220,13 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                     <Text style={styles.specLabel}>Libranza y Turno</Text>
                     <View style={[styles.dayPill, { backgroundColor: colors.libranza[vendedor.diaLibranza] || colors.primary }]}>
                       <Text style={styles.dayPillText}>
-                        {vendedor.diaLibranza === 'LIBRE_24H' ? '24H LIBRE' : `${vendedor.diaLibranza} (${vendedor.turnoDescanso || 'PAR'})`}
+                        {vendedor.diaLibranza === 'EUROTAXI'
+                          ? '♿ EUROTAXI (Sin libranza)'
+                          : vendedor.diaLibranza === 'ELECTRICO_SIN_LIBRANZA'
+                          ? '⚡ ELÉCTRICO (Sin libranza)'
+                          : vendedor.diaLibranza === 'LIBRE_24H'
+                          ? '24H LIBRE'
+                          : `${vendedor.diaLibranza} (${vendedor.turnoDescanso || 'PAR'})`}
                       </Text>
                     </View>
                   </View>
@@ -403,7 +409,11 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                     <Text style={styles.specLabel}>Libranza Buscada</Text>
                     <View style={[styles.dayPill, { backgroundColor: colors.libranza[comprador.diaLibranzaDeseada] || colors.primary }]}>
                       <Text style={styles.dayPillText}>
-                        {comprador.diaLibranzaDeseada === 'LIBRE_24H'
+                        {comprador.diaLibranzaDeseada === 'EUROTAXI'
+                          ? '♿ EUROTAXI (Sin libranza)'
+                          : comprador.diaLibranzaDeseada === 'ELECTRICO_SIN_LIBRANZA'
+                          ? '⚡ ELÉCTRICO (Sin libranza)'
+                          : comprador.diaLibranzaDeseada === 'LIBRE_24H'
                           ? '24H LIBRE'
                           : `${comprador.diaLibranzaDeseada} (${comprador.turnoDescansoDeseado || 'Indiferente'})`}
                       </Text>

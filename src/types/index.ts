@@ -1,4 +1,15 @@
-export type DiaLibranza = 'LUNES' | 'MARTES' | 'MIERCOLES' | 'JUEVES' | 'VIERNES' | 'SABADO' | 'DOMINGO' | 'LIBRE_24H' | 'CUALQUIERA';
+export type DiaLibranza =
+  | 'LUNES'
+  | 'MARTES'
+  | 'MIERCOLES'
+  | 'JUEVES'
+  | 'VIERNES'
+  | 'EUROTAXI'
+  | 'ELECTRICO_SIN_LIBRANZA'
+  | 'LIBRE_24H'
+  | 'CUALQUIERA'
+  | 'SABADO'
+  | 'DOMINGO';
 
 export type TurnoDescanso = 'PAR' | 'IMPAR' | 'ROTATIVO' | 'LIBRE_24H';
 

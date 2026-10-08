@@ -63,6 +63,10 @@ export const CompradorCard: React.FC<CompradorCardProps> = ({
                     ? (comprador.turnoDescansoDeseado && comprador.turnoDescansoDeseado !== 'INDIFERENTE'
                         ? `LIBRANZA CUALQUIERA • ${comprador.turnoDescansoDeseado}`
                         : 'BUSCA CUALQUIERA')
+                    : comprador.diaLibranzaDeseada === 'EUROTAXI'
+                    ? 'BUSCA EUROTAXI (SIN LIBRANZA)'
+                    : comprador.diaLibranzaDeseada === 'ELECTRICO_SIN_LIBRANZA'
+                    ? 'BUSCA ELÉCTRICO (SIN LIBRANZA)'
                     : comprador.diaLibranzaDeseada === 'LIBRE_24H'
                     ? 'BUSCA 24H LIBRE'
                     : `BUSCA ${comprador.diaLibranzaDeseada}${comprador.turnoDescansoDeseado && comprador.turnoDescansoDeseado !== 'INDIFERENTE' ? ' • ' + comprador.turnoDescansoDeseado : ''}`}

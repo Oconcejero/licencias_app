@@ -25,11 +25,27 @@ export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchS
   let turnoEncaja = false;
 
   // 1.1 Día entre semana
-  if (comprador.diaLibranzaDeseada === 'CUALQUIERA' || comprador.diaLibranzaDeseada === vendedor.diaLibranza) {
+  const isVendedorExento =
+    vendedor.diaLibranza === 'EUROTAXI' ||
+    vendedor.diaLibranza === 'ELECTRICO_SIN_LIBRANZA' ||
+    vendedor.diaLibranza === 'LIBRE_24H';
+
+  const isCompradorExento =
+    comprador.diaLibranzaDeseada === 'EUROTAXI' ||
+    comprador.diaLibranzaDeseada === 'ELECTRICO_SIN_LIBRANZA' ||
+    comprador.diaLibranzaDeseada === 'LIBRE_24H';
+
+  if (
+    comprador.diaLibranzaDeseada === 'CUALQUIERA' ||
+    comprador.diaLibranzaDeseada === vendedor.diaLibranza ||
+    (isCompradorExento && isVendedorExento)
+  ) {
     diaEncaja = true;
     score += 25;
     if (comprador.diaLibranzaDeseada === 'CUALQUIERA') {
       razones.push(`Comprador busca cualquier libranza (Vendedor tiene ${vendedor.diaLibranza})`);
+    } else if (isCompradorExento && isVendedorExento) {
+      razones.push(`Ambos encajan en licencia exenta de libranza (${vendedor.diaLibranza})`);
     } else {
       razones.push(`Día de libranza coincide exactamente: ${vendedor.diaLibranza}`);
     }
@@ -41,7 +57,11 @@ export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchS
   const turnoVend = vendedor.turnoDescanso || 'PAR';
   const turnoComp = comprador.turnoDescansoDeseado || 'INDIFERENTE';
 
-  if (turnoComp === 'INDIFERENTE') {
+  if (isVendedorExento) {
+    turnoEncaja = true;
+    score += 10;
+    razones.push(`Licencia exenta de libranza: autorizada para trabajar los 7 días sin descanso obligatorio`);
+  } else if (turnoComp === 'INDIFERENTE') {
     turnoEncaja = true;
     score += 10;
     razones.push(`Comprador acepta cualquier turno de fin de semana (Vendedor es ${turnoVend})`);

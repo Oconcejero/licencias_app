@@ -1,6 +1,14 @@
 import { Linking } from 'react-native';
 import { CruceMatch, Vendedor, Comprador } from '../types';
 
+function formatLibranzaText(dia: string, turno?: string): string {
+  if (dia === 'EUROTAXI') return '♿ EUROTAXI (Exento de libranza)';
+  if (dia === 'ELECTRICO_SIN_LIBRANZA') return '⚡ ELÉCTRICO CERO (Exento de libranza)';
+  if (dia === 'LIBRE_24H') return '24H LIBRE';
+  if (dia === 'CUALQUIERA') return 'Cualquiera';
+  return `${dia}${turno && turno !== 'INDIFERENTE' ? ' (Turno ' + turno + ')' : ''}`;
+}
+
 export const shareService = {
   generateMatchReport(cruce: CruceMatch): string {
     const { vendedor, comprador, match } = cruce;
@@ -61,7 +69,7 @@ export const shareService = {
 👤 *PARTE COMPRADORA:*
 • *Titular:* ${comprador.nombre}
 ${formatContactoComprador}
-• *Libranza requerida:* ${comprador.diaLibranzaDeseada}${comprador.turnoDescansoDeseado && comprador.turnoDescansoDeseado !== 'INDIFERENTE' ? ' (Turno ' + comprador.turnoDescansoDeseado + ')' : ''}
+• *Libranza requerida:* ${formatLibranzaText(comprador.diaLibranzaDeseada, comprador.turnoDescansoDeseado)}
 • *Presupuesto máximo:* ${comprador.precioMaximo.toLocaleString()} €
 • *Disponibilidad de señal:* ${comprador.puedeSenalizarYa ? '🔥 SÍ, DISPONIBLE PARA SEÑALIZAR DE INMEDIATO' : 'Pendiente de acordar'}
 • *Requerimiento vehículo:* ${cocheComprador}
@@ -70,7 +78,7 @@ ${comprador.notas ? `• *Observaciones:* ${comprador.notas}\n` : ''}
 🚗 *PARTE VENDEDORA:*
 • *Titular:* ${vendedor.nombre}
 ${formatContactoVendedor}
-• *Día libranza:* ${vendedor.diaLibranza}${vendedor.diaLibranza !== 'LIBRE_24H' ? ' (Turno ' + (vendedor.turnoDescanso || 'PAR') + ')' : ''}
+• *Día libranza:* ${formatLibranzaText(vendedor.diaLibranza, vendedor.turnoDescanso)}
 • *Precio salida:* ${precioVendedorStr}
 • *Situación de cargas:* ${cargaVendedor}
 • *Vehículo:* ${cocheVendedor}
@@ -109,7 +117,7 @@ Se remite la información de ambas partes para valoración, contacto directo y f
     return `🚕 *EXPEDIENTE DE LICENCIA EN VENTA:*
 • *Titular:* ${vendedor.nombre}
 ${contacto}
-• *Libranza:* ${vendedor.diaLibranza}${vendedor.diaLibranza !== 'LIBRE_24H' ? ' (Turno ' + (vendedor.turnoDescanso || 'PAR') + ')' : ''}
+• *Libranza:* ${formatLibranzaText(vendedor.diaLibranza, vendedor.turnoDescanso)}
 • *Precio:* ${precioStr}
 • *Carga Licencia:* ${vendedor.cargaLicencia === 'SIN_CARGA' ? 'Libre' : vendedor.detalleCargaLicencia || 'Con préstamo'}
 • *Vehículo:* ${coche}
@@ -126,7 +134,7 @@ Se remite la ficha para incorporación a cartera y búsqueda de contraparte.`;
     return `👤 *EXPEDIENTE DE COMPRADOR ACTIVO:*
 • *Interesado:* ${comprador.nombre}
 ${contacto}
-• *Libranza solicitada:* ${comprador.diaLibranzaDeseada}${comprador.turnoDescansoDeseado && comprador.turnoDescansoDeseado !== 'INDIFERENTE' ? ' (Turno ' + comprador.turnoDescansoDeseado + ')' : ''}
+• *Libranza solicitada:* ${formatLibranzaText(comprador.diaLibranzaDeseada, comprador.turnoDescansoDeseado)}
 • *Presupuesto máximo:* ${comprador.precioMaximo.toLocaleString()} €
 • *Disponibilidad de señal:* ${comprador.puedeSenalizarYa ? '🔥 SÍ, LISTO PARA SEÑALIZAR' : 'No'}
 • *Preferencia vehículo:* ${comprador.buscaConCoche}

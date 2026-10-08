@@ -57,7 +57,11 @@ export const VendedorCard: React.FC<VendedorCardProps> = ({
             <View style={styles.badgesRow}>
               <View style={[styles.dayBadge, { backgroundColor: colors.libranza[vendedor.diaLibranza] || colors.primary }]}>
                 <Text style={styles.dayText}>
-                  {vendedor.diaLibranza === 'LIBRE_24H'
+                  {vendedor.diaLibranza === 'EUROTAXI'
+                    ? '♿ EUROTAXI (SIN LIBRANZA)'
+                    : vendedor.diaLibranza === 'ELECTRICO_SIN_LIBRANZA'
+                    ? '⚡ ELÉCTRICO (SIN LIBRANZA)'
+                    : vendedor.diaLibranza === 'LIBRE_24H'
                     ? '24H LIBRE'
                     : `LIBRANZA ${vendedor.diaLibranza} • ${vendedor.turnoDescanso || 'PAR'}`}
                 </Text>
