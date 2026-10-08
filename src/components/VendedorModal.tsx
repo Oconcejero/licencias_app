@@ -9,7 +9,7 @@ import {
   ScrollView,
   Switch,
 } from 'react-native';
-import { Vendedor, DiaLibranza, TipoPerfil, TipoCarga, CondicionVenta, EstadoRegistro } from '../types';
+import { Vendedor, DiaLibranza, TipoPerfil, TipoCarga, CondicionVenta, EstadoRegistro, CanalContacto } from '../types';
 import { colors } from '../theme/colors';
 
 interface VendedorModalProps {
@@ -37,6 +37,8 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
 }) => {
   const [nombre, setNombre] = useState('');
   const [telefono, setTelefono] = useState('');
+  const [canalContacto, setCanalContacto] = useState<CanalContacto>('TELEFONO');
+  const [contactoOrigen, setContactoOrigen] = useState('');
   const [perfil, setPerfil] = useState<TipoPerfil>('PARTICULAR');
   const [diaLibranza, setDiaLibranza] = useState<DiaLibranza>('LUNES');
   const [cargaLicencia, setCargaLicencia] = useState<TipoCarga>('SIN_CARGA');
@@ -66,6 +68,8 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
     if (vendedorToEdit) {
       setNombre(vendedorToEdit.nombre);
       setTelefono(vendedorToEdit.telefono);
+      setCanalContacto(vendedorToEdit.canalContacto || 'TELEFONO');
+      setContactoOrigen(vendedorToEdit.contactoOrigen || '');
       setPerfil(vendedorToEdit.perfil);
       setDiaLibranza(vendedorToEdit.diaLibranza);
       setCargaLicencia(vendedorToEdit.cargaLicencia);
@@ -95,6 +99,8 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
       // Valores por defecto para nuevo
       setNombre('');
       setTelefono('');
+      setCanalContacto('TELEFONO');
+      setContactoOrigen('');
       setPerfil('PARTICULAR');
       setDiaLibranza('LUNES');
       setCargaLicencia('SIN_CARGA');
@@ -130,6 +136,8 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
       id: vendedorToEdit ? vendedorToEdit.id : `v-${Date.now()}`,
       nombre: nombre.trim(),
       telefono: telefono.trim(),
+      canalContacto,
+      contactoOrigen: canalContacto !== 'TELEFONO' ? contactoOrigen.trim() || undefined : undefined,
       fechaCreacion: vendedorToEdit ? vendedorToEdit.fechaCreacion : new Date().toISOString(),
       perfil,
       diaLibranza,
@@ -175,34 +183,115 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
           </View>
 
           <ScrollView style={styles.scrollArea} keyboardShouldPersistTaps="handled">
-            {/* SECCIÓN 1: DATOS PERSONALES */}
+            {/* SECCIÓN 1: DATOS PERSONALES Y CANAL */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>1. DATOS DE CONTACTO Y PERFIL</Text>
-              
+              <Text style={styles.sectionTitle}>1. CANAL DE CONTACTO Y PERFIL</Text>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Canal / Plataforma de Origen</Text>
+                <View style={styles.selectorRow}>
+                  <TouchableOpacity
+                    style={[
+                      styles.selectorBtn,
+                      canalContacto === 'TELEFONO' && { backgroundColor: colors.canales.TELEFONO, borderColor: colors.canales.TELEFONO },
+                    ]}
+                    onPress={() => setCanalContacto('TELEFONO')}
+                  >
+                    <Text style={[styles.selectorText, canalContacto === 'TELEFONO' && styles.selectorTextActive]}>
+                      📞 Teléfono
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.selectorBtn,
+                      canalContacto === 'WALLAPOP' && { backgroundColor: colors.canales.WALLAPOP, borderColor: colors.canales.WALLAPOP },
+                    ]}
+                    onPress={() => setCanalContacto('WALLAPOP')}
+                  >
+                    <Text style={[styles.selectorText, canalContacto === 'WALLAPOP' && styles.selectorTextActive]}>
+                      🟠 Wallapop
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.selectorBtn,
+                      canalContacto === 'MILANUNCIOS' && { backgroundColor: colors.canales.MILANUNCIOS, borderColor: colors.canales.MILANUNCIOS },
+                    ]}
+                    onPress={() => setCanalContacto('MILANUNCIOS')}
+                  >
+                    <Text style={[styles.selectorText, canalContacto === 'MILANUNCIOS' && styles.selectorTextActive]}>
+                      🟢 Milanuncios
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.selectorBtn,
+                      canalContacto === 'FACEBOOK' && { backgroundColor: colors.canales.FACEBOOK, borderColor: colors.canales.FACEBOOK },
+                    ]}
+                    onPress={() => setCanalContacto('FACEBOOK')}
+                  >
+                    <Text style={[styles.selectorText, canalContacto === 'FACEBOOK' && styles.selectorTextActive]}>
+                      🔵 Facebook
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.selectorBtn,
+                      canalContacto === 'OTRO' && { backgroundColor: colors.canales.OTRO, borderColor: colors.canales.OTRO },
+                    ]}
+                    onPress={() => setCanalContacto('OTRO')}
+                  >
+                    <Text style={[styles.selectorText, canalContacto === 'OTRO' && styles.selectorTextActive]}>
+                      💬 Otro
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
               <View style={styles.row}>
                 <View style={styles.col}>
-                  <Text style={styles.label}>Nombre completo *</Text>
+                  <Text style={styles.label}>Nombre o Alias *</Text>
                   <TextInput
                     style={styles.input}
                     value={nombre}
                     onChangeText={setNombre}
-                    placeholder="Ej. Juan Pérez"
+                    placeholder={canalContacto === 'TELEFONO' ? "Ej. Juan Pérez" : "Ej. Carlos (Wallapop)"}
                     placeholderTextColor={colors.textSubtle}
                   />
                 </View>
 
                 <View style={styles.col}>
-                  <Text style={styles.label}>Teléfono</Text>
+                  <Text style={styles.label}>
+                    {canalContacto === 'TELEFONO' ? 'Teléfono / WhatsApp' : 'Teléfono (Opcional)'}
+                  </Text>
                   <TextInput
                     style={styles.input}
                     value={telefono}
                     onChangeText={setTelefono}
-                    placeholder="600 000 000"
+                    placeholder={canalContacto === 'TELEFONO' ? "600 000 000" : "Pendiente de pedir"}
                     placeholderTextColor={colors.textSubtle}
                     keyboardType="phone-pad"
                   />
                 </View>
               </View>
+
+              {canalContacto !== 'TELEFONO' && (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>
+                    Usuario o Enlace del chat ({canalContacto === 'WALLAPOP' ? 'Wallapop' : canalContacto === 'MILANUNCIOS' ? 'Milanuncios' : canalContacto === 'FACEBOOK' ? 'Facebook' : 'Plataforma'})
+                  </Text>
+                  <TextInput
+                    style={styles.input}
+                    value={contactoOrigen}
+                    onChangeText={setContactoOrigen}
+                    placeholder="Ej. @carlos_taxi o enlace del chat / anuncio..."
+                    placeholderTextColor={colors.textSubtle}
+                  />
+                  <Text style={styles.sublabel}>
+                    💡 Puedes guardarlo sin teléfono ahora y añadirlo cuando te lo facilite en la conversación.
+                  </Text>
+                </View>
+              )}
 
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Tipo de Vendedor</Text>

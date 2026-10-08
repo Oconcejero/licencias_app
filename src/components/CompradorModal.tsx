@@ -17,6 +17,7 @@ import {
   TipoPreferenciaCoche,
   TipoGestoria,
   EstadoRegistro,
+  CanalContacto,
 } from '../types';
 import { colors } from '../theme/colors';
 import { calculateMatch } from '../services/matchEngine';
@@ -51,6 +52,8 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
 }) => {
   const [nombre, setNombre] = useState('');
   const [telefono, setTelefono] = useState('');
+  const [canalContacto, setCanalContacto] = useState<CanalContacto>('TELEFONO');
+  const [contactoOrigen, setContactoOrigen] = useState('');
   const [perfil, setPerfil] = useState<TipoPerfil>('PARTICULAR');
 
   const [diaLibranzaDeseada, setDiaLibranzaDeseada] = useState<DiaLibranza>('CUALQUIERA');
@@ -78,6 +81,8 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
     if (compradorToEdit) {
       setNombre(compradorToEdit.nombre);
       setTelefono(compradorToEdit.telefono);
+      setCanalContacto(compradorToEdit.canalContacto || 'TELEFONO');
+      setContactoOrigen(compradorToEdit.contactoOrigen || '');
       setPerfil(compradorToEdit.perfil);
       setDiaLibranzaDeseada(compradorToEdit.diaLibranzaDeseada);
       setPrecioMaximo(compradorToEdit.precioMaximo ? String(compradorToEdit.precioMaximo) : '');
@@ -93,6 +98,8 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
     } else {
       setNombre('');
       setTelefono('');
+      setCanalContacto('TELEFONO');
+      setContactoOrigen('');
       setPerfil('PARTICULAR');
       setDiaLibranzaDeseada('CUALQUIERA');
       setPrecioMaximo('');
@@ -167,6 +174,8 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
       id: compradorToEdit ? compradorToEdit.id : `c-${Date.now()}`,
       nombre: nombre.trim(),
       telefono: telefono.trim(),
+      canalContacto,
+      contactoOrigen: canalContacto !== 'TELEFONO' ? contactoOrigen.trim() || undefined : undefined,
       fechaCreacion: compradorToEdit ? compradorToEdit.fechaCreacion : new Date().toISOString(),
       perfil,
       diaLibranzaDeseada,
@@ -203,34 +212,115 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
           </View>
 
           <ScrollView style={styles.scrollArea} keyboardShouldPersistTaps="handled">
-            {/* SECCIÓN 1: DATOS PERSONALES */}
+            {/* SECCIÓN 1: DATOS PERSONALES Y CANAL */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>1. DATOS DE CONTACTO</Text>
+              <Text style={styles.sectionTitle}>1. CANAL DE CONTACTO Y PERFIL</Text>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Canal / Plataforma de Origen</Text>
+                <View style={styles.selectorRow}>
+                  <TouchableOpacity
+                    style={[
+                      styles.selectorBtn,
+                      canalContacto === 'TELEFONO' && { backgroundColor: colors.canales.TELEFONO, borderColor: colors.canales.TELEFONO },
+                    ]}
+                    onPress={() => setCanalContacto('TELEFONO')}
+                  >
+                    <Text style={[styles.selectorText, canalContacto === 'TELEFONO' && styles.selectorTextActive]}>
+                      📞 Teléfono
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.selectorBtn,
+                      canalContacto === 'WALLAPOP' && { backgroundColor: colors.canales.WALLAPOP, borderColor: colors.canales.WALLAPOP },
+                    ]}
+                    onPress={() => setCanalContacto('WALLAPOP')}
+                  >
+                    <Text style={[styles.selectorText, canalContacto === 'WALLAPOP' && styles.selectorTextActive]}>
+                      🟠 Wallapop
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.selectorBtn,
+                      canalContacto === 'MILANUNCIOS' && { backgroundColor: colors.canales.MILANUNCIOS, borderColor: colors.canales.MILANUNCIOS },
+                    ]}
+                    onPress={() => setCanalContacto('MILANUNCIOS')}
+                  >
+                    <Text style={[styles.selectorText, canalContacto === 'MILANUNCIOS' && styles.selectorTextActive]}>
+                      🟢 Milanuncios
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.selectorBtn,
+                      canalContacto === 'FACEBOOK' && { backgroundColor: colors.canales.FACEBOOK, borderColor: colors.canales.FACEBOOK },
+                    ]}
+                    onPress={() => setCanalContacto('FACEBOOK')}
+                  >
+                    <Text style={[styles.selectorText, canalContacto === 'FACEBOOK' && styles.selectorTextActive]}>
+                      🔵 Facebook
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.selectorBtn,
+                      canalContacto === 'OTRO' && { backgroundColor: colors.canales.OTRO, borderColor: colors.canales.OTRO },
+                    ]}
+                    onPress={() => setCanalContacto('OTRO')}
+                  >
+                    <Text style={[styles.selectorText, canalContacto === 'OTRO' && styles.selectorTextActive]}>
+                      💬 Otro
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
 
               <View style={styles.row}>
                 <View style={styles.col}>
-                  <Text style={styles.label}>Nombre completo *</Text>
+                  <Text style={styles.label}>Nombre o Alias *</Text>
                   <TextInput
                     style={styles.input}
                     value={nombre}
                     onChangeText={setNombre}
-                    placeholder="Ej. David Sánchez"
+                    placeholder={canalContacto === 'TELEFONO' ? "Ej. David Sánchez" : "Ej. David (Wallapop)"}
                     placeholderTextColor={colors.textSubtle}
                   />
                 </View>
 
                 <View style={styles.col}>
-                  <Text style={styles.label}>Teléfono</Text>
+                  <Text style={styles.label}>
+                    {canalContacto === 'TELEFONO' ? 'Teléfono / WhatsApp' : 'Teléfono (Opcional)'}
+                  </Text>
                   <TextInput
                     style={styles.input}
                     value={telefono}
                     onChangeText={setTelefono}
-                    placeholder="600 000 000"
+                    placeholder={canalContacto === 'TELEFONO' ? "600 000 000" : "Pendiente de pedir"}
                     placeholderTextColor={colors.textSubtle}
                     keyboardType="phone-pad"
                   />
                 </View>
               </View>
+
+              {canalContacto !== 'TELEFONO' && (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>
+                    Usuario o Enlace del chat ({canalContacto === 'WALLAPOP' ? 'Wallapop' : canalContacto === 'MILANUNCIOS' ? 'Milanuncios' : canalContacto === 'FACEBOOK' ? 'Facebook' : 'Plataforma'})
+                  </Text>
+                  <TextInput
+                    style={styles.input}
+                    value={contactoOrigen}
+                    onChangeText={setContactoOrigen}
+                    placeholder="Ej. @david_inversor o enlace del chat / anuncio..."
+                    placeholderTextColor={colors.textSubtle}
+                  />
+                  <Text style={styles.sublabel}>
+                    💡 Puedes guardarlo sin teléfono ahora y añadirlo cuando te lo facilite en la conversación.
+                  </Text>
+                </View>
+              )}
 
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Tipo de Comprador</Text>

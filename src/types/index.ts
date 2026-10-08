@@ -12,6 +12,8 @@ export type TipoPreferenciaCoche = 'SOLO_LICENCIA' | 'CON_COCHE' | 'INDIFERENTE'
 
 export type TipoGestoria = 'NINGUNA' | 'PROPIA' | 'GESTORIA_VIP' | 'GESTORIA_TALAMANCA';
 
+export type CanalContacto = 'TELEFONO' | 'WALLAPOP' | 'MILANUNCIOS' | 'FACEBOOK' | 'OTRO';
+
 export interface VehiculoVendedor {
   modelo: string;
   anoMatriculacion: string;
@@ -24,6 +26,8 @@ export interface Vendedor {
   id: string;
   nombre: string;
   telefono: string;
+  canalContacto?: CanalContacto;
+  contactoOrigen?: string;
   fechaCreacion: string;
   perfil: TipoPerfil;
   diaLibranza: DiaLibranza;
@@ -48,6 +52,8 @@ export interface Comprador {
   id: string;
   nombre: string;
   telefono: string;
+  canalContacto?: CanalContacto;
+  contactoOrigen?: string;
   fechaCreacion: string;
   perfil: TipoPerfil;
   

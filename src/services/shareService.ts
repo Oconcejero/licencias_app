@@ -33,12 +33,20 @@ export const shareService = {
       ? 'El Casar de Talamanca'
       : comprador.nombreGestoriaPropia || 'Gestoría propia';
 
+    const formatContactoVendedor = vendedor.telefono
+      ? `• *Teléfono:* ${vendedor.telefono} (${vendedor.perfil}${vendedor.canalContacto && vendedor.canalContacto !== 'TELEFONO' ? ' • ' + vendedor.canalContacto : ''})`
+      : `• *Contacto:* Pendiente de pedir (${vendedor.canalContacto || 'Chat'}${vendedor.contactoOrigen ? ': ' + vendedor.contactoOrigen : ''}) (${vendedor.perfil})`;
+
+    const formatContactoComprador = comprador.telefono
+      ? `• *Teléfono:* ${comprador.telefono} (${comprador.perfil}${comprador.canalContacto && comprador.canalContacto !== 'TELEFONO' ? ' • ' + comprador.canalContacto : ''})`
+      : `• *Contacto:* Pendiente de pedir (${comprador.canalContacto || 'Chat'}${comprador.contactoOrigen ? ': ' + comprador.contactoOrigen : ''}) (${comprador.perfil})`;
+
     return `🚕 *FICHA TÉCNICA DE COINCIDENCIA / TRASPASO DE LICENCIA* 🚕
 (Afinidad calculada: *${match.score}% MATCH*)
 
 👤 *PARTE COMPRADORA:*
 • *Titular:* ${comprador.nombre}
-• *Teléfono:* ${comprador.telefono} (${comprador.perfil})
+${formatContactoComprador}
 • *Libranza requerida:* ${comprador.diaLibranzaDeseada}
 • *Presupuesto máximo:* ${comprador.precioMaximo.toLocaleString()} €
 • *Disponibilidad de señal:* ${comprador.puedeSenalizarYa ? '🔥 SÍ, DISPONIBLE PARA SEÑALIZAR DE INMEDIATO' : 'Pendiente de acordar'}
@@ -47,7 +55,7 @@ export const shareService = {
 ${comprador.notas ? `• *Observaciones:* ${comprador.notas}\n` : ''}
 🚗 *PARTE VENDEDORA:*
 • *Titular:* ${vendedor.nombre}
-• *Teléfono:* ${vendedor.telefono} (${vendedor.perfil})
+${formatContactoVendedor}
 • *Día libranza:* ${vendedor.diaLibranza}
 • *Precio salida:* ${vendedor.precio.toLocaleString()} € (${vendedor.precioNegociable ? 'Negociable' : 'Precio fijo'})
 • *Situación de cargas:* ${cargaVendedor}
@@ -66,9 +74,13 @@ Se remite la información de ambas partes para valoración, contacto directo y f
       ? `${vendedor.vehiculo.modelo} (${vendedor.vehiculo.anoMatriculacion}, ${vendedor.vehiculo.kilometros} km, carga: ${vendedor.vehiculo.carga})`
       : 'Solo licencia';
 
+    const contacto = vendedor.telefono
+      ? `• *Teléfono:* ${vendedor.telefono} (${vendedor.perfil}${vendedor.canalContacto && vendedor.canalContacto !== 'TELEFONO' ? ' • ' + vendedor.canalContacto : ''})`
+      : `• *Contacto:* Pendiente de pedir (${vendedor.canalContacto || 'Chat'}${vendedor.contactoOrigen ? ': ' + vendedor.contactoOrigen : ''}) (${vendedor.perfil})`;
+
     return `🚕 *EXPEDIENTE DE LICENCIA EN VENTA:*
 • *Titular:* ${vendedor.nombre}
-• *Teléfono:* ${vendedor.telefono} (${vendedor.perfil})
+${contacto}
 • *Libranza:* ${vendedor.diaLibranza}
 • *Precio:* ${vendedor.precio.toLocaleString()} € (${vendedor.precioNegociable ? 'Negociable' : 'Precio fijo'})
 • *Carga Licencia:* ${vendedor.cargaLicencia === 'SIN_CARGA' ? 'Libre' : vendedor.detalleCargaLicencia || 'Con préstamo'}
@@ -79,9 +91,13 @@ Se remite la ficha para incorporación a cartera y búsqueda de contraparte.`;
   },
 
   generateCompradorReport(comprador: Comprador): string {
+    const contacto = comprador.telefono
+      ? `• *Teléfono:* ${comprador.telefono} (${comprador.perfil}${comprador.canalContacto && comprador.canalContacto !== 'TELEFONO' ? ' • ' + comprador.canalContacto : ''})`
+      : `• *Contacto:* Pendiente de pedir (${comprador.canalContacto || 'Chat'}${comprador.contactoOrigen ? ': ' + comprador.contactoOrigen : ''}) (${comprador.perfil})`;
+
     return `👤 *EXPEDIENTE DE COMPRADOR ACTIVO:*
 • *Interesado:* ${comprador.nombre}
-• *Teléfono:* ${comprador.telefono} (${comprador.perfil})
+${contacto}
 • *Libranza solicitada:* ${comprador.diaLibranzaDeseada}
 • *Presupuesto máximo:* ${comprador.precioMaximo.toLocaleString()} €
 • *Disponibilidad de señal:* ${comprador.puedeSenalizarYa ? '🔥 SÍ, LISTO PARA SEÑALIZAR' : 'No'}

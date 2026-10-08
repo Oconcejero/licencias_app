@@ -46,11 +46,23 @@ export const DetailModal: React.FC<DetailModalProps> = ({
 }) => {
   if (!vendedor && !comprador) return null;
 
-  const handleCall = (phone: string) => {
+  const handleCall = (phone: string, canal?: string) => {
+    if (!phone) {
+      alert(`Contacto de ${canal || 'chat'}. Aún no tienes su teléfono; pídeselo en la conversación para llamarle.`);
+      return;
+    }
     Linking.openURL(`tel:${phone.replace(/\s+/g, '')}`);
   };
 
-  const handleWhatsApp = (phone: string, text: string) => {
+  const handleWhatsApp = (phone: string, text: string, canal?: string, link?: string) => {
+    if (!phone) {
+      if (link && link.startsWith('http')) {
+        Linking.openURL(link);
+        return;
+      }
+      alert(`Contacto de ${canal || 'chat'}. Pídele su número de WhatsApp en la conversación para continuar el trámite.`);
+      return;
+    }
     const cleanPhone = phone.replace(/[^\d+]/g, '');
     Linking.openURL(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`);
   };
@@ -129,22 +141,42 @@ export const DetailModal: React.FC<DetailModalProps> = ({
             {vendedor && (
               <View style={styles.profileSection}>
                 <View style={styles.profileHeader}>
-                  <View>
-                    <Text style={styles.name}>{vendedor.nombre}</Text>
-                    <Text style={styles.phone}>📞 {vendedor.telefono}</Text>
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <Text style={styles.name}>{vendedor.nombre}</Text>
+                      {vendedor.canalContacto && vendedor.canalContacto !== 'TELEFONO' && (
+                        <View style={[styles.dayPill, { backgroundColor: colors.canales[vendedor.canalContacto] || colors.secondary }]}>
+                          <Text style={styles.dayPillText}>{vendedor.canalContacto}</Text>
+                        </View>
+                      )}
+                    </View>
+                    {vendedor.telefono ? (
+                      <Text style={styles.phone}>📞 {vendedor.telefono}</Text>
+                    ) : (
+                      <Text style={[styles.phone, { color: colors.accent, fontWeight: '700' }]}>
+                        💬 {vendedor.contactoOrigen ? `${vendedor.contactoOrigen}` : `Chat ${vendedor.canalContacto || ''} (Teléfono pendiente)`}
+                      </Text>
+                    )}
                   </View>
                   <View style={styles.actionRow}>
                     <TouchableOpacity
                       style={styles.btnAction}
-                      onPress={() => handleCall(vendedor.telefono)}
+                      onPress={() => handleCall(vendedor.telefono, vendedor.canalContacto)}
                     >
                       <Text style={styles.btnActionText}>Llamar</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.btnAction, styles.waBtn]}
-                      onPress={() => handleWhatsApp(vendedor.telefono, `Hola ${vendedor.nombre}, te contacto sobre la venta de tu licencia con libranza ${vendedor.diaLibranza}.`)}
+                      onPress={() => handleWhatsApp(
+                        vendedor.telefono,
+                        `Hola ${vendedor.nombre}, te contacto sobre la venta de tu licencia con libranza ${vendedor.diaLibranza}.`,
+                        vendedor.canalContacto,
+                        vendedor.contactoOrigen
+                      )}
                     >
-                      <Text style={styles.btnActionText}>WhatsApp</Text>
+                      <Text style={styles.btnActionText}>
+                        {vendedor.telefono ? 'WhatsApp' : vendedor.contactoOrigen?.startsWith('http') ? 'Abrir Chat' : 'WhatsApp'}
+                      </Text>
                     </TouchableOpacity>
                     {onEditVendedor && (
                       <TouchableOpacity
@@ -276,22 +308,42 @@ export const DetailModal: React.FC<DetailModalProps> = ({
             {comprador && (
               <View style={styles.profileSection}>
                 <View style={styles.profileHeader}>
-                  <View>
-                    <Text style={styles.name}>{comprador.nombre}</Text>
-                    <Text style={styles.phone}>📞 {comprador.telefono}</Text>
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <Text style={styles.name}>{comprador.nombre}</Text>
+                      {comprador.canalContacto && comprador.canalContacto !== 'TELEFONO' && (
+                        <View style={[styles.dayPill, { backgroundColor: colors.canales[comprador.canalContacto] || colors.secondary }]}>
+                          <Text style={styles.dayPillText}>{comprador.canalContacto}</Text>
+                        </View>
+                      )}
+                    </View>
+                    {comprador.telefono ? (
+                      <Text style={styles.phone}>📞 {comprador.telefono}</Text>
+                    ) : (
+                      <Text style={[styles.phone, { color: colors.accent, fontWeight: '700' }]}>
+                        💬 {comprador.contactoOrigen ? `${comprador.contactoOrigen}` : `Chat ${comprador.canalContacto || ''} (Teléfono pendiente)`}
+                      </Text>
+                    )}
                   </View>
                   <View style={styles.actionRow}>
                     <TouchableOpacity
                       style={styles.btnAction}
-                      onPress={() => handleCall(comprador.telefono)}
+                      onPress={() => handleCall(comprador.telefono, comprador.canalContacto)}
                     >
                       <Text style={styles.btnActionText}>Llamar</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.btnAction, styles.waBtn]}
-                      onPress={() => handleWhatsApp(comprador.telefono, `Hola ${comprador.nombre}, te escribo con respecto a la búsqueda de licencia de taxi.`)}
+                      onPress={() => handleWhatsApp(
+                        comprador.telefono,
+                        `Hola ${comprador.nombre}, te escribo con respecto a la búsqueda de licencia de taxi.`,
+                        comprador.canalContacto,
+                        comprador.contactoOrigen
+                      )}
                     >
-                      <Text style={styles.btnActionText}>WhatsApp</Text>
+                      <Text style={styles.btnActionText}>
+                        {comprador.telefono ? 'WhatsApp' : comprador.contactoOrigen?.startsWith('http') ? 'Abrir Chat' : 'WhatsApp'}
+                      </Text>
                     </TouchableOpacity>
                     {onEditComprador && (
                       <TouchableOpacity

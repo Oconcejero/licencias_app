@@ -9,8 +9,8 @@ const TRAMITADOR_KEY = '@licencias_tramitador_v1';
 const DERIVADOS_KEY = '@licencias_matches_derivados_v1';
 
 // Mapeos Supabase <-> TypeScript
-function mapVendedorToRow(v: Vendedor) {
-  return {
+function mapVendedorToRow(v: Vendedor, includeCanal = true) {
+  const row: any = {
     id: v.id,
     nombre: v.nombre,
     telefono: v.telefono,
@@ -29,6 +29,11 @@ function mapVendedorToRow(v: Vendedor) {
     notas: v.notas || null,
     estado: v.estado,
   };
+  if (includeCanal) {
+    row.canal_contacto = v.canalContacto || 'TELEFONO';
+    row.contacto_origen = v.contactoOrigen || null;
+  }
+  return row;
 }
 
 function mapRowToVendedor(row: any): Vendedor {
@@ -36,6 +41,8 @@ function mapRowToVendedor(row: any): Vendedor {
     id: row.id,
     nombre: row.nombre,
     telefono: row.telefono || '',
+    canalContacto: row.canal_contacto || 'TELEFONO',
+    contactoOrigen: row.contacto_origen || undefined,
     fechaCreacion: row.fecha_creacion || new Date().toISOString(),
     perfil: row.perfil || 'PARTICULAR',
     diaLibranza: row.dia_libranza || 'LUNES',
@@ -53,8 +60,8 @@ function mapRowToVendedor(row: any): Vendedor {
   };
 }
 
-function mapCompradorToRow(c: Comprador) {
-  return {
+function mapCompradorToRow(c: Comprador, includeCanal = true) {
+  const row: any = {
     id: c.id,
     nombre: c.nombre,
     telefono: c.telefono,
@@ -72,6 +79,11 @@ function mapCompradorToRow(c: Comprador) {
     notas: c.notas || null,
     estado: c.estado,
   };
+  if (includeCanal) {
+    row.canal_contacto = c.canalContacto || 'TELEFONO';
+    row.contacto_origen = c.contactoOrigen || null;
+  }
+  return row;
 }
 
 function mapRowToComprador(row: any): Comprador {
@@ -83,6 +95,8 @@ function mapRowToComprador(row: any): Comprador {
     id: row.id,
     nombre: row.nombre,
     telefono: row.telefono || '',
+    canalContacto: row.canal_contacto || 'TELEFONO',
+    contactoOrigen: row.contacto_origen || undefined,
     fechaCreacion: row.fecha_creacion || new Date().toISOString(),
     perfil: row.perfil || 'PARTICULAR',
     diaLibranzaDeseada: row.dia_libranza_deseada || 'CUALQUIERA',
@@ -138,7 +152,11 @@ export const storageService = {
   async saveVendedor(vendedor: Vendedor): Promise<Vendedor[]> {
     if (supabase) {
       try {
-        await supabase.from('vendedores').upsert(mapVendedorToRow(vendedor));
+        const { error } = await supabase.from('vendedores').upsert(mapVendedorToRow(vendedor, true));
+        if (error && (error.message?.includes('canal_contacto') || error.message?.includes('contacto_origen'))) {
+          // Si las columnas aún no están migradas en Supabase, reintentar sin ellas
+          await supabase.from('vendedores').upsert(mapVendedorToRow(vendedor, false));
+        }
       } catch (e) {
         console.warn('Error guardando vendedor en Supabase:', e);
       }
@@ -205,7 +223,11 @@ export const storageService = {
   async saveComprador(comprador: Comprador): Promise<Comprador[]> {
     if (supabase) {
       try {
-        await supabase.from('compradores').upsert(mapCompradorToRow(comprador));
+        const { error } = await supabase.from('compradores').upsert(mapCompradorToRow(comprador, true));
+        if (error && (error.message?.includes('canal_contacto') || error.message?.includes('contacto_origen'))) {
+          // Si las columnas aún no están migradas en Supabase, reintentar sin ellas
+          await supabase.from('compradores').upsert(mapCompradorToRow(comprador, false));
+        }
       } catch (e) {
         console.warn('Error guardando comprador en Supabase:', e);
       }

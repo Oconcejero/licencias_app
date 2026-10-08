@@ -29,10 +29,22 @@ export const CompradorCard: React.FC<CompradorCardProps> = ({
   });
 
   const handleCall = () => {
+    if (!comprador.telefono) {
+      alert(`Contacto de ${comprador.canalContacto || 'chat'}. Aún no tienes su teléfono; pídeselo en la conversación para llamarle.`);
+      return;
+    }
     Linking.openURL(`tel:${comprador.telefono.replace(/\s+/g, '')}`);
   };
 
   const handleWhatsApp = () => {
+    if (!comprador.telefono) {
+      if (comprador.contactoOrigen && comprador.contactoOrigen.startsWith('http')) {
+        Linking.openURL(comprador.contactoOrigen);
+        return;
+      }
+      alert(`Contacto de ${comprador.canalContacto || 'chat'}. Pídele su número en la conversación para contactarle por WhatsApp.`);
+      return;
+    }
     const cleanPhone = comprador.telefono.replace(/[^\d+]/g, '');
     Linking.openURL(`https://wa.me/${cleanPhone}`);
   };
@@ -51,6 +63,16 @@ export const CompradorCard: React.FC<CompradorCardProps> = ({
               <View style={styles.perfilBadge}>
                 <Text style={styles.perfilText}>{comprador.perfil}</Text>
               </View>
+              {comprador.canalContacto && comprador.canalContacto !== 'TELEFONO' && (
+                <View style={[styles.canalBadge, { backgroundColor: colors.canales[comprador.canalContacto] || colors.secondary }]}>
+                  <Text style={styles.canalText}>
+                    {comprador.canalContacto === 'WALLAPOP' ? '🟠 WALLAPOP'
+                     : comprador.canalContacto === 'MILANUNCIOS' ? '🟢 MILANUNCIOS'
+                     : comprador.canalContacto === 'FACEBOOK' ? '🔵 FACEBOOK'
+                     : '💬 ' + comprador.canalContacto}
+                  </Text>
+                </View>
+              )}
               {comprador.puedeSenalizarYa && (
                 <View style={styles.hotBadge}>
                   <Text style={styles.hotText}>🔥 SEÑALIZA YA</Text>
@@ -67,6 +89,15 @@ export const CompradorCard: React.FC<CompradorCardProps> = ({
 
         {/* Detalles */}
         <View style={styles.detailsGrid}>
+          {!comprador.telefono && (
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>Contacto:</Text>
+              <Text style={[styles.detailValue, { color: colors.accent, fontWeight: '700' }]}>
+                {comprador.contactoOrigen ? `${comprador.contactoOrigen} (${comprador.canalContacto || 'Chat'})` : `Chat ${comprador.canalContacto || 'online'} (Teléfono pendiente)`}
+              </Text>
+            </View>
+          )}
+
           <View style={styles.detailItem}>
             <Text style={styles.detailLabel}>Coche:</Text>
             <Text style={styles.detailValue}>
@@ -202,6 +233,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 3,
     borderRadius: 6,
+  },
+  canalBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  canalText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: colors.white,
+    letterSpacing: 0.5,
   },
   hotText: {
     fontSize: 10,

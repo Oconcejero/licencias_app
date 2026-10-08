@@ -63,3 +63,10 @@ CREATE POLICY "Allow public all compradores" ON public.compradores FOR ALL USING
 
 DROP POLICY IF EXISTS "Allow public all app_config" ON public.app_config;
 CREATE POLICY "Allow public all app_config" ON public.app_config FOR ALL USING (true) WITH CHECK (true);
+
+-- 5. ACTUALIZACIÓN MULTICANAL (Wallapop, Milanuncios, Facebook, etc.)
+ALTER TABLE public.vendedores ADD COLUMN IF NOT EXISTS canal_contacto TEXT DEFAULT 'TELEFONO';
+ALTER TABLE public.vendedores ADD COLUMN IF NOT EXISTS contacto_origen TEXT;
+
+ALTER TABLE public.compradores ADD COLUMN IF NOT EXISTS canal_contacto TEXT DEFAULT 'TELEFONO';
+ALTER TABLE public.compradores ADD COLUMN IF NOT EXISTS contacto_origen TEXT;

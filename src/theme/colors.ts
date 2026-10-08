@@ -40,5 +40,14 @@ export const colors = {
     SABADO: '#06B6D4',
     DOMINGO: '#6366F1',
     CUALQUIERA: '#64748B',
-  }
+  },
+
+  // Canales de captación / plataformas
+  canales: {
+    TELEFONO: '#10B981',    // WhatsApp / Teléfono (Verde esmeralda)
+    WALLAPOP: '#13C1AC',    // Wallapop (Turquesa oficial)
+    MILANUNCIOS: '#2ECC71', // Milanuncios (Verde)
+    FACEBOOK: '#1877F2',    // Facebook Marketplace (Azul oficial)
+    OTRO: '#8B5CF6',        // Púrpura
+  },
 };
