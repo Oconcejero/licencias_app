@@ -74,3 +74,7 @@ ALTER TABLE public.compradores ADD COLUMN IF NOT EXISTS contacto_origen TEXT;
 -- 6. ACTUALIZACIÓN TURNO DE DESCANSO / LIBRANZA (Par / Impar / Rotativo / 24h)
 ALTER TABLE public.vendedores ADD COLUMN IF NOT EXISTS turno_descanso TEXT DEFAULT 'PAR';
 ALTER TABLE public.compradores ADD COLUMN IF NOT EXISTS turno_descanso_deseado TEXT DEFAULT 'INDIFERENTE';
+
+-- 7. ACTUALIZACIÓN MODALIDAD DE VENTA DE VEHÍCULO (Solo licencia, Con coche, Ambas opciones)
+ALTER TABLE public.vendedores ADD COLUMN IF NOT EXISTS modalidad_venta_coche TEXT DEFAULT 'SOLO_LICENCIA';
+ALTER TABLE public.vendedores ADD COLUMN IF NOT EXISTS precio_con_coche NUMERIC;

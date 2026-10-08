@@ -14,6 +14,8 @@ export type CondicionVenta = 'INMEDIATA' | 'JUBILACION' | 'OTRA';
 
 export type TipoPreferenciaCoche = 'SOLO_LICENCIA' | 'CON_COCHE' | 'INDIFERENTE';
 
+export type ModalidadVentaCoche = 'SOLO_LICENCIA' | 'CON_COCHE' | 'AMBAS_OPCIONES';
+
 export type TipoGestoria = 'NINGUNA' | 'PROPIA' | 'GESTORIA_VIP' | 'GESTORIA_TALAMANCA';
 
 export type CanalContacto = 'TELEFONO' | 'WALLAPOP' | 'MILANUNCIOS' | 'FACEBOOK' | 'OTRO';
@@ -24,6 +26,8 @@ export interface VehiculoVendedor {
   kilometros: string;
   carga: TipoCarga;
   detalleCarga?: string;
+  exentoLibranza?: boolean;
+  detalleExencion?: string;
 }
 
 export interface Vendedor {
@@ -40,9 +44,11 @@ export interface Vendedor {
   detalleCargaLicencia?: string;
   
   vendeConCoche: boolean;
+  modalidadVentaCoche?: ModalidadVentaCoche;
   vehiculo?: VehiculoVendedor;
   
   precio: number;
+  precioConCoche?: number;
   precioNegociable: boolean;
   
   condicionVenta: CondicionVenta;

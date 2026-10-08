@@ -196,7 +196,21 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                 <View style={styles.specsGrid}>
                   <View style={styles.specBox}>
                     <Text style={styles.specLabel}>Precio</Text>
-                    <Text style={styles.specValue}>{vendedor.precio.toLocaleString()} €</Text>
+                    {vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES' && vendedor.precioConCoche ? (
+                      <View>
+                        <Text style={styles.specValue}>
+                          {vendedor.precio.toLocaleString()} € <Text style={{ fontSize: 11, color: colors.textMuted }}>(Solo lic.)</Text>
+                        </Text>
+                        <Text style={[styles.specValue, { color: colors.primary, fontSize: 13, marginTop: 2 }]}>
+                          {vendedor.precioConCoche.toLocaleString()} € <Text style={{ fontSize: 10, color: colors.textMuted }}>(Con coche)</Text>
+                        </Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.specValue}>
+                        {vendedor.precio.toLocaleString()} €
+                        {vendedor.modalidadVentaCoche === 'CON_COCHE' ? ' (Pack)' : ''}
+                      </Text>
+                    )}
                     <Text style={vendedor.precioNegociable ? styles.greenPill : styles.subtlePill}>
                       {vendedor.precioNegociable ? 'Negociable' : 'No negociable'}
                     </Text>
@@ -222,13 +236,25 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                   </View>
 
                   <View style={styles.specBox}>
-                    <Text style={styles.specLabel}>Vehículo</Text>
+                    <Text style={styles.specLabel}>Vehículo / Pack</Text>
                     <Text style={styles.specValue}>
-                      {vendedor.vendeConCoche ? 'Con Coche' : 'Solo Licencia'}
+                      {vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES'
+                        ? 'Ambas Opciones'
+                        : vendedor.vendeConCoche ? 'Con Coche' : 'Solo Licencia'}
                     </Text>
                     {vendedor.vehiculo && (
                       <Text style={styles.specSub}>
                         {vendedor.vehiculo.modelo} ({vendedor.vehiculo.anoMatriculacion})
+                      </Text>
+                    )}
+                    {vendedor.vehiculo?.exentoLibranza && (
+                      <Text style={[styles.specSub, { color: colors.accent, fontWeight: '700' }]}>
+                        ⚡ {vendedor.vehiculo.detalleExencion || 'Exento libranza'}
+                      </Text>
+                    )}
+                    {vendedor.vehiculo?.carga === 'PRESTAMO' && (
+                      <Text style={[styles.specSub, { color: colors.warning }]}>
+                        🚗 Préstamo: {vendedor.vehiculo.detalleCarga || 'con reserva'}
                       </Text>
                     )}
                   </View>

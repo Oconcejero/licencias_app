@@ -55,8 +55,43 @@ export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchS
 
   const libranzaEncaja = diaEncaja && turnoEncaja;
 
+  // Determinar modalidad de venta respecto al vehículo
+  const modalidadVend = vendedor.modalidadVentaCoche || (vendedor.vendeConCoche ? 'CON_COCHE' : 'SOLO_LICENCIA');
+  const buscaCocheComp = comprador.buscaConCoche;
+
+  // Seleccionar qué precio del vendedor aplica para este comprador
+  let precioComparar = vendedor.precio;
+  let evaluandoConCoche = false;
+
+  if (modalidadVend === 'AMBAS_OPCIONES') {
+    if (buscaCocheComp === 'CON_COCHE') {
+      precioComparar = vendedor.precioConCoche || vendedor.precio;
+      evaluandoConCoche = true;
+    } else if (buscaCocheComp === 'SOLO_LICENCIA') {
+      precioComparar = vendedor.precio;
+      evaluandoConCoche = false;
+    } else {
+      // INDIFERENTE: comprobamos si el comprador puede permitirse el pack con coche o solo la licencia
+      const precioPack = vendedor.precioConCoche || vendedor.precio;
+      if (comprador.precioMaximo >= precioPack) {
+        precioComparar = precioPack;
+        evaluandoConCoche = true;
+      } else {
+        precioComparar = vendedor.precio;
+        evaluandoConCoche = false;
+      }
+    }
+  } else if (modalidadVend === 'CON_COCHE') {
+    precioComparar = vendedor.precioConCoche || vendedor.precio;
+    evaluandoConCoche = true;
+  } else {
+    // SOLO_LICENCIA
+    precioComparar = vendedor.precio;
+    evaluandoConCoche = false;
+  }
+
   // 2. PRECIO (Hasta 35 puntos)
-  const diferenciaPrecio = vendedor.precio - comprador.precioMaximo;
+  const diferenciaPrecio = precioComparar - comprador.precioMaximo;
   let precioEncaja = false;
 
   if (diferenciaPrecio <= 0) {
@@ -64,21 +99,22 @@ export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchS
     score += 35;
     const ahorro = Math.abs(diferenciaPrecio);
     if (ahorro > 0) {
-      razones.push(`Precio en rango: Vendedor pide ${vendedor.precio.toLocaleString()}€ (Comprador tiene hasta ${comprador.precioMaximo.toLocaleString()}€, sobran ${ahorro.toLocaleString()}€)`);
+      razones.push(
+        `Precio en rango: ${precioComparar.toLocaleString()}€ ${evaluandoConCoche ? '(con coche)' : '(solo licencia)'} (Comprador tiene hasta ${comprador.precioMaximo.toLocaleString()}€, sobran ${ahorro.toLocaleString()}€)`
+      );
     } else {
-      razones.push(`Precio exacto en presupuesto: ${vendedor.precio.toLocaleString()}€`);
+      razones.push(`Precio exacto en presupuesto: ${precioComparar.toLocaleString()}€ ${evaluandoConCoche ? '(con coche)' : '(solo licencia)'}`);
     }
   } else {
     // El vendedor pide más de lo que el comprador quiere pagar
     const pctExceso = (diferenciaPrecio / comprador.precioMaximo) * 100;
     if (vendedor.precioNegociable) {
       if (pctExceso <= 6) {
-        // Exceso menor y negociable
         score += 25;
-        alertas.push(`Precio supera en ${diferenciaPrecio.toLocaleString()}€ pero el vendedor es NEGOCIABLE (margen salvable)`);
+        alertas.push(`Precio (${precioComparar.toLocaleString()}€) supera en ${diferenciaPrecio.toLocaleString()}€ pero el vendedor es NEGOCIABLE (margen salvable)`);
       } else if (pctExceso <= 12) {
         score += 15;
-        alertas.push(`Precio supera en ${diferenciaPrecio.toLocaleString()}€ (negociable, requiere acuerdo)`);
+        alertas.push(`Precio (${precioComparar.toLocaleString()}€) supera en ${diferenciaPrecio.toLocaleString()}€ (negociable, requiere acuerdo)`);
       } else {
         score += 5;
         alertas.push(`Supera presupuesto en ${diferenciaPrecio.toLocaleString()}€ aunque vendedor indica negociable`);
@@ -95,26 +131,46 @@ export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchS
 
   // 3. VEHÍCULO (Hasta 15 puntos)
   let cocheEncaja = false;
-  if (comprador.buscaConCoche === 'INDIFERENTE') {
+  if (modalidadVend === 'AMBAS_OPCIONES') {
     cocheEncaja = true;
     score += 15;
-    razones.push(vendedor.vendeConCoche ? `Incluye coche (${vendedor.vehiculo?.modelo || 'Vehículo'}) y comprador es indiferente` : 'Vende solo licencia y comprador es indiferente');
-  } else if (comprador.buscaConCoche === 'CON_COCHE') {
-    if (vendedor.vendeConCoche) {
+    if (buscaCocheComp === 'SOLO_LICENCIA') {
+      razones.push(`Vendedor acepta vender solo licencia por ${vendedor.precio.toLocaleString()}€`);
+    } else if (buscaCocheComp === 'CON_COCHE') {
+      razones.push(`Vendedor incluye vehículo ${vendedor.vehiculo?.modelo || ''} por ${precioComparar.toLocaleString()}€`);
+    } else {
+      razones.push(`Vendedor flexible: opción solo licencia (${vendedor.precio.toLocaleString()}€) o con coche (${(vendedor.precioConCoche || vendedor.precio).toLocaleString()}€)`);
+    }
+  } else if (buscaCocheComp === 'INDIFERENTE') {
+    cocheEncaja = true;
+    score += 15;
+    razones.push(modalidadVend === 'CON_COCHE' ? `Incluye coche (${vendedor.vehiculo?.modelo || 'Vehículo'}) y comprador es indiferente` : 'Vende solo licencia y comprador es indiferente');
+  } else if (buscaCocheComp === 'CON_COCHE') {
+    if (modalidadVend === 'CON_COCHE') {
       cocheEncaja = true;
       score += 15;
       razones.push(`Ambos coinciden: incluye vehículo ${vendedor.vehiculo?.modelo || ''} (${vendedor.vehiculo?.anoMatriculacion || ''})`);
     } else {
       alertas.push('Comprador exige coche pero el vendedor vende SOLO licencia');
     }
-  } else if (comprador.buscaConCoche === 'SOLO_LICENCIA') {
-    if (!vendedor.vendeConCoche) {
+  } else if (buscaCocheComp === 'SOLO_LICENCIA') {
+    if (modalidadVend === 'SOLO_LICENCIA') {
       cocheEncaja = true;
       score += 15;
       razones.push('Ambos coinciden: solo licencia sin vehículo');
     } else {
       score += 5;
-      alertas.push(`Vendedor incluye coche (${vendedor.vehiculo?.modelo || ''}), consultar si aceptaría vender solo licencia`);
+      alertas.push(`Vendedor exige venta con coche incluido (${vendedor.vehiculo?.modelo || ''})`);
+    }
+  }
+
+  // Valor añadido del vehículo (exenciones o alertas de préstamo de coche)
+  if (evaluandoConCoche && vendedor.vehiculo) {
+    if (vendedor.vehiculo.exentoLibranza) {
+      razones.push(`⚡ Coche con exención de descanso (${vendedor.vehiculo.detalleExencion || 'CERO Emisiones'}): ¡permite trabajar sin libranza obligatoria!`);
+    }
+    if (vendedor.vehiculo.carga === 'PRESTAMO') {
+      alertas.push(`🚗 Vehículo con financiación/reserva de dominio: ${vendedor.vehiculo.detalleCarga || 'cancelar con el precio'}`);
     }
   }
 

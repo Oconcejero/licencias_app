@@ -9,7 +9,17 @@ import {
   ScrollView,
   Switch,
 } from 'react-native';
-import { Vendedor, DiaLibranza, TipoPerfil, TipoCarga, CondicionVenta, EstadoRegistro, CanalContacto, TurnoDescanso } from '../types';
+import {
+  Vendedor,
+  DiaLibranza,
+  TipoPerfil,
+  TipoCarga,
+  CondicionVenta,
+  EstadoRegistro,
+  CanalContacto,
+  TurnoDescanso,
+  ModalidadVentaCoche,
+} from '../types';
 import { colors } from '../theme/colors';
 
 interface VendedorModalProps {
@@ -48,14 +58,18 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
 
   // Vehículo
   const [vendeConCoche, setVendeConCoche] = useState(false);
+  const [modalidadVentaCoche, setModalidadVentaCoche] = useState<ModalidadVentaCoche>('SOLO_LICENCIA');
   const [modeloVehiculo, setModeloVehiculo] = useState('');
   const [anoVehiculo, setAnoVehiculo] = useState('');
   const [kmVehiculo, setKmVehiculo] = useState('');
   const [cargaVehiculo, setCargaVehiculo] = useState<TipoCarga>('SIN_CARGA');
   const [detalleCargaVehiculo, setDetalleCargaVehiculo] = useState('');
+  const [exentoLibranza, setExentoLibranza] = useState(false);
+  const [detalleExencion, setDetalleExencion] = useState('');
 
   // Precio
   const [precio, setPrecio] = useState('');
+  const [precioConCoche, setPrecioConCoche] = useState('');
   const [precioNegociable, setPrecioNegociable] = useState(false);
 
   // Condición
@@ -77,21 +91,30 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
       setTurnoDescanso(vendedorToEdit.turnoDescanso || 'PAR');
       setCargaLicencia(vendedorToEdit.cargaLicencia);
       setDetalleCargaLicencia(vendedorToEdit.detalleCargaLicencia || '');
-      setVendeConCoche(vendedorToEdit.vendeConCoche);
+      
+      const mod = vendedorToEdit.modalidadVentaCoche || (vendedorToEdit.vendeConCoche ? 'CON_COCHE' : 'SOLO_LICENCIA');
+      setModalidadVentaCoche(mod);
+      setVendeConCoche(mod !== 'SOLO_LICENCIA');
+
       if (vendedorToEdit.vehiculo) {
         setModeloVehiculo(vendedorToEdit.vehiculo.modelo);
         setAnoVehiculo(String(vendedorToEdit.vehiculo.anoMatriculacion));
         setKmVehiculo(String(vendedorToEdit.vehiculo.kilometros));
         setCargaVehiculo(vendedorToEdit.vehiculo.carga);
         setDetalleCargaVehiculo(vendedorToEdit.vehiculo.detalleCarga || '');
+        setExentoLibranza(Boolean(vendedorToEdit.vehiculo.exentoLibranza));
+        setDetalleExencion(vendedorToEdit.vehiculo.detalleExencion || '');
       } else {
         setModeloVehiculo('');
         setAnoVehiculo('');
         setKmVehiculo('');
         setCargaVehiculo('SIN_CARGA');
         setDetalleCargaVehiculo('');
+        setExentoLibranza(false);
+        setDetalleExencion('');
       }
       setPrecio(vendedorToEdit.precio ? String(vendedorToEdit.precio) : '');
+      setPrecioConCoche(vendedorToEdit.precioConCoche ? String(vendedorToEdit.precioConCoche) : '');
       setPrecioNegociable(vendedorToEdit.precioNegociable);
       setCondicionVenta(vendedorToEdit.condicionVenta);
       setFechaJubilacion(vendedorToEdit.fechaJubilacion || '');
@@ -110,12 +133,16 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
       setCargaLicencia('SIN_CARGA');
       setDetalleCargaLicencia('');
       setVendeConCoche(false);
+      setModalidadVentaCoche('SOLO_LICENCIA');
       setModeloVehiculo('');
       setAnoVehiculo('');
       setKmVehiculo('');
       setCargaVehiculo('SIN_CARGA');
       setDetalleCargaVehiculo('');
+      setExentoLibranza(false);
+      setDetalleExencion('');
       setPrecio('');
+      setPrecioConCoche('');
       setPrecioNegociable(false);
       setCondicionVenta('INMEDIATA');
       setFechaJubilacion('');
@@ -132,9 +159,16 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
     }
     const precioNum = parseFloat(precio.replace(/[^\d.]/g, '')) || 0;
     if (precioNum <= 0) {
-      alert('Por favor introduce un precio válido');
+      alert('Por favor introduce un precio válido para la licencia');
       return;
     }
+
+    const tieneCoche = modalidadVentaCoche !== 'SOLO_LICENCIA';
+    const precioConCocheNum = modalidadVentaCoche === 'AMBAS_OPCIONES'
+      ? parseFloat(precioConCoche.replace(/[^\d.]/g, '')) || undefined
+      : modalidadVentaCoche === 'CON_COCHE'
+      ? precioNum
+      : undefined;
 
     const item: Vendedor = {
       id: vendedorToEdit ? vendedorToEdit.id : `v-${Date.now()}`,
@@ -148,17 +182,21 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
       turnoDescanso,
       cargaLicencia,
       detalleCargaLicencia: cargaLicencia !== 'SIN_CARGA' ? detalleCargaLicencia.trim() : undefined,
-      vendeConCoche,
-      vehiculo: vendeConCoche
+      vendeConCoche: tieneCoche,
+      modalidadVentaCoche,
+      vehiculo: tieneCoche
         ? {
             modelo: modeloVehiculo.trim() || 'Vehículo Taxi',
             anoMatriculacion: anoVehiculo.trim() || new Date().getFullYear().toString(),
             kilometros: kmVehiculo.trim() || '0',
             carga: cargaVehiculo,
             detalleCarga: cargaVehiculo !== 'SIN_CARGA' ? detalleCargaVehiculo.trim() : undefined,
+            exentoLibranza,
+            detalleExencion: exentoLibranza ? (detalleExencion.trim() || 'Exento CERO Emisiones') : undefined,
           }
         : undefined,
       precio: precioNum,
+      precioConCoche: precioConCocheNum,
       precioNegociable,
       condicionVenta,
       fechaJubilacion: condicionVenta === 'JUBILACION' ? fechaJubilacion.trim() : undefined,
@@ -430,20 +468,56 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
 
             {/* SECCIÓN 3: VEHÍCULO */}
             <View style={styles.section}>
-              <View style={styles.switchRow}>
-                <View>
-                  <Text style={styles.sectionTitle}>3. VEHÍCULO</Text>
-                  <Text style={styles.sublabel}>¿Vende la licencia junto con el vehículo?</Text>
-                </View>
-                <Switch
-                  value={vendeConCoche}
-                  onValueChange={setVendeConCoche}
-                  trackColor={{ false: colors.border, true: colors.primary }}
-                  thumbColor={colors.white}
-                />
+              <Text style={styles.sectionTitle}>3. VEHÍCULO / PACK DE VENTA</Text>
+              <Text style={styles.sublabel}>¿Cómo comercializa la licencia respecto al vehículo?</Text>
+
+              <View style={styles.selectorRow}>
+                <TouchableOpacity
+                  style={[styles.selectorBtn, modalidadVentaCoche === 'SOLO_LICENCIA' && styles.selectorBtnActive]}
+                  onPress={() => {
+                    setModalidadVentaCoche('SOLO_LICENCIA');
+                    setVendeConCoche(false);
+                  }}
+                >
+                  <Text style={[styles.selectorText, modalidadVentaCoche === 'SOLO_LICENCIA' && styles.selectorTextActive]}>
+                    Solo Licencia
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.selectorBtn, modalidadVentaCoche === 'CON_COCHE' && styles.selectorBtnActive]}
+                  onPress={() => {
+                    setModalidadVentaCoche('CON_COCHE');
+                    setVendeConCoche(true);
+                  }}
+                >
+                  <Text style={[styles.selectorText, modalidadVentaCoche === 'CON_COCHE' && styles.selectorTextActive]}>
+                    Con Coche (Pack)
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.selectorBtn, modalidadVentaCoche === 'AMBAS_OPCIONES' && styles.selectorBtnActive]}
+                  onPress={() => {
+                    setModalidadVentaCoche('AMBAS_OPCIONES');
+                    setVendeConCoche(true);
+                  }}
+                >
+                  <Text style={[styles.selectorText, modalidadVentaCoche === 'AMBAS_OPCIONES' && styles.selectorTextActive]}>
+                    ✨ Ambas Opciones
+                  </Text>
+                </TouchableOpacity>
               </View>
 
-              {vendeConCoche && (
+              {modalidadVentaCoche === 'AMBAS_OPCIONES' && (
+                <View style={styles.infoBanner}>
+                  <Text style={styles.infoBannerText}>
+                    💡 <Text style={{ fontWeight: '700' }}>Venta Flexible:</Text> El vendedor ofrece vender solo la licencia (se queda su vehículo) o vender el pack completo con coche. Podrás fijar ambos precios a continuación.
+                  </Text>
+                </View>
+              )}
+
+              {modalidadVentaCoche !== 'SOLO_LICENCIA' && (
                 <View style={styles.subBox}>
                   <View style={styles.inputGroup}>
                     <Text style={styles.label}>Modelo del vehículo</Text>
@@ -451,21 +525,20 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
                       style={styles.input}
                       value={modeloVehiculo}
                       onChangeText={setModeloVehiculo}
-                      placeholder="Ej. Toyota Corolla Touring Sports / Prius Plus / Skoda..."
+                      placeholder="Ej. Tesla Model Y / Toyota Corolla / Prius..."
                       placeholderTextColor={colors.textSubtle}
                     />
                   </View>
 
                   <View style={styles.row}>
                     <View style={styles.col}>
-                      <Text style={styles.label}>Año de Matriculación</Text>
+                      <Text style={styles.label}>Año o Antigüedad</Text>
                       <TextInput
                         style={styles.input}
                         value={anoVehiculo}
                         onChangeText={setAnoVehiculo}
-                        placeholder="2022"
+                        placeholder="Ej. 2023 o 3.5 años"
                         placeholderTextColor={colors.textSubtle}
-                        keyboardType="numeric"
                       />
                     </View>
                     <View style={styles.col}>
@@ -474,7 +547,7 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
                         style={styles.input}
                         value={kmVehiculo}
                         onChangeText={setKmVehiculo}
-                        placeholder="95.000"
+                        placeholder="Ej. 95.000"
                         placeholderTextColor={colors.textSubtle}
                         keyboardType="numeric"
                       />
@@ -482,7 +555,7 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
                   </View>
 
                   <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Carga del Vehículo</Text>
+                    <Text style={styles.label}>Carga o Financiación del Vehículo</Text>
                     <View style={styles.selectorRow}>
                       <TouchableOpacity
                         style={[styles.selectorBtn, cargaVehiculo === 'SIN_CARGA' && styles.selectorBtnActive]}
@@ -506,7 +579,32 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
                         style={[styles.input, { marginTop: 8 }]}
                         value={detalleCargaVehiculo}
                         onChangeText={setDetalleCargaVehiculo}
-                        placeholder="Importe o cuota pendiente del coche..."
+                        placeholder="Ej. Debe 30.000€ de préstamo a liquidar de Tesla..."
+                        placeholderTextColor={colors.textSubtle}
+                      />
+                    )}
+                  </View>
+
+                  {/* Exención de descanso por vehículo CERO emisiones / Eurotaxi */}
+                  <View style={[styles.inputGroup, { marginTop: 4 }]}>
+                    <View style={styles.switchRow}>
+                      <View style={{ flex: 1, paddingRight: 8 }}>
+                        <Text style={styles.label}>⚡ Exención de Libranza (CERO Emisiones / Eurotaxi)</Text>
+                        <Text style={styles.sublabel}>¿Permite trabajar sin libranza obligatoria?</Text>
+                      </View>
+                      <Switch
+                        value={exentoLibranza}
+                        onValueChange={setExentoLibranza}
+                        trackColor={{ false: colors.border, true: colors.primary }}
+                        thumbColor={colors.white}
+                      />
+                    </View>
+                    {exentoLibranza && (
+                      <TextInput
+                        style={[styles.input, { marginTop: 8 }]}
+                        value={detalleExencion}
+                        onChangeText={setDetalleExencion}
+                        placeholder="Ej. Exenta de libranza hasta 2033 por 100% eléctrico"
                         placeholderTextColor={colors.textSubtle}
                       />
                     )}
@@ -519,34 +617,87 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>4. PRECIO Y CONDICIONES GENERALES</Text>
 
-              <View style={styles.row}>
-                <View style={[styles.col, { flex: 1.4 }]}>
-                  <Text style={styles.label}>Precio de Venta (€) *</Text>
-                  <TextInput
-                    style={[styles.input, styles.priceInput]}
-                    value={precio}
-                    onChangeText={setPrecio}
-                    placeholder="Ej. 135.000"
-                    placeholderTextColor={colors.textSubtle}
-                    keyboardType="numeric"
-                  />
-                </View>
+              {modalidadVentaCoche === 'AMBAS_OPCIONES' ? (
+                <View>
+                  <View style={styles.row}>
+                    <View style={[styles.col, { flex: 1 }]}>
+                      <Text style={styles.label}>Precio Solo Licencia (€) *</Text>
+                      <TextInput
+                        style={[styles.input, styles.priceInput]}
+                        value={precio}
+                        onChangeText={setPrecio}
+                        placeholder="Ej. 190.000"
+                        placeholderTextColor={colors.textSubtle}
+                        keyboardType="numeric"
+                      />
+                      <Text style={styles.sublabel}>Si se queda el coche</Text>
+                    </View>
 
-                <View style={[styles.col, { flex: 1 }]}>
-                  <Text style={styles.label}>¿Es Negociable?</Text>
-                  <View style={styles.switchBox}>
-                    <Text style={{ color: precioNegociable ? colors.accent : colors.textMuted, fontWeight: '700', fontSize: 12 }}>
-                      {precioNegociable ? 'Negociable' : 'Precio Fijo'}
+                    <View style={[styles.col, { flex: 1 }]}>
+                      <Text style={styles.label}>Precio Con Coche (€) *</Text>
+                      <TextInput
+                        style={[styles.input, styles.priceInput]}
+                        value={precioConCoche}
+                        onChangeText={setPrecioConCoche}
+                        placeholder="Ej. 225.000"
+                        placeholderTextColor={colors.textSubtle}
+                        keyboardType="numeric"
+                      />
+                      <Text style={styles.sublabel}>Pack completo con coche</Text>
+                    </View>
+                  </View>
+
+                  <View style={[styles.switchBox, { marginTop: 8 }]}>
+                    <Text style={{ color: colors.text, fontSize: 12, fontWeight: '600' }}>
+                      ¿Precios negociables?
                     </Text>
-                    <Switch
-                      value={precioNegociable}
-                      onValueChange={setPrecioNegociable}
-                      trackColor={{ false: colors.border, true: colors.accent }}
-                      thumbColor={colors.white}
-                    />
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Text style={{ color: precioNegociable ? colors.accent : colors.textMuted, fontWeight: '700', fontSize: 12 }}>
+                        {precioNegociable ? 'Negociables' : 'Precios Fijos'}
+                      </Text>
+                      <Switch
+                        value={precioNegociable}
+                        onValueChange={setPrecioNegociable}
+                        trackColor={{ false: colors.border, true: colors.accent }}
+                        thumbColor={colors.white}
+                      />
+                    </View>
                   </View>
                 </View>
-              </View>
+              ) : (
+                <View style={styles.row}>
+                  <View style={[styles.col, { flex: 1.4 }]}>
+                    <Text style={styles.label}>
+                      {modalidadVentaCoche === 'CON_COCHE'
+                        ? 'Precio Total con Coche (€) *'
+                        : 'Precio de Venta Licencia (€) *'}
+                    </Text>
+                    <TextInput
+                      style={[styles.input, styles.priceInput]}
+                      value={precio}
+                      onChangeText={setPrecio}
+                      placeholder="Ej. 190.000"
+                      placeholderTextColor={colors.textSubtle}
+                      keyboardType="numeric"
+                    />
+                  </View>
+
+                  <View style={[styles.col, { flex: 1 }]}>
+                    <Text style={styles.label}>¿Es Negociable?</Text>
+                    <View style={styles.switchBox}>
+                      <Text style={{ color: precioNegociable ? colors.accent : colors.textMuted, fontWeight: '700', fontSize: 12 }}>
+                        {precioNegociable ? 'Negociable' : 'Precio Fijo'}
+                      </Text>
+                      <Switch
+                        value={precioNegociable}
+                        onValueChange={setPrecioNegociable}
+                        trackColor={{ false: colors.border, true: colors.accent }}
+                        thumbColor={colors.white}
+                      />
+                    </View>
+                  </View>
+                </View>
+              )}
 
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Condición de Venta</Text>
@@ -896,5 +1047,19 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 13,
     fontWeight: '800',
+  },
+  infoBanner: {
+    backgroundColor: '#0F2942',
+    padding: 10,
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.primary,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  infoBannerText: {
+    color: colors.text,
+    fontSize: 11,
+    lineHeight: 16,
   },
 });

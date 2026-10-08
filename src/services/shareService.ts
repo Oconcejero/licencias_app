@@ -5,9 +5,23 @@ export const shareService = {
   generateMatchReport(cruce: CruceMatch): string {
     const { vendedor, comprador, match } = cruce;
 
-    const cocheVendedor = vendedor.vendeConCoche && vendedor.vehiculo
-      ? `${vendedor.vehiculo.modelo} (${vendedor.vehiculo.anoMatriculacion}, ${vendedor.vehiculo.kilometros} km)`
-      : 'Solo licencia';
+    let precioVendedorStr = `${vendedor.precio.toLocaleString()} €`;
+    if (vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES' && vendedor.precioConCoche) {
+      precioVendedorStr = `${vendedor.precio.toLocaleString()} € (solo lic.) / ${vendedor.precioConCoche.toLocaleString()} € (con coche)`;
+    } else if (vendedor.modalidadVentaCoche === 'CON_COCHE') {
+      precioVendedorStr = `${vendedor.precio.toLocaleString()} € (pack con coche)`;
+    }
+    precioVendedorStr += ` (${vendedor.precioNegociable ? 'Negociable' : 'Precio fijo'})`;
+
+    let cocheVendedor = 'Solo licencia';
+    if (vendedor.vendeConCoche && vendedor.vehiculo) {
+      const exencionStr = vendedor.vehiculo.exentoLibranza ? ` • ⚡ ${vendedor.vehiculo.detalleExencion || 'Exento libranza'}` : '';
+      const cargaStr = vendedor.vehiculo.carga === 'PRESTAMO' ? ` • 🚗 Préstamo coche: ${vendedor.vehiculo.detalleCarga || 'con reserva'}` : '';
+      cocheVendedor = `${vendedor.vehiculo.modelo} (${vendedor.vehiculo.anoMatriculacion}, ${vendedor.vehiculo.kilometros} km)${exencionStr}${cargaStr}`;
+      if (vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES') {
+        cocheVendedor = `Flexible (con o sin coche): ${cocheVendedor}`;
+      }
+    }
 
     const cargaVendedor = vendedor.cargaLicencia === 'SIN_CARGA'
       ? 'Libre de cargas'
@@ -57,7 +71,7 @@ ${comprador.notas ? `• *Observaciones:* ${comprador.notas}\n` : ''}
 • *Titular:* ${vendedor.nombre}
 ${formatContactoVendedor}
 • *Día libranza:* ${vendedor.diaLibranza}${vendedor.diaLibranza !== 'LIBRE_24H' ? ' (Turno ' + (vendedor.turnoDescanso || 'PAR') + ')' : ''}
-• *Precio salida:* ${vendedor.precio.toLocaleString()} € (${vendedor.precioNegociable ? 'Negociable' : 'Precio fijo'})
+• *Precio salida:* ${precioVendedorStr}
 • *Situación de cargas:* ${cargaVendedor}
 • *Vehículo:* ${cocheVendedor}
 • *Condición de entrega:* ${condicionVendedor}
@@ -70,9 +84,23 @@ Se remite la información de ambas partes para valoración, contacto directo y f
   },
 
   generateVendedorReport(vendedor: Vendedor): string {
-    const coche = vendedor.vendeConCoche && vendedor.vehiculo
-      ? `${vendedor.vehiculo.modelo} (${vendedor.vehiculo.anoMatriculacion}, ${vendedor.vehiculo.kilometros} km, carga: ${vendedor.vehiculo.carga})`
-      : 'Solo licencia';
+    let coche = 'Solo licencia';
+    if (vendedor.vendeConCoche && vendedor.vehiculo) {
+      const exencionStr = vendedor.vehiculo.exentoLibranza ? ` • ⚡ ${vendedor.vehiculo.detalleExencion || 'Exento libranza'}` : '';
+      const cargaStr = vendedor.vehiculo.carga === 'PRESTAMO' ? ` • 🚗 Préstamo coche: ${vendedor.vehiculo.detalleCarga || 'con reserva'}` : '';
+      coche = `${vendedor.vehiculo.modelo} (${vendedor.vehiculo.anoMatriculacion}, ${vendedor.vehiculo.kilometros} km, carga: ${vendedor.vehiculo.carga})${exencionStr}${cargaStr}`;
+      if (vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES') {
+        coche = `Flexible (con o sin coche): ${coche}`;
+      }
+    }
+
+    let precioStr = `${vendedor.precio.toLocaleString()} €`;
+    if (vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES' && vendedor.precioConCoche) {
+      precioStr = `${vendedor.precio.toLocaleString()} € (solo lic.) / ${vendedor.precioConCoche.toLocaleString()} € (con coche)`;
+    } else if (vendedor.modalidadVentaCoche === 'CON_COCHE') {
+      precioStr = `${vendedor.precio.toLocaleString()} € (pack con coche)`;
+    }
+    precioStr += ` (${vendedor.precioNegociable ? 'Negociable' : 'Precio fijo'})`;
 
     const contacto = vendedor.telefono
       ? `• *Teléfono:* ${vendedor.telefono} (${vendedor.perfil}${vendedor.canalContacto && vendedor.canalContacto !== 'TELEFONO' ? ' • ' + vendedor.canalContacto : ''})`
@@ -82,7 +110,7 @@ Se remite la información de ambas partes para valoración, contacto directo y f
 • *Titular:* ${vendedor.nombre}
 ${contacto}
 • *Libranza:* ${vendedor.diaLibranza}${vendedor.diaLibranza !== 'LIBRE_24H' ? ' (Turno ' + (vendedor.turnoDescanso || 'PAR') + ')' : ''}
-• *Precio:* ${vendedor.precio.toLocaleString()} € (${vendedor.precioNegociable ? 'Negociable' : 'Precio fijo'})
+• *Precio:* ${precioStr}
 • *Carga Licencia:* ${vendedor.cargaLicencia === 'SIN_CARGA' ? 'Libre' : vendedor.detalleCargaLicencia || 'Con préstamo'}
 • *Vehículo:* ${coche}
 • *Condición de venta:* ${vendedor.condicionVenta === 'JUBILACION' ? `Tras jubilación (${vendedor.fechaJubilacion || ''})` : vendedor.condicionVenta}

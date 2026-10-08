@@ -33,6 +33,8 @@ function mapVendedorToRow(v: Vendedor, includeCanal = true) {
     row.canal_contacto = v.canalContacto || 'TELEFONO';
     row.contacto_origen = v.contactoOrigen || null;
     row.turno_descanso = v.turnoDescanso || 'PAR';
+    row.modalidad_venta_coche = v.modalidadVentaCoche || (v.vendeConCoche ? 'CON_COCHE' : 'SOLO_LICENCIA');
+    row.precio_con_coche = v.precioConCoche || null;
   }
   return row;
 }
@@ -51,8 +53,10 @@ function mapRowToVendedor(row: any): Vendedor {
     cargaLicencia: row.carga_licencia || 'SIN_CARGA',
     detalleCargaLicencia: row.detalle_carga_licencia || undefined,
     vendeConCoche: Boolean(row.vende_con_coche),
+    modalidadVentaCoche: row.modalidad_venta_coche || (row.vende_con_coche ? 'CON_COCHE' : 'SOLO_LICENCIA'),
     vehiculo: row.vehiculo || undefined,
     precio: Number(row.precio) || 0,
+    precioConCoche: row.precio_con_coche ? Number(row.precio_con_coche) : undefined,
     precioNegociable: Boolean(row.precio_negociable),
     condicionVenta: row.condicion_venta || 'INMEDIATA',
     fechaJubilacion: row.fecha_jubilacion || undefined,

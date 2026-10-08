@@ -79,7 +79,23 @@ export const VendedorCard: React.FC<VendedorCardProps> = ({
           </View>
 
           <View style={styles.priceContainer}>
-            <Text style={styles.price}>{vendedor.precio.toLocaleString()} €</Text>
+            {vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES' && vendedor.precioConCoche ? (
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={styles.price}>
+                  {vendedor.precio.toLocaleString()} € <Text style={{ fontSize: 10, color: colors.textMuted }}>lic.</Text>
+                </Text>
+                <Text style={[styles.price, { fontSize: 13, color: colors.primary }]}>
+                  {vendedor.precioConCoche.toLocaleString()} € <Text style={{ fontSize: 9, color: colors.textMuted }}>+coche</Text>
+                </Text>
+              </View>
+            ) : (
+              <Text style={styles.price}>
+                {vendedor.precio.toLocaleString()} €
+                {vendedor.modalidadVentaCoche === 'CON_COCHE' ? (
+                  <Text style={{ fontSize: 11, color: colors.textMuted }}> (pack)</Text>
+                ) : null}
+              </Text>
+            )}
             <Text style={vendedor.precioNegociable ? styles.negotiable : styles.fixed}>
               {vendedor.precioNegociable ? 'Negociable' : 'Precio Fijo'}
             </Text>
@@ -108,11 +124,25 @@ export const VendedorCard: React.FC<VendedorCardProps> = ({
 
           <View style={styles.detailItem}>
             <Text style={styles.detailLabel}>Vehículo:</Text>
-            <Text style={styles.detailValue}>
-              {vendedor.vendeConCoche && vendedor.vehiculo
-                ? `${vendedor.vehiculo.modelo} (${vendedor.vehiculo.anoMatriculacion} - ${vendedor.vehiculo.kilometros} km)`
-                : 'Solo licencia (sin coche)'}
-            </Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.detailValue}>
+                {vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES'
+                  ? `Flexible: solo lic. o con ${vendedor.vehiculo?.modelo || 'coche'} (${vendedor.vehiculo?.anoMatriculacion || ''})`
+                  : vendedor.vendeConCoche && vendedor.vehiculo
+                  ? `Pack coche: ${vendedor.vehiculo.modelo} (${vendedor.vehiculo.anoMatriculacion || ''} - ${vendedor.vehiculo.kilometros || '0'} km)`
+                  : 'Solo licencia (sin coche)'}
+              </Text>
+              {vendedor.vehiculo?.exentoLibranza && (
+                <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700', marginTop: 2 }}>
+                  ⚡ {vendedor.vehiculo.detalleExencion || 'Exento de descanso (CERO)'}
+                </Text>
+              )}
+              {vendedor.vehiculo?.carga === 'PRESTAMO' && (
+                <Text style={{ color: colors.warning, fontSize: 11, fontWeight: '600', marginTop: 2 }}>
+                  🚗 Deuda coche: {vendedor.vehiculo.detalleCarga || 'con reserva de dominio'}
+                </Text>
+              )}
+            </View>
           </View>
 
           {vendedor.condicionVenta !== 'INMEDIATA' && (
