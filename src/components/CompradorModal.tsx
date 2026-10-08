@@ -208,7 +208,7 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
               <Text style={styles.sectionTitle}>1. DATOS DE CONTACTO</Text>
 
               <View style={styles.row}>
-                <View style={styles.inputGroup}>
+                <View style={styles.col}>
                   <Text style={styles.label}>Nombre completo *</Text>
                   <TextInput
                     style={styles.input}
@@ -219,7 +219,7 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
                   />
                 </View>
 
-                <View style={styles.inputGroup}>
+                <View style={styles.col}>
                   <Text style={styles.label}>Teléfono</Text>
                   <TextInput
                     style={styles.input}
@@ -285,18 +285,16 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
                 </View>
               </View>
 
-              <View style={styles.row}>
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Presupuesto Máximo que quiere/puede pagar (€) *</Text>
-                  <TextInput
-                    style={[styles.input, styles.priceInput]}
-                    value={precioMaximo}
-                    onChangeText={setPrecioMaximo}
-                    placeholder="Ej. 130.000"
-                    placeholderTextColor={colors.textSubtle}
-                    keyboardType="numeric"
-                  />
-                </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Presupuesto Máximo que quiere/puede pagar (€) *</Text>
+                <TextInput
+                  style={[styles.input, styles.priceInput]}
+                  value={precioMaximo}
+                  onChangeText={setPrecioMaximo}
+                  placeholder="Ej. 130.000"
+                  placeholderTextColor={colors.textSubtle}
+                  keyboardType="numeric"
+                />
               </View>
 
               {/* SEÑALIZACIÓN INMEDIATA */}
@@ -521,15 +519,19 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
             {/* SECCIÓN 5: NOTAS Y ESTADO */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>5. NOTAS Y SEGUIMIENTO</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                value={notas}
-                onChangeText={setNotas}
-                placeholder="Anotaciones de la conversación, si tiene dinero listo, si está comparando..."
-                placeholderTextColor={colors.textSubtle}
-                multiline
-                numberOfLines={3}
-              />
+              
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Notas adicionales</Text>
+                <TextInput
+                  style={[styles.input, styles.textArea]}
+                  value={notas}
+                  onChangeText={setNotas}
+                  placeholder="Anotaciones de la conversación, si tiene dinero listo, si está comparando..."
+                  placeholderTextColor={colors.textSubtle}
+                  multiline
+                  numberOfLines={3}
+                />
+              </View>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Estado del Comprador</Text>
@@ -633,16 +635,18 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   scrollArea: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 20,
   },
   section: {
     backgroundColor: colors.surfaceCard,
     borderRadius: 12,
-    padding: 14,
+    padding: 16,
     marginBottom: 16,
     borderWidth: 1,
     borderColor: colors.border,
-    gap: 12,
+    gap: 14,
   },
   sectionTitle: {
     fontSize: 13,
@@ -652,21 +656,27 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
+    alignItems: 'flex-start',
+    width: '100%',
+  },
+  col: {
+    flex: 1,
   },
   inputGroup: {
-    flex: 1,
+    width: '100%',
+    marginBottom: 2,
   },
   label: {
     fontSize: 12,
     color: colors.text,
-    fontWeight: '600',
+    fontWeight: '700',
     marginBottom: 6,
   },
   sublabel: {
     fontSize: 11,
     color: colors.textMuted,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   input: {
     backgroundColor: colors.surface,
@@ -677,6 +687,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     color: colors.text,
     fontSize: 14,
+    height: 44,
   },
   priceInput: {
     fontSize: 16,
@@ -684,24 +695,27 @@ const styles = StyleSheet.create({
     color: colors.success,
   },
   textArea: {
-    minHeight: 70,
+    minHeight: 85,
+    height: 85,
+    paddingTop: 10,
     textAlignVertical: 'top',
   },
   selectorRow: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 8,
     flexWrap: 'wrap',
   },
   selectorBtn: {
     flex: 1,
     minWidth: 90,
     backgroundColor: colors.surface,
-    paddingVertical: 9,
+    paddingVertical: 11,
     paddingHorizontal: 8,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   selectorBtnActive: {
     backgroundColor: colors.success,
@@ -724,7 +738,7 @@ const styles = StyleSheet.create({
   },
   diaBtn: {
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 7,
     borderRadius: 6,
     borderWidth: 1,
     borderColor: colors.border,
