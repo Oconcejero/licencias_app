@@ -1,0 +1,103 @@
+import { Linking } from 'react-native';
+import { CruceMatch, Vendedor, Comprador } from '../types';
+
+export const shareService = {
+  generateMatchReport(cruce: CruceMatch): string {
+    const { vendedor, comprador, match } = cruce;
+
+    const cocheVendedor = vendedor.vendeConCoche && vendedor.vehiculo
+      ? `${vendedor.vehiculo.modelo} (${vendedor.vehiculo.anoMatriculacion}, ${vendedor.vehiculo.kilometros} km)`
+      : 'Solo licencia';
+
+    const cargaVendedor = vendedor.cargaLicencia === 'SIN_CARGA'
+      ? 'Libre de cargas'
+      : `Con préstamo (${vendedor.detalleCargaLicencia || 'Pendiente'})`;
+
+    const condicionVendedor = vendedor.condicionVenta === 'JUBILACION'
+      ? `Tras jubilación (${vendedor.fechaJubilacion || 'Prevista'})`
+      : vendedor.condicionVenta === 'OTRA'
+      ? vendedor.detalleCondicion || 'Especial'
+      : 'Inmediata';
+
+    const cocheComprador = comprador.buscaConCoche === 'CON_COCHE'
+      ? 'Con vehículo'
+      : comprador.buscaConCoche === 'SOLO_LICENCIA'
+      ? 'Solo licencia'
+      : 'Indiferente';
+
+    const gestoriaComprador = !comprador.tieneGestoria
+      ? 'Sin gestoría (Tramitar ayuda 6.000€)'
+      : comprador.gestoriaSeleccionada === 'GESTORIA_VIP'
+      ? 'Gestoría Asesoría Integral (Subvención 6.000€)'
+      : comprador.gestoriaSeleccionada === 'GESTORIA_TALAMANCA'
+      ? 'El Casar de Talamanca'
+      : comprador.nombreGestoriaPropia || 'Gestoría propia';
+
+    return `🚕 *FICHA TÉCNICA DE COINCIDENCIA / TRASPASO DE LICENCIA* 🚕
+(Afinidad calculada: *${match.score}% MATCH*)
+
+👤 *PARTE COMPRADORA:*
+• *Titular:* ${comprador.nombre}
+• *Teléfono:* ${comprador.telefono} (${comprador.perfil})
+• *Libranza requerida:* ${comprador.diaLibranzaDeseada}
+• *Presupuesto máximo:* ${comprador.precioMaximo.toLocaleString()} €
+• *Disponibilidad de señal:* ${comprador.puedeSenalizarYa ? '🔥 SÍ, DISPONIBLE PARA SEÑALIZAR DE INMEDIATO' : 'Pendiente de acordar'}
+• *Requerimiento vehículo:* ${cocheComprador}
+• *Gestoría:* ${gestoriaComprador}
+${comprador.notas ? `• *Observaciones:* ${comprador.notas}\n` : ''}
+🚗 *PARTE VENDEDORA:*
+• *Titular:* ${vendedor.nombre}
+• *Teléfono:* ${vendedor.telefono} (${vendedor.perfil})
+• *Día libranza:* ${vendedor.diaLibranza}
+• *Precio salida:* ${vendedor.precio.toLocaleString()} € (${vendedor.precioNegociable ? 'Negociable' : 'Precio fijo'})
+• *Situación de cargas:* ${cargaVendedor}
+• *Vehículo:* ${cocheVendedor}
+• *Condición de entrega:* ${condicionVendedor}
+${vendedor.notas ? `• *Observaciones:* ${vendedor.notas}\n` : ''}
+⚡ *COMPATIBILIDAD Y PUNTOS CLAVE:*
+${match.razones.map(r => `✓ ${r}`).join('\n')}
+${match.alertas.length > 0 ? `\n⚠️ *Puntos de atención para el cierre:*\n${match.alertas.map(a => `• ${a}`).join('\n')}` : ''}
+
+Se remite la información de ambas partes para valoración, contacto directo y formalización del traspaso.`;
+  },
+
+  generateVendedorReport(vendedor: Vendedor): string {
+    const coche = vendedor.vendeConCoche && vendedor.vehiculo
+      ? `${vendedor.vehiculo.modelo} (${vendedor.vehiculo.anoMatriculacion}, ${vendedor.vehiculo.kilometros} km, carga: ${vendedor.vehiculo.carga})`
+      : 'Solo licencia';
+
+    return `🚕 *EXPEDIENTE DE LICENCIA EN VENTA:*
+• *Titular:* ${vendedor.nombre}
+• *Teléfono:* ${vendedor.telefono} (${vendedor.perfil})
+• *Libranza:* ${vendedor.diaLibranza}
+• *Precio:* ${vendedor.precio.toLocaleString()} € (${vendedor.precioNegociable ? 'Negociable' : 'Precio fijo'})
+• *Carga Licencia:* ${vendedor.cargaLicencia === 'SIN_CARGA' ? 'Libre' : vendedor.detalleCargaLicencia || 'Con préstamo'}
+• *Vehículo:* ${coche}
+• *Condición de venta:* ${vendedor.condicionVenta === 'JUBILACION' ? `Tras jubilación (${vendedor.fechaJubilacion || ''})` : vendedor.condicionVenta}
+${vendedor.notas ? `• *Observaciones:* ${vendedor.notas}\n` : ''}
+Se remite la ficha para incorporación a cartera y búsqueda de contraparte.`;
+  },
+
+  generateCompradorReport(comprador: Comprador): string {
+    return `👤 *EXPEDIENTE DE COMPRADOR ACTIVO:*
+• *Interesado:* ${comprador.nombre}
+• *Teléfono:* ${comprador.telefono} (${comprador.perfil})
+• *Libranza solicitada:* ${comprador.diaLibranzaDeseada}
+• *Presupuesto máximo:* ${comprador.precioMaximo.toLocaleString()} €
+• *Disponibilidad de señal:* ${comprador.puedeSenalizarYa ? '🔥 SÍ, LISTO PARA SEÑALIZAR' : 'No'}
+• *Preferencia vehículo:* ${comprador.buscaConCoche}
+• *Gestoría:* ${!comprador.tieneGestoria ? 'Sin gestoría (Tramitar ayuda 6.000€)' : comprador.gestoriaSeleccionada}
+${comprador.notas ? `• *Observaciones:* ${comprador.notas}\n` : ''}
+Se remite el expediente de demanda para matching y tramitación.`;
+  },
+
+  sendWhatsApp(phone: string, text: string) {
+    const cleanPhone = phone.replace(/[^\d+]/g, '');
+    const encoded = encodeURIComponent(text);
+    if (cleanPhone) {
+      Linking.openURL(`https://wa.me/${cleanPhone}?text=${encoded}`);
+    } else {
+      Linking.openURL(`https://wa.me/?text=${encoded}`);
+    }
+  }
+};
