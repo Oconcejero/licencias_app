@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import { Vendedor, Comprador, CruceMatch } from '../types';
 import { colors } from '../theme/colors';
 import { calculateMatch } from '../services/matchEngine';
 import { shareService } from '../services/shareService';
+import { ExportCardModal } from './ExportCardModal';
 
 interface DetailModalProps {
   visible: boolean;
@@ -44,6 +45,8 @@ export const DetailModal: React.FC<DetailModalProps> = ({
   onSendMatchToFriend,
   onOpenConfigTramitador,
 }) => {
+  const [showExportModal, setShowExportModal] = useState(false);
+
   if (!vendedor && !comprador) return null;
 
   const handleCall = (phone: string, canal?: string) => {
@@ -119,23 +122,42 @@ export const DetailModal: React.FC<DetailModalProps> = ({
           </View>
 
           <ScrollView style={styles.scrollArea}>
-            {/* BOTÓN SUPERIOR: DERIVAR ESTE EXPEDIENTE A GESTIÓN */}
-            <TouchableOpacity
-              style={styles.sendFriendBtn}
-              onPress={handleSendSingleToFriend}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.sendFriendIcon}>📤</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.sendFriendTitle}>
-                  Derivar ficha técnica a {tramitadorNombre || 'Gestor'} (WhatsApp)
-                </Text>
-                <Text style={styles.sendFriendSub}>
-                  Envía todos los datos de este {vendedor ? 'vendedor' : 'comprador'} para tramitación oficial
-                </Text>
-              </View>
-              <Text style={styles.sendFriendArrow}>→</Text>
-            </TouchableOpacity>
+            {/* ACCIONES SUPERIORES DE EXPORTACIÓN Y TRAMITACIÓN */}
+            <View style={styles.topActionsContainer}>
+              <TouchableOpacity
+                style={styles.flyerActionBtn}
+                onPress={() => setShowExportModal(true)}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.flyerActionIcon}>🖼️</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.flyerActionTitle}>
+                    Ficha Visual (Flyer Digital) / Exportar WhatsApp
+                  </Text>
+                  <Text style={styles.flyerActionSub}>
+                    Genera imagen PNG de alta calidad para pegar en WhatsApp (Ctrl+V) o copia el texto limpio
+                  </Text>
+                </View>
+                <Text style={styles.flyerActionArrow}>→</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.sendFriendBtn}
+                onPress={handleSendSingleToFriend}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.sendFriendIcon}>📤</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.sendFriendTitle}>
+                    Derivar directamente a {tramitadorNombre || 'Gestor'} (WhatsApp)
+                  </Text>
+                  <Text style={styles.sendFriendSub}>
+                    Envía este expediente limpio por WhatsApp a su teléfono
+                  </Text>
+                </View>
+                <Text style={styles.sendFriendArrow}>→</Text>
+              </TouchableOpacity>
+            </View>
 
             {/* VENDEDOR EXPEDIENTE */}
             {vendedor && (
@@ -518,6 +540,14 @@ export const DetailModal: React.FC<DetailModalProps> = ({
           </View>
         </View>
       </View>
+
+      <ExportCardModal
+        visible={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        vendedor={vendedor}
+        comprador={comprador}
+        recipientPhone={tramitadorTelefono}
+      />
     </Modal>
   );
 };
@@ -577,6 +607,38 @@ const styles = StyleSheet.create({
   scrollArea: {
     padding: 16,
   },
+  topActionsContainer: {
+    gap: 8,
+    marginBottom: 14,
+  },
+  flyerActionBtn: {
+    backgroundColor: '#1E1B4B',
+    borderColor: '#6366F1',
+    borderWidth: 1.5,
+    padding: 12,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  flyerActionIcon: {
+    fontSize: 22,
+  },
+  flyerActionTitle: {
+    color: '#EEF2FF',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  flyerActionSub: {
+    color: '#C7D2FE',
+    fontSize: 11,
+    marginTop: 2,
+  },
+  flyerActionArrow: {
+    color: '#EEF2FF',
+    fontSize: 18,
+    fontWeight: '800',
+  },
   sendFriendBtn: {
     backgroundColor: '#064E3B',
     borderColor: '#10B981',
@@ -586,7 +648,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: 14,
   },
   sendFriendIcon: {
     fontSize: 22,

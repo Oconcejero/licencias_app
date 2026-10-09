@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import { CruceMatch } from '../types';
 import { colors } from '../theme/colors';
+import { ExportCardModal } from './ExportCardModal';
 
 interface MatchCardProps {
   cruce: CruceMatch;
@@ -24,6 +25,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
   onSendToFriend,
   onToggleDerivado,
 }) => {
+  const [showExportModal, setShowExportModal] = useState(false);
   const { vendedor, comprador, match } = cruce;
 
   const handleCall = (phone: string) => {
@@ -62,6 +64,13 @@ export const MatchCard: React.FC<MatchCardProps> = ({
         </View>
 
         <View style={styles.headerRightActions}>
+          <TouchableOpacity
+            style={styles.flyerBtn}
+            onPress={() => setShowExportModal(true)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.flyerBtnText}>🖼️ Flyer Digital</Text>
+          </TouchableOpacity>
           <TouchableOpacity
             style={styles.scriptBtn}
             onPress={() => onOpenGestoriaScript(comprador.nombre)}
@@ -252,6 +261,12 @@ export const MatchCard: React.FC<MatchCardProps> = ({
           </View>
         )}
       </View>
+
+      <ExportCardModal
+        visible={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        cruce={cruce}
+      />
     </View>
   );
 };
@@ -323,6 +338,19 @@ const styles = StyleSheet.create({
   headerRightActions: {
     flexDirection: 'row',
     gap: 6,
+  },
+  flyerBtn: {
+    backgroundColor: 'rgba(99, 102, 241, 0.15)',
+    borderWidth: 1,
+    borderColor: '#6366F1',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  flyerBtnText: {
+    color: '#818CF8',
+    fontSize: 12,
+    fontWeight: '700',
   },
   scriptBtn: {
     backgroundColor: colors.surfaceHighlight,

@@ -1,150 +1,263 @@
 import { Linking } from 'react-native';
 import { CruceMatch, Vendedor, Comprador } from '../types';
 
+function cleanKm(km?: string): string {
+  if (!km) return '';
+  const num = parseInt(km.replace(/[^\d]/g, ''), 10);
+  if (isNaN(num)) return km;
+  return `${num.toLocaleString('es-ES')} km`;
+}
+
+function cleanCargaLicencia(carga: string, detalle?: string): string {
+  if (carga === 'SIN_CARGA') return '100% Libre de cargas / préstamos';
+  if (carga === 'PRESTAMO') return `Con préstamo (${detalle || 'pendiente de liquidar'})`;
+  return detalle || 'Consultar cargas';
+}
+
+function cleanCargaVehiculo(carga: string, detalle?: string): string {
+  if (carga === 'SIN_CARGA') return 'Totalmente pagado (sin reserva de dominio)';
+  if (carga === 'PRESTAMO') return `Con financiación (${detalle || 'reserva de dominio a liquidar'})`;
+  return detalle || 'Consultar';
+}
+
+function cleanCondicion(condicion: string, fecha?: string, detalle?: string): string {
+  if (condicion === 'INMEDIATA') return 'Inmediata para firma y traspaso';
+  if (condicion === 'JUBILACION') return `Tras jubilación (${fecha || 'fecha a convenir'})`;
+  return detalle || 'Condición a consultar';
+}
+
+function cleanPerfil(perfil: string): string {
+  return perfil === 'PARTICULAR' ? 'Particular' : 'Profesional / Gestoría';
+}
+
 function formatLibranzaText(dia: string, turno?: string): string {
   if (dia === 'EUROTAXI') return '♿ EUROTAXI (Exento de libranza)';
   if (dia === 'ELECTRICO_SIN_LIBRANZA') return '⚡ ELÉCTRICO CERO (Exento de libranza)';
-  if (dia === 'LIBRE_24H') return '24H LIBRE';
-  if (dia === 'CUALQUIERA') return 'Cualquiera';
-  return `${dia}${turno && turno !== 'INDIFERENTE' ? ' (Turno ' + turno + ')' : ''}`;
+  if (dia === 'LIBRE_24H') return '🟢 24H LIBRE (Sin libranza fija)';
+  if (dia === 'CUALQUIERA') return 'Cualquiera (Indiferente)';
+  const diaNom = dia.charAt(0) + dia.slice(1).toLowerCase();
+  return `${diaNom}${turno && turno !== 'INDIFERENTE' ? ' (Turno ' + turno + ')' : ''}`;
 }
 
 export const shareService = {
-  generateMatchReport(cruce: CruceMatch): string {
-    const { vendedor, comprador, match } = cruce;
-
-    let precioVendedorStr = `${vendedor.precio.toLocaleString()} €`;
-    if (vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES' && vendedor.precioConCoche) {
-      precioVendedorStr = `${vendedor.precio.toLocaleString()} € (solo lic.) / ${vendedor.precioConCoche.toLocaleString()} € (con coche)`;
-    } else if (vendedor.modalidadVentaCoche === 'CON_COCHE') {
-      precioVendedorStr = `${vendedor.precio.toLocaleString()} € (pack con coche)`;
-    }
-    precioVendedorStr += ` (${vendedor.precioNegociable ? 'Negociable' : 'Precio fijo'})`;
-
-    let cocheVendedor = 'Solo licencia';
-    if (vendedor.vendeConCoche && vendedor.vehiculo) {
-      const exencionStr = vendedor.vehiculo.exentoLibranza ? ` • ⚡ ${vendedor.vehiculo.detalleExencion || 'Exento libranza'}` : '';
-      const cargaStr = vendedor.vehiculo.carga === 'PRESTAMO' ? ` • 🚗 Préstamo coche: ${vendedor.vehiculo.detalleCarga || 'con reserva'}` : '';
-      cocheVendedor = `${vendedor.vehiculo.modelo} (${vendedor.vehiculo.anoMatriculacion}, ${vendedor.vehiculo.kilometros} km)${exencionStr}${cargaStr}`;
-      if (vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES') {
-        cocheVendedor = `Flexible (con o sin coche): ${cocheVendedor}`;
-      }
-    }
-
-    const cargaVendedor = vendedor.cargaLicencia === 'SIN_CARGA'
-      ? 'Libre de cargas'
-      : `Con préstamo (${vendedor.detalleCargaLicencia || 'Pendiente'})`;
-
-    const condicionVendedor = vendedor.condicionVenta === 'JUBILACION'
-      ? `Tras jubilación (${vendedor.fechaJubilacion || 'Prevista'})`
-      : vendedor.condicionVenta === 'OTRA'
-      ? vendedor.detalleCondicion || 'Especial'
-      : 'Inmediata';
-
-    const cocheComprador = comprador.buscaConCoche === 'CON_COCHE'
-      ? 'Con vehículo'
-      : comprador.buscaConCoche === 'SOLO_LICENCIA'
-      ? 'Solo licencia'
-      : 'Indiferente';
-
-    const gestoriaComprador = !comprador.tieneGestoria
-      ? 'Sin gestoría (Tramitar ayuda 6.000€)'
-      : comprador.gestoriaSeleccionada === 'GESTORIA_VIP'
-      ? 'Gestoría Asesoría Integral (Subvención 6.000€)'
-      : comprador.gestoriaSeleccionada === 'GESTORIA_TALAMANCA'
-      ? 'El Casar de Talamanca'
-      : comprador.nombreGestoriaPropia || 'Gestoría propia';
-
-    const formatContactoVendedor = vendedor.telefono
-      ? `• *Teléfono:* ${vendedor.telefono} (${vendedor.perfil}${vendedor.canalContacto && vendedor.canalContacto !== 'TELEFONO' ? ' • ' + vendedor.canalContacto : ''})`
-      : `• *Contacto:* Pendiente de pedir (${vendedor.canalContacto || 'Chat'}${vendedor.contactoOrigen ? ': ' + vendedor.contactoOrigen : ''}) (${vendedor.perfil})`;
-
-    const formatContactoComprador = comprador.telefono
-      ? `• *Teléfono:* ${comprador.telefono} (${comprador.perfil}${comprador.canalContacto && comprador.canalContacto !== 'TELEFONO' ? ' • ' + comprador.canalContacto : ''})`
-      : `• *Contacto:* Pendiente de pedir (${comprador.canalContacto || 'Chat'}${comprador.contactoOrigen ? ': ' + comprador.contactoOrigen : ''}) (${comprador.perfil})`;
-
-    return `🚕 *FICHA TÉCNICA DE COINCIDENCIA / TRASPASO DE LICENCIA* 🚕
-(Afinidad calculada: *${match.score}% MATCH*)
-
-👤 *PARTE COMPRADORA:*
-• *Titular:* ${comprador.nombre}
-${formatContactoComprador}
-• *Libranza requerida:* ${formatLibranzaText(comprador.diaLibranzaDeseada, comprador.turnoDescansoDeseado)}
-• *Presupuesto máximo:* ${comprador.precioMaximo.toLocaleString()} €
-• *Disponibilidad de señal:* ${comprador.puedeSenalizarYa ? '🔥 SÍ, DISPONIBLE PARA SEÑALIZAR DE INMEDIATO' : 'Pendiente de acordar'}
-• *Requerimiento vehículo:* ${cocheComprador}
-• *Gestoría:* ${gestoriaComprador}
-${comprador.notas ? `• *Observaciones:* ${comprador.notas}\n` : ''}
-🚗 *PARTE VENDEDORA:*
-• *Titular:* ${vendedor.nombre}
-${formatContactoVendedor}
-• *Día libranza:* ${formatLibranzaText(vendedor.diaLibranza, vendedor.turnoDescanso)}
-• *Precio salida:* ${precioVendedorStr}
-• *Situación de cargas:* ${cargaVendedor}
-• *Vehículo:* ${cocheVendedor}
-• *Condición de entrega:* ${condicionVendedor}
-${vendedor.notas ? `• *Observaciones:* ${vendedor.notas}\n` : ''}
-⚡ *COMPATIBILIDAD Y PUNTOS CLAVE:*
-${match.razones.map(r => `✓ ${r}`).join('\n')}
-${match.alertas.length > 0 ? `\n⚠️ *Puntos de atención para el cierre:*\n${match.alertas.map(a => `• ${a}`).join('\n')}` : ''}
-
-Se remite la información de ambas partes para valoración, contacto directo y formalización del traspaso.`;
-  },
+  formatLibranzaText,
 
   generateVendedorReport(vendedor: Vendedor): string {
-    let coche = 'Solo licencia';
-    if (vendedor.vendeConCoche && vendedor.vehiculo) {
-      const exencionStr = vendedor.vehiculo.exentoLibranza ? ` • ⚡ ${vendedor.vehiculo.detalleExencion || 'Exento libranza'}` : '';
-      const cargaStr = vendedor.vehiculo.carga === 'PRESTAMO' ? ` • 🚗 Préstamo coche: ${vendedor.vehiculo.detalleCarga || 'con reserva'}` : '';
-      coche = `${vendedor.vehiculo.modelo} (${vendedor.vehiculo.anoMatriculacion}, ${vendedor.vehiculo.kilometros} km, carga: ${vendedor.vehiculo.carga})${exencionStr}${cargaStr}`;
-      if (vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES') {
-        coche = `Flexible (con o sin coche): ${coche}`;
-      }
+    const divider = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+
+    // Libranza
+    let libranzaStr = '';
+    if (vendedor.diaLibranza === 'EUROTAXI') {
+      libranzaStr = '♿ *EUROTAXI (Sin libranza)*\n   _Autorizado para trabajar los 7 días (PMR)_';
+    } else if (vendedor.diaLibranza === 'ELECTRICO_SIN_LIBRANZA') {
+      libranzaStr = '⚡ *ELÉCTRICO CERO (Sin libranza)*\n   _Exento de descanso obligatorio_';
+    } else if (vendedor.diaLibranza === 'LIBRE_24H') {
+      libranzaStr = '🟢 *24H LIBRE (Sin libranza fija)*';
+    } else {
+      const diaNom = vendedor.diaLibranza.charAt(0) + vendedor.diaLibranza.slice(1).toLowerCase();
+      libranzaStr = `*${diaNom} • Turno ${vendedor.turnoDescanso || 'PAR'}*`;
     }
 
-    let precioStr = `${vendedor.precio.toLocaleString()} €`;
+    // Precio
+    const precioBase = `${vendedor.precio.toLocaleString('es-ES')} €`;
+    let precioLines = '';
     if (vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES' && vendedor.precioConCoche) {
-      precioStr = `${vendedor.precio.toLocaleString()} € (solo lic.) / ${vendedor.precioConCoche.toLocaleString()} € (con coche)`;
+      precioLines = `   ▪ *${precioBase}* _(Solo Licencia)_\n   ▪ *${vendedor.precioConCoche.toLocaleString('es-ES')} €* _(Con Vehículo incluido)_`;
     } else if (vendedor.modalidadVentaCoche === 'CON_COCHE') {
-      precioStr = `${vendedor.precio.toLocaleString()} € (pack con coche)`;
+      precioLines = `   ▪ *${precioBase}* _(Pack completo con vehículo)_`;
+    } else {
+      precioLines = `   ▪ *${precioBase}* _(Solo Licencia)_`;
     }
-    precioStr += ` (${vendedor.precioNegociable ? 'Negociable' : 'Precio fijo'})`;
+    const negociableStr = vendedor.precioNegociable ? '_(Precio negociable)_' : '_(Precio cerrado / fijo)_';
 
-    const contacto = vendedor.telefono
-      ? `• *Teléfono:* ${vendedor.telefono} (${vendedor.perfil}${vendedor.canalContacto && vendedor.canalContacto !== 'TELEFONO' ? ' • ' + vendedor.canalContacto : ''})`
-      : `• *Contacto:* Pendiente de pedir (${vendedor.canalContacto || 'Chat'}${vendedor.contactoOrigen ? ': ' + vendedor.contactoOrigen : ''}) (${vendedor.perfil})`;
+    // Vehículo
+    let vehiculoLines = '';
+    if (vendedor.vendeConCoche && vendedor.vehiculo) {
+      const kmFormatted = cleanKm(vendedor.vehiculo.kilometros);
+      const ano = vendedor.vehiculo.anoMatriculacion ? ` (${vendedor.vehiculo.anoMatriculacion})` : '';
+      vehiculoLines = `   ▪ *Modelo:* ${vendedor.vehiculo.modelo}${ano}`;
+      if (kmFormatted) vehiculoLines += `\n   ▪ *Kilómetros:* ${kmFormatted}`;
+      vehiculoLines += `\n   ▪ *Situación:* ${cleanCargaVehiculo(vendedor.vehiculo.carga, vendedor.vehiculo.detalleCarga)}`;
+      if (vendedor.vehiculo.exentoLibranza) {
+        vehiculoLines += `\n   ▪ *Exención:* ⚡ ${vendedor.vehiculo.detalleExencion || 'Exento por CERO emisiones'}`;
+      }
+    } else {
+      vehiculoLines = '   ▪ _Venta de solo licencia (vehículo no incluido)_';
+    }
 
-    return `🚕 *EXPEDIENTE DE LICENCIA EN VENTA:*
-• *Titular:* ${vendedor.nombre}
-${contacto}
-• *Libranza:* ${formatLibranzaText(vendedor.diaLibranza, vendedor.turnoDescanso)}
-• *Precio:* ${precioStr}
-• *Carga Licencia:* ${vendedor.cargaLicencia === 'SIN_CARGA' ? 'Libre' : vendedor.detalleCargaLicencia || 'Con préstamo'}
-• *Vehículo:* ${coche}
-• *Condición de venta:* ${vendedor.condicionVenta === 'JUBILACION' ? `Tras jubilación (${vendedor.fechaJubilacion || ''})` : vendedor.condicionVenta}
-${vendedor.notas ? `• *Observaciones:* ${vendedor.notas}\n` : ''}
-Se remite la ficha para incorporación a cartera y búsqueda de contraparte.`;
+    // Contacto
+    let contactoLines = `   ▪ *Titular:* ${vendedor.nombre} _(${cleanPerfil(vendedor.perfil)})_`;
+    if (vendedor.telefono) {
+      contactoLines += `\n   ▪ *Teléfono:* ${vendedor.telefono}`;
+    } else {
+      const canalNom = vendedor.canalContacto && vendedor.canalContacto !== 'TELEFONO' ? vendedor.canalContacto : 'Chat online';
+      contactoLines += `\n   ▪ *Contacto:* Canal ${canalNom} _(Teléfono en gestión)_`;
+    }
+
+    // Situación administrativa
+    let adminLines = `   ▪ *Cargas licencia:* ${cleanCargaLicencia(vendedor.cargaLicencia, vendedor.detalleCargaLicencia)}`;
+    adminLines += `\n   ▪ *Disponibilidad:* ${cleanCondicion(vendedor.condicionVenta, vendedor.fechaJubilacion, vendedor.detalleCondicion)}`;
+    if (vendedor.notas) {
+      adminLines += `\n   ▪ *Observaciones:* _${vendedor.notas.trim()}_`;
+    }
+
+    // Enlace de origen (al pie para no romper la visualización)
+    let enlacePie = '';
+    if (vendedor.contactoOrigen && vendedor.contactoOrigen.startsWith('http')) {
+      enlacePie = `\n\n🔗 *Enlace de origen:*\n${vendedor.contactoOrigen}`;
+    }
+
+    return `🚕 *FICHA DE LICENCIA EN VENTA*
+${divider}
+
+📍 *LIBRANZA Y TURNO:*
+   ▪ ${libranzaStr}
+
+💰 *VALORACIÓN:*
+${precioLines}
+   ${negociableStr}
+
+🚘 *VEHÍCULO:*
+${vehiculoLines}
+
+👤 *DATOS DEL VENDEDOR:*
+${contactoLines}
+
+📋 *SITUACIÓN ADMINISTRATIVA:*
+${adminLines}
+${divider}
+📲 _Ficha técnica emitida para formalización de traspaso_${enlacePie}`;
   },
 
   generateCompradorReport(comprador: Comprador): string {
-    const contacto = comprador.telefono
-      ? `• *Teléfono:* ${comprador.telefono} (${comprador.perfil}${comprador.canalContacto && comprador.canalContacto !== 'TELEFONO' ? ' • ' + comprador.canalContacto : ''})`
-      : `• *Contacto:* Pendiente de pedir (${comprador.canalContacto || 'Chat'}${comprador.contactoOrigen ? ': ' + comprador.contactoOrigen : ''}) (${comprador.perfil})`;
+    const divider = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
 
-    return `👤 *EXPEDIENTE DE COMPRADOR ACTIVO:*
-• *Interesado:* ${comprador.nombre}
-${contacto}
-• *Libranza solicitada:* ${formatLibranzaText(comprador.diaLibranzaDeseada, comprador.turnoDescansoDeseado)}
-• *Presupuesto máximo:* ${comprador.precioMaximo.toLocaleString()} €
-• *Disponibilidad de señal:* ${comprador.puedeSenalizarYa ? '🔥 SÍ, LISTO PARA SEÑALIZAR' : 'No'}
-• *Preferencia vehículo:* ${comprador.buscaConCoche}
-• *Gestoría:* ${!comprador.tieneGestoria ? 'Sin gestoría (Tramitar ayuda 6.000€)' : comprador.gestoriaSeleccionada}
-${comprador.notas ? `• *Observaciones:* ${comprador.notas}\n` : ''}
-Se remite el expediente de demanda para matching y tramitación.`;
+    let libranzaStr = '';
+    if (comprador.diaLibranzaDeseada === 'CUALQUIERA') {
+      libranzaStr = 'Cualquier día _(Indiferente)_';
+    } else if (comprador.diaLibranzaDeseada === 'EUROTAXI') {
+      libranzaStr = '♿ *Busca EUROTAXI (Sin libranza)*';
+    } else if (comprador.diaLibranzaDeseada === 'ELECTRICO_SIN_LIBRANZA') {
+      libranzaStr = '⚡ *Busca ELÉCTRICO CERO (Sin libranza)*';
+    } else if (comprador.diaLibranzaDeseada === 'LIBRE_24H') {
+      libranzaStr = '🟢 *Busca 24H LIBRE*';
+    } else {
+      const diaNom = comprador.diaLibranzaDeseada.charAt(0) + comprador.diaLibranzaDeseada.slice(1).toLowerCase();
+      const turno = comprador.turnoDescansoDeseado && comprador.turnoDescansoDeseado !== 'INDIFERENTE'
+        ? ` • Turno ${comprador.turnoDescansoDeseado}`
+        : ' • Turno Indiferente';
+      libranzaStr = `*${diaNom}${turno}*`;
+    }
+
+    const cochePref = comprador.buscaConCoche === 'CON_COCHE'
+      ? 'Exige vehículo incluido en la compra'
+      : comprador.buscaConCoche === 'SOLO_LICENCIA'
+      ? 'Busca exclusivamente solo la licencia'
+      : 'Indiferente (con o sin vehículo)';
+
+    const senalStr = comprador.puedeSenalizarYa
+      ? '🔥 *SÍ, DISPONIBLE PARA SEÑALIZAR DE INMEDIATO*'
+      : 'Pendiente de formalizar acuerdo';
+
+    const gestoriaStr = !comprador.tieneGestoria
+      ? 'Sin gestoría _(Candidato a tramitar subvención 6.000 €)_'
+      : comprador.gestoriaSeleccionada === 'GESTORIA_VIP'
+      ? 'Gestoría Asesoría Integral (Subvención 6.000 €)'
+      : comprador.gestoriaSeleccionada === 'GESTORIA_TALAMANCA'
+      ? 'El Casar de Talamanca'
+      : comprador.nombreGestoriaPropia || 'Gestoría propia asignada';
+
+    let contactoLines = `   ▪ *Interesado:* ${comprador.nombre} _(${cleanPerfil(comprador.perfil)})_`;
+    if (comprador.telefono) {
+      contactoLines += `\n   ▪ *Teléfono:* ${comprador.telefono}`;
+    } else {
+      const canalNom = comprador.canalContacto && comprador.canalContacto !== 'TELEFONO' ? comprador.canalContacto : 'Chat online';
+      contactoLines += `\n   ▪ *Contacto:* Canal ${canalNom} _(Teléfono en gestión)_`;
+    }
+
+    let notasStr = '';
+    if (comprador.notas) {
+      notasStr = `\n   ▪ *Notas:* _${comprador.notas.trim()}_`;
+    }
+
+    let enlacePie = '';
+    if (comprador.contactoOrigen && comprador.contactoOrigen.startsWith('http')) {
+      enlacePie = `\n\n🔗 *Enlace de origen:*\n${comprador.contactoOrigen}`;
+    }
+
+    return `👤 *EXPEDIENTE DE COMPRADOR ACTIVO*
+${divider}
+
+📍 *DEMANDA DE LIBRANZA:*
+   ▪ ${libranzaStr}
+
+💰 *CAPACIDAD FINANCIERA:*
+   ▪ *Presupuesto Máximo:* *${comprador.precioMaximo.toLocaleString('es-ES')} €*
+   ▪ *Disponibilidad de Señal:* ${senalStr}
+
+🚘 *REQUISITO DE VEHÍCULO:*
+   ▪ ${cochePref}
+
+📋 *GESTIÓN & ASESORAMIENTO:*
+   ▪ *Gestoría:* ${gestoriaStr}${notasStr}
+
+👤 *DATOS DEL COMPRADOR:*
+${contactoLines}
+${divider}
+📲 _Ficha de demanda remitida para matching y traspaso_${enlacePie}`;
+  },
+
+  generateMatchReport(cruce: CruceMatch): string {
+    const { vendedor, comprador, match } = cruce;
+    const divider = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+
+    let precioVendStr = `${vendedor.precio.toLocaleString('es-ES')} €`;
+    if (vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES' && vendedor.precioConCoche) {
+      precioVendStr = `${precioVendStr} (solo lic.) / ${vendedor.precioConCoche.toLocaleString('es-ES')} € (con coche)`;
+    } else if (vendedor.modalidadVentaCoche === 'CON_COCHE') {
+      precioVendStr = `${precioVendStr} (pack con coche)`;
+    }
+    precioVendStr += vendedor.precioNegociable ? ' _(Negociable)_' : ' _(Fijo)_';
+
+    let cocheVendStr = 'Solo licencia';
+    if (vendedor.vendeConCoche && vendedor.vehiculo) {
+      const kmFormatted = cleanKm(vendedor.vehiculo.kilometros);
+      cocheVendStr = `${vendedor.vehiculo.modelo} (${vendedor.vehiculo.anoMatriculacion || 'Coche'}${kmFormatted ? ' • ' + kmFormatted : ''})`;
+      if (vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES') {
+        cocheVendStr = `Flexible: ${cocheVendStr}`;
+      }
+    }
+
+    const contactoVend = vendedor.telefono ? vendedor.telefono : `Canal ${vendedor.canalContacto || 'Chat'}`;
+    const contactoComp = comprador.telefono ? comprador.telefono : `Canal ${comprador.canalContacto || 'Chat'}`;
+
+    return `🎯 *INFORME DE CRUCE / MATCH (${match.score}% AFINIDAD)*
+${divider}
+
+🚗 *OFERTA (VENDEDOR)*
+   ▪ *Titular:* ${vendedor.nombre} _(${cleanPerfil(vendedor.perfil)})_
+   ▪ *Contacto:* ${contactoVend}
+   ▪ *Libranza:* ${formatLibranzaText(vendedor.diaLibranza, vendedor.turnoDescanso)}
+   ▪ *Precio:* *${precioVendStr}*
+   ▪ *Vehículo:* ${cocheVendStr}
+   ▪ *Cargas:* ${cleanCargaLicencia(vendedor.cargaLicencia, vendedor.detalleCargaLicencia)}
+
+👤 *DEMANDA (COMPRADOR)*
+   ▪ *Titular:* ${comprador.nombre} _(${cleanPerfil(comprador.perfil)})_
+   ▪ *Contacto:* ${contactoComp}
+   ▪ *Libranza:* ${formatLibranzaText(comprador.diaLibranzaDeseada, comprador.turnoDescansoDeseado)}
+   ▪ *Presupuesto:* *${comprador.precioMaximo.toLocaleString('es-ES')} €*
+   ▪ *Señal:* ${comprador.puedeSenalizarYa ? '🔥 Listo para señalizar ya' : 'Pendiente'}
+
+⚡ *CLAVES DEL ENCAJE:*
+${match.razones.map(r => `   ✓ ${r}`).join('\n')}
+${match.alertas.length > 0 ? `\n⚠️ *Puntos a coordinar:*\n${match.alertas.map(a => `   • ${a}`).join('\n')}` : ''}
+${divider}
+📲 _Operación lista para contacto mutuo y formalización del traspaso_`;
   },
 
   sendWhatsApp(phone: string, text: string) {
-    const cleanPhone = phone.replace(/[^\d+]/g, '');
+    const cleanPhone = phone ? phone.replace(/[^\d+]/g, '') : '';
     const encoded = encodeURIComponent(text);
     if (cleanPhone) {
       Linking.openURL(`https://wa.me/${cleanPhone}?text=${encoded}`);
