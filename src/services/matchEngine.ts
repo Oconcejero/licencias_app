@@ -21,6 +21,7 @@ export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchS
   }
 
   // 1. LIBRANZA Y TURNO (Hasta 35 puntos: 25 por día + 10 por turno Par/Impar)
+  // PREMISA INDISPENSABLE: Si el día de LIBRANZA no coincide, el encaje es 0 absoluto.
   let diaEncaja = false;
   let turnoEncaja = false;
 
@@ -37,20 +38,31 @@ export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchS
 
   if (
     comprador.diaLibranzaDeseada === 'CUALQUIERA' ||
-    comprador.diaLibranzaDeseada === vendedor.diaLibranza ||
-    (isCompradorExento && isVendedorExento)
+    comprador.diaLibranzaDeseada === vendedor.diaLibranza
   ) {
     diaEncaja = true;
     score += 25;
     if (comprador.diaLibranzaDeseada === 'CUALQUIERA') {
       razones.push(`Comprador busca cualquier libranza (Vendedor tiene ${vendedor.diaLibranza})`);
-    } else if (isCompradorExento && isVendedorExento) {
-      razones.push(`Ambos encajan en licencia exenta de libranza (${vendedor.diaLibranza})`);
     } else {
       razones.push(`Día de libranza coincide exactamente: ${vendedor.diaLibranza}`);
     }
   } else {
-    alertas.push(`Libranza semanal diferente: Vendedor tiene ${vendedor.diaLibranza}, comprador prefiere ${comprador.diaLibranzaDeseada}`);
+    // Si el día de libranza no coincide, el encaje es 0
+    return {
+      score: 0,
+      nivel: 'POTENCIAL',
+      razones: [],
+      alertas: [
+        `Día de libranza no coincide: Vendedor tiene ${vendedor.diaLibranza}, comprador busca ${comprador.diaLibranzaDeseada}`,
+      ],
+      diferenciaPrecio: vendedor.precio - comprador.precioMaximo,
+      precioEncaja: false,
+      libranzaEncaja: false,
+      turnoEncaja: false,
+      cocheEncaja: false,
+      cargaEncaja: false,
+    };
   }
 
   // 1.2 Turno de fin de semana (Par / Impar / Rotativo / Libre 24h)
