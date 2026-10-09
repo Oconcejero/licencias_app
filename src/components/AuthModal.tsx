@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { colors } from '../theme/colors';
 import { UserRole } from '../types';
-import { storageService, DEFAULT_ADMIN_PIN, DEFAULT_SOCIO_PIN } from '../services/storage';
+import { storageService } from '../services/storage';
 
 interface AuthModalProps {
   visible: boolean;
@@ -39,8 +39,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     if (pin.trim() !== expectedPin.trim()) {
       setErrorMsg(
         selectedRole === 'ADMIN'
-          ? 'PIN de Administrador incorrecto (por defecto: 2026)'
-          : 'PIN de Socio incorrecto (por defecto: 1234)'
+          ? 'PIN de Administrador incorrecto'
+          : 'PIN de Socio incorrecto'
       );
       return;
     }
@@ -121,7 +121,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </Text>
             <TextInput
               style={styles.pinInput}
-              placeholder={selectedRole === 'ADMIN' ? 'PIN Admin (def: 2026)' : 'PIN Socio (def: 1234)'}
+              placeholder={selectedRole === 'ADMIN' ? 'PIN Admin' : 'PIN Socio'}
               placeholderTextColor={colors.textSubtle}
               value={pin}
               onChangeText={t => {
@@ -172,14 +172,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <Text style={styles.cancelText}>Cancelar</Text>
               </TouchableOpacity>
             )}
-
-            {/* Pista de credenciales iniciales */}
-            <View style={styles.helpBox}>
-              <Text style={styles.helpText}>
-                🔐 PINs iniciales: <Text style={{ fontWeight: '800' }}>Admin: {DEFAULT_ADMIN_PIN}</Text> •{' '}
-                <Text style={{ fontWeight: '800' }}>Socio: {DEFAULT_SOCIO_PIN}</Text>
-              </Text>
-            </View>
           </View>
         </View>
       </View>
@@ -367,16 +359,5 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 13,
     fontWeight: '700',
-  },
-  helpBox: {
-    marginTop: 10,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    alignItems: 'center',
-  },
-  helpText: {
-    fontSize: 11,
-    color: colors.textSubtle,
   },
 });
