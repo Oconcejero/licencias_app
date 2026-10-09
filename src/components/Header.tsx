@@ -2,11 +2,15 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { colors } from '../theme/colors';
 
+import { UserRole } from '../types';
+
 interface HeaderProps {
   totalMatches: number;
   onOpenMatches: () => void;
   onNewVendedor: () => void;
   onNewComprador: () => void;
+  userRole?: UserRole | null;
+  onSwitchRole?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -14,7 +18,11 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenMatches,
   onNewVendedor,
   onNewComprador,
+  userRole = 'ADMIN',
+  onSwitchRole,
 }) => {
+  const isAdmin = userRole === 'ADMIN';
+
   return (
     <View style={styles.header}>
       <View style={styles.left}>
@@ -28,6 +36,24 @@ export const Header: React.FC<HeaderProps> = ({
       </View>
 
       <View style={styles.actions}>
+        {/* Badge de Rol y Cambio de Perfil */}
+        {userRole && onSwitchRole && (
+          <TouchableOpacity
+            style={[
+              styles.roleTagBtn,
+              isAdmin ? styles.roleTagAdmin : styles.roleTagSocio,
+            ]}
+            onPress={onSwitchRole}
+            activeOpacity={0.8}
+            accessibilityLabel="Pulsar para cambiar perfil"
+          >
+            <Text style={styles.roleTagText}>
+              {isAdmin ? '👑 Admin' : '👀 Socio'}
+            </Text>
+            <Text style={styles.roleTagSwitchIcon}>⇄</Text>
+          </TouchableOpacity>
+        )}
+
         <TouchableOpacity
           style={[styles.matchesAlertBtn, totalMatches > 0 && styles.matchesAlertBtnActive]}
           onPress={onOpenMatches}
@@ -40,23 +66,25 @@ export const Header: React.FC<HeaderProps> = ({
           {totalMatches > 0 && <View style={styles.pulseDot} />}
         </TouchableOpacity>
 
-        <View style={styles.buttonGroup}>
-          <TouchableOpacity
-            style={[styles.btn, styles.btnVendedor]}
-            onPress={onNewVendedor}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.btnText}>+ Vendedor</Text>
-          </TouchableOpacity>
+        {isAdmin && (
+          <View style={styles.buttonGroup}>
+            <TouchableOpacity
+              style={[styles.btn, styles.btnVendedor]}
+              onPress={onNewVendedor}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.btnText}>+ Vendedor</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.btn, styles.btnComprador]}
-            onPress={onNewComprador}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.btnText}>+ Comprador</Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity
+              style={[styles.btn, styles.btnComprador]}
+              onPress={onNewComprador}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.btnText}>+ Comprador</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -162,5 +190,32 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontWeight: '700',
     fontSize: 13,
+  },
+  roleTagBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 8,
+    borderWidth: 1.5,
+  },
+  roleTagAdmin: {
+    backgroundColor: 'rgba(37, 99, 235, 0.15)',
+    borderColor: colors.primary,
+  },
+  roleTagSocio: {
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    borderColor: colors.accent,
+  },
+  roleTagText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: colors.text,
+  },
+  roleTagSwitchIcon: {
+    fontSize: 13,
+    color: colors.textMuted,
+    fontWeight: '800',
   },
 });

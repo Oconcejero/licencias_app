@@ -121,3 +121,5 @@ export interface ConfigTramitador {
   nombre: string;
   telefono: string;
 }
+
+export type UserRole = 'ADMIN' | 'SOCIO';

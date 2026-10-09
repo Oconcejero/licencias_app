@@ -11,25 +11,30 @@ import {
 } from 'react-native';
 import { colors } from '../theme/colors';
 import { storageService } from '../services/storage';
-import { Vendedor, Comprador, ConfigTramitador } from '../types';
+import { Vendedor, Comprador, ConfigTramitador, UserRole } from '../types';
 
 interface SettingsScreenProps {
   vendedores: Vendedor[];
   compradores: Comprador[];
   tramitador: ConfigTramitador;
+  userRole?: UserRole;
   onUpdateTramitador: (config: ConfigTramitador) => void;
   onRefreshData: () => void;
   onOpenGestoriaHelper: () => void;
+  onSwitchRole?: () => void;
 }
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   vendedores,
   compradores,
   tramitador,
+  userRole = 'ADMIN',
   onUpdateTramitador,
   onRefreshData,
   onOpenGestoriaHelper,
+  onSwitchRole,
 }) => {
+  const isAdmin = userRole === 'ADMIN';
   const [friendName, setFriendName] = useState(tramitador.nombre);
   const [friendPhone, setFriendPhone] = useState(tramitador.telefono);
   const [savedFriendStatus, setSavedFriendStatus] = useState(false);
@@ -141,6 +146,31 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         <Text style={styles.subtitle}>
           Configura el contacto del gestor operativo, copias de seguridad y guiones
         </Text>
+      </View>
+
+      {/* BLOQUE DE PERFIL Y SESIÓN ACTIVA */}
+      <View style={styles.card}>
+        <View style={styles.sessionHeaderRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cardTitle}>👤 PERFIL DE SESIÓN ACTIVA</Text>
+            <Text style={styles.descText}>
+              {isAdmin
+                ? 'Conectado con permisos totales de Administrador (puedes crear, editar y borrar).'
+                : 'Conectado en Modo Socio (solo consulta: puedes ver cruces, cartera y exportar fichas).'}
+            </Text>
+          </View>
+          <View style={[styles.roleBadgeBox, isAdmin ? styles.roleBadgeAdmin : styles.roleBadgeSocio]}>
+            <Text style={styles.roleBadgeText}>
+              {isAdmin ? '👑 Administrador' : '👀 Socio (Consulta)'}
+            </Text>
+          </View>
+        </View>
+
+        {onSwitchRole && (
+          <TouchableOpacity style={styles.switchBtn} onPress={onSwitchRole} activeOpacity={0.8}>
+            <Text style={styles.switchBtnText}>⇄ Cambiar de Perfil / Cerrar Sesión</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* SECCIÓN ESTRELLA: GESTOR DE OPERACIONES */}
@@ -262,19 +292,21 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         </TouchableOpacity>
       </View>
 
-      {/* ACCIONES DE DATOS */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>🛠️ GESTIÓN DE EJEMPLOS Y LIMPIEZA</Text>
-        <View style={styles.btnsRow}>
-          <TouchableOpacity style={[styles.btn, styles.demoBtn]} onPress={handleResetDemo}>
-            <Text style={styles.btnText}>🔄 Cargar Datos de Demostración</Text>
-          </TouchableOpacity>
+      {/* ACCIONES DE DATOS (SOLO ADMIN) */}
+      {isAdmin && (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>🛠️ GESTIÓN DE EJEMPLOS Y LIMPIEZA</Text>
+          <View style={styles.btnsRow}>
+            <TouchableOpacity style={[styles.btn, styles.demoBtn]} onPress={handleResetDemo}>
+              <Text style={styles.btnText}>🔄 Cargar Datos de Demostración</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.btn, styles.dangerBtn]} onPress={handleClearAll}>
-            <Text style={[styles.btnText, { color: colors.danger }]}>🗑️ Borrar Toda la Base</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={[styles.btn, styles.dangerBtn]} onPress={handleClearAll}>
+              <Text style={[styles.btnText, { color: colors.danger }]}>🗑️ Borrar Toda la Base</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      )}
     </ScrollView>
   );
 };
@@ -492,5 +524,44 @@ const styles = StyleSheet.create({
     color: '#93C5FD',
     fontSize: 13,
     fontWeight: '800',
+  },
+  sessionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  roleBadgeBox: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  roleBadgeAdmin: {
+    backgroundColor: 'rgba(234, 179, 8, 0.15)',
+    borderColor: colors.accent,
+  },
+  roleBadgeSocio: {
+    backgroundColor: 'rgba(99, 102, 241, 0.15)',
+    borderColor: '#818CF8',
+  },
+  roleBadgeText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: colors.white,
+  },
+  switchBtn: {
+    backgroundColor: colors.surfaceHighlight,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  switchBtnText: {
+    color: colors.primaryLight,
+    fontSize: 12,
+    fontWeight: '700',
   },
 });

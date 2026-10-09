@@ -6,7 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { Vendedor, Comprador, CruceMatch, ConfigTramitador } from '../types';
+import { Vendedor, Comprador, CruceMatch, ConfigTramitador, UserRole } from '../types';
 import { colors } from '../theme/colors';
 import { StatsCard } from '../components/StatsCard';
 import { MatchCard } from '../components/MatchCard';
@@ -17,6 +17,7 @@ interface DashboardScreenProps {
   matches: CruceMatch[];
   tramitador: ConfigTramitador;
   derivadosIds: string[];
+  userRole?: UserRole;
   onNavigateTab: (tab: 'dashboard' | 'matches' | 'vendedores' | 'compradores' | 'ajustes') => void;
   onNewVendedor: () => void;
   onNewComprador: () => void;
@@ -33,6 +34,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   matches,
   tramitador,
   derivadosIds,
+  userRole = 'ADMIN',
   onNavigateTab,
   onNewVendedor,
   onNewComprador,
@@ -46,6 +48,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const activeSellers = vendedores.filter(v => v.estado !== 'CERRADO');
   const safeDerivados = derivadosIds || [];
   const pendientesMatches = matches.filter(c => !safeDerivados.includes(c.id));
+  const isAdmin = userRole === 'ADMIN';
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -59,31 +62,39 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           </Text>
         </View>
 
-        <View style={styles.quickActionBtns}>
-          <TouchableOpacity
-            style={[styles.actionBtn, styles.btnSeller]}
-            onPress={onNewVendedor}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.actionBtnText}>+ Meter Vendedor</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionBtn, styles.btnBuyer]}
-            onPress={onNewComprador}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.actionBtnText}>+ Meter Comprador</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionBtn, styles.btnTramitador]}
-            onPress={onOpenConfigTramitador}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.actionBtnText}>
-              👤 {tramitador.nombre && tramitador.nombre !== 'Gestor Operativo' ? `Gestor: ${tramitador.nombre}` : 'Contacto Gestor'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {isAdmin ? (
+          <View style={styles.quickActionBtns}>
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.btnSeller]}
+              onPress={onNewVendedor}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.actionBtnText}>+ Meter Vendedor</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.btnBuyer]}
+              onPress={onNewComprador}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.actionBtnText}>+ Meter Comprador</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.btnTramitador]}
+              onPress={onOpenConfigTramitador}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.actionBtnText}>
+                👤 {tramitador.nombre && tramitador.nombre !== 'Gestor Operativo' ? `Gestor: ${tramitador.nombre}` : 'Contacto Gestor'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.socioBadgeRow}>
+            <View style={styles.socioBadge}>
+              <Text style={styles.socioBadgeText}>👀 Conectado como Socio (Modo Solo Lectura)</Text>
+            </View>
+          </View>
+        )}
       </View>
 
       {/* MÉTRICAS PRINCIPALES */}
@@ -248,6 +259,23 @@ const styles = StyleSheet.create({
   },
   actionBtnText: {
     color: colors.white,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  socioBadgeRow: {
+    marginTop: 4,
+  },
+  socioBadge: {
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    borderWidth: 1,
+    borderColor: colors.accent,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  socioBadgeText: {
+    color: colors.accent,
     fontSize: 12,
     fontWeight: '700',
   },

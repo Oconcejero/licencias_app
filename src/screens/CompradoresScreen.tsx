@@ -7,13 +7,14 @@ import {
   TextInput,
   TouchableOpacity,
 } from 'react-native';
-import { Comprador, Vendedor, DiaLibranza } from '../types';
+import { Comprador, Vendedor, DiaLibranza, UserRole } from '../types';
 import { colors } from '../theme/colors';
 import { CompradorCard } from '../components/CompradorCard';
 
 interface CompradoresScreenProps {
   compradores: Comprador[];
   vendedores: Vendedor[];
+  userRole?: UserRole;
   onNewComprador: () => void;
   onEditComprador: (comprador: Comprador) => void;
   onDeleteComprador: (id: string) => void;
@@ -24,6 +25,7 @@ interface CompradoresScreenProps {
 export const CompradoresScreen: React.FC<CompradoresScreenProps> = ({
   compradores,
   vendedores,
+  userRole = 'ADMIN',
   onNewComprador,
   onEditComprador,
   onDeleteComprador,
@@ -66,9 +68,11 @@ export const CompradoresScreen: React.FC<CompradoresScreenProps> = ({
             {compradores.length} {compradores.length === 1 ? 'comprador registrado' : 'compradores registrados'} en búsqueda activa o bolsa de espera
           </Text>
         </View>
-        <TouchableOpacity style={styles.addBtn} onPress={onNewComprador} activeOpacity={0.8}>
-          <Text style={styles.addBtnText}>+ Nuevo Comprador</Text>
-        </TouchableOpacity>
+        {userRole === 'ADMIN' && (
+          <TouchableOpacity style={styles.addBtn} onPress={onNewComprador} activeOpacity={0.8}>
+            <Text style={styles.addBtnText}>+ Nuevo Comprador</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* BUSCADOR */}
@@ -152,8 +156,8 @@ export const CompradoresScreen: React.FC<CompradoresScreenProps> = ({
             comprador={comprador}
             allVendedores={vendedores}
             onPress={() => onSelectComprador(comprador.id)}
-            onEdit={() => onEditComprador(comprador)}
-            onDelete={() => onDeleteComprador(comprador.id)}
+            onEdit={userRole === 'ADMIN' ? () => onEditComprador(comprador) : undefined}
+            onDelete={userRole === 'ADMIN' ? () => onDeleteComprador(comprador.id) : undefined}
             onOpenGestoriaScript={() => onOpenGestoriaScript(comprador.nombre)}
           />
         ))

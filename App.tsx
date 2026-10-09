@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, StyleSheet, SafeAreaView, Platform, StatusBar } from 'react-native';
 import { colors } from './src/theme/colors';
-import { Vendedor, Comprador, CruceMatch, ConfigTramitador } from './src/types';
+import { Vendedor, Comprador, CruceMatch, ConfigTramitador, UserRole } from './src/types';
 import { storageService } from './src/services/storage';
 import { findMatches } from './src/services/matchEngine';
 import { shareService } from './src/services/shareService';
@@ -13,6 +13,7 @@ import { CompradorModal } from './src/components/CompradorModal';
 import { GestoriaHelperModal } from './src/components/GestoriaHelperModal';
 import { DetailModal } from './src/components/DetailModal';
 import { TramitadorModal } from './src/components/TramitadorModal';
+import { AuthModal } from './src/components/AuthModal';
 
 import { DashboardScreen } from './src/screens/DashboardScreen';
 import { MatchesScreen } from './src/screens/MatchesScreen';
@@ -27,6 +28,11 @@ export default function App() {
   const [tramitador, setTramitador] = useState<ConfigTramitador>({ nombre: 'Gestor Operativo', telefono: '' });
   const [derivadosIds, setDerivadosIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Rol y Acceso (ADMIN vs SOCIO)
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [authModalVisible, setAuthModalVisible] = useState(false);
+  const isAdmin = userRole === 'ADMIN';
 
   // Modales
   const [vendedorModalVisible, setVendedorModalVisible] = useState(false);
@@ -65,7 +71,23 @@ export default function App() {
 
   useEffect(() => {
     loadData();
+    storageService.getUserRole().then((savedRole) => {
+      if (savedRole) {
+        setUserRole(savedRole);
+      } else {
+        setAuthModalVisible(true);
+      }
+    });
   }, [loadData]);
+
+  const handleAuthSuccess = (role: UserRole) => {
+    setUserRole(role);
+    setAuthModalVisible(false);
+  };
+
+  const handleSwitchRole = () => {
+    setAuthModalVisible(true);
+  };
 
   // Matches calculados
   const matches = useMemo(() => {
@@ -172,6 +194,8 @@ export default function App() {
         {/* Header Superior */}
         <Header
           totalMatches={matches.length}
+          userRole={userRole || undefined}
+          onSwitchRole={handleSwitchRole}
           onOpenMatches={() => setCurrentTab('matches')}
           onNewVendedor={() => {
             setVendedorToEdit(null);
@@ -199,6 +223,7 @@ export default function App() {
               matches={matches}
               tramitador={tramitador}
               derivadosIds={derivadosIds}
+              userRole={userRole || 'ADMIN'}
               onNavigateTab={setCurrentTab}
               onNewVendedor={() => {
                 setVendedorToEdit(null);
@@ -233,6 +258,7 @@ export default function App() {
             <VendedoresScreen
               vendedores={vendedores}
               compradores={compradores}
+              userRole={userRole || 'ADMIN'}
               onNewVendedor={() => {
                 setVendedorToEdit(null);
                 setVendedorModalVisible(true);
@@ -250,6 +276,7 @@ export default function App() {
             <CompradoresScreen
               compradores={compradores}
               vendedores={vendedores}
+              userRole={userRole || 'ADMIN'}
               onNewComprador={() => {
                 setCompradorToEdit(null);
                 setCompradorModalVisible(true);
@@ -269,9 +296,11 @@ export default function App() {
               vendedores={vendedores}
               compradores={compradores}
               tramitador={tramitador}
+              userRole={userRole || 'ADMIN'}
               onUpdateTramitador={setTramitador}
               onRefreshData={loadData}
               onOpenGestoriaHelper={() => handleOpenGestoriaHelper()}
+              onSwitchRole={handleSwitchRole}
             />
           )}
         </View>
@@ -318,17 +347,25 @@ export default function App() {
           allCompradores={compradores}
           tramitadorNombre={tramitador.nombre}
           tramitadorTelefono={tramitador.telefono}
-          onEditVendedor={(v) => {
+          onEditVendedor={isAdmin ? (v) => {
             setVendedorToEdit(v);
             setVendedorModalVisible(true);
-          }}
-          onEditComprador={(c) => {
+          } : undefined}
+          onEditComprador={isAdmin ? (c) => {
             setCompradorToEdit(c);
             setCompradorModalVisible(true);
-          }}
+          } : undefined}
           onOpenGestoriaScript={handleOpenGestoriaHelper}
           onSendMatchToFriend={handleSendToFriend}
           onOpenConfigTramitador={() => setTramitadorModalVisible(true)}
+        />
+
+        {/* Modal de Autenticación / Cambio de Rol */}
+        <AuthModal
+          visible={authModalVisible}
+          onSuccess={handleAuthSuccess}
+          canCancel={userRole !== null}
+          onClose={() => setAuthModalVisible(false)}
         />
       </View>
     </SafeAreaView>

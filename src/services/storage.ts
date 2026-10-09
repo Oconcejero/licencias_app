@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Vendedor, Comprador, ConfigTramitador } from '../types';
+import { Vendedor, Comprador, ConfigTramitador, UserRole } from '../types';
 import { initialVendedores, initialCompradores } from './demoData';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 
@@ -7,6 +7,11 @@ const VENDEDORES_KEY = '@licencias_vendedores_v1';
 const COMPRADORES_KEY = '@licencias_compradores_v1';
 const TRAMITADOR_KEY = '@licencias_tramitador_v1';
 const DERIVADOS_KEY = '@licencias_matches_derivados_v1';
+const USER_ROLE_KEY = '@licencias_user_role_v1';
+const ADMIN_PIN_KEY = '@licencias_admin_pin_v1';
+const SOCIO_PIN_KEY = '@licencias_socio_pin_v1';
+export const DEFAULT_ADMIN_PIN = '2026';
+export const DEFAULT_SOCIO_PIN = '1234';
 
 // Mapeos Supabase <-> TypeScript
 function mapVendedorToRow(v: Vendedor, includeCanal = true) {
@@ -393,5 +398,51 @@ export const storageService = {
       };
     }
     throw new Error('Formato inválido.');
+  },
+
+  async getUserRole(): Promise<UserRole | null> {
+    try {
+      const role = await AsyncStorage.getItem(USER_ROLE_KEY);
+      if (role === 'ADMIN' || role === 'SOCIO') {
+        return role;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  },
+
+  async setUserRole(role: UserRole | null): Promise<void> {
+    try {
+      if (role) {
+        await AsyncStorage.setItem(USER_ROLE_KEY, role);
+      } else {
+        await AsyncStorage.removeItem(USER_ROLE_KEY);
+      }
+    } catch (e) {
+      console.error('Error guardando rol:', e);
+    }
+  },
+
+  async getPins(): Promise<{ adminPin: string; socioPin: string }> {
+    try {
+      const a = await AsyncStorage.getItem(ADMIN_PIN_KEY);
+      const s = await AsyncStorage.getItem(SOCIO_PIN_KEY);
+      return {
+        adminPin: a || DEFAULT_ADMIN_PIN,
+        socioPin: s || DEFAULT_SOCIO_PIN,
+      };
+    } catch {
+      return { adminPin: DEFAULT_ADMIN_PIN, socioPin: DEFAULT_SOCIO_PIN };
+    }
+  },
+
+  async setPins(adminPin: string, socioPin: string): Promise<void> {
+    try {
+      await AsyncStorage.setItem(ADMIN_PIN_KEY, adminPin);
+      await AsyncStorage.setItem(SOCIO_PIN_KEY, socioPin);
+    } catch (e) {
+      console.error('Error guardando PINs:', e);
+    }
   }
 };

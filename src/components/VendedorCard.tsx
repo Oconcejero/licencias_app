@@ -8,8 +8,8 @@ interface VendedorCardProps {
   vendedor: Vendedor;
   allCompradores: Comprador[];
   onPress: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 export const VendedorCard: React.FC<VendedorCardProps> = ({
@@ -183,12 +183,16 @@ export const VendedorCard: React.FC<VendedorCardProps> = ({
           <TouchableOpacity style={[styles.iconBtn, styles.waBtn]} onPress={handleWhatsApp}>
             <Text style={styles.btnIconText}>💬</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn} onPress={onEdit}>
-            <Text style={styles.btnIconText}>✏️</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.iconBtn, styles.delBtn]} onPress={onDelete}>
-            <Text style={styles.btnIconText}>🗑️</Text>
-          </TouchableOpacity>
+          {onEdit && (
+            <TouchableOpacity style={styles.iconBtn} onPress={onEdit}>
+              <Text style={styles.btnIconText}>✏️</Text>
+            </TouchableOpacity>
+          )}
+          {onDelete && (
+            <TouchableOpacity style={[styles.iconBtn, styles.delBtn]} onPress={onDelete}>
+              <Text style={styles.btnIconText}>🗑️</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </View>

@@ -7,13 +7,14 @@ import {
   TextInput,
   TouchableOpacity,
 } from 'react-native';
-import { Vendedor, Comprador, DiaLibranza } from '../types';
+import { Vendedor, Comprador, DiaLibranza, UserRole } from '../types';
 import { colors } from '../theme/colors';
 import { VendedorCard } from '../components/VendedorCard';
 
 interface VendedoresScreenProps {
   vendedores: Vendedor[];
   compradores: Comprador[];
+  userRole?: UserRole;
   onNewVendedor: () => void;
   onEditVendedor: (vendedor: Vendedor) => void;
   onDeleteVendedor: (id: string) => void;
@@ -23,6 +24,7 @@ interface VendedoresScreenProps {
 export const VendedoresScreen: React.FC<VendedoresScreenProps> = ({
   vendedores,
   compradores,
+  userRole = 'ADMIN',
   onNewVendedor,
   onEditVendedor,
   onDeleteVendedor,
@@ -63,9 +65,11 @@ export const VendedoresScreen: React.FC<VendedoresScreenProps> = ({
             {vendedores.length} {vendedores.length === 1 ? 'licencia registrada' : 'licencias registradas'} en la base de datos
           </Text>
         </View>
-        <TouchableOpacity style={styles.addBtn} onPress={onNewVendedor} activeOpacity={0.8}>
-          <Text style={styles.addBtnText}>+ Nueva Licencia</Text>
-        </TouchableOpacity>
+        {userRole === 'ADMIN' && (
+          <TouchableOpacity style={styles.addBtn} onPress={onNewVendedor} activeOpacity={0.8}>
+            <Text style={styles.addBtnText}>+ Nueva Licencia</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* BUSCADOR */}
@@ -149,8 +153,8 @@ export const VendedoresScreen: React.FC<VendedoresScreenProps> = ({
             vendedor={vendedor}
             allCompradores={compradores}
             onPress={() => onSelectVendedor(vendedor.id)}
-            onEdit={() => onEditVendedor(vendedor)}
-            onDelete={() => onDeleteVendedor(vendedor.id)}
+            onEdit={userRole === 'ADMIN' ? () => onEditVendedor(vendedor) : undefined}
+            onDelete={userRole === 'ADMIN' ? () => onDeleteVendedor(vendedor.id) : undefined}
           />
         ))
       ) : (

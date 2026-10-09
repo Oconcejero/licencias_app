@@ -1,5 +1,4 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { colors } from '../theme/colors';
 
 export type TabType = 'dashboard' | 'matches' | 'vendedores' | 'compradores' | 'ajustes';
@@ -25,47 +24,55 @@ export const Navigation: React.FC<NavigationProps> = ({
 
   return (
     <View style={styles.navContainer}>
-      {tabs.map((tab) => {
-        const isActive = currentTab === tab.key;
-        return (
-          <TouchableOpacity
-            key={tab.key}
-            style={[styles.tabItem, isActive && styles.tabItemActive]}
-            onPress={() => onSelectTab(tab.key)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.iconContainer}>
-              <Text style={styles.iconText}>{tab.icon}</Text>
-              {typeof tab.badge === 'number' && tab.badge > 0 && (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{tab.badge}</Text>
-                </View>
-              )}
-            </View>
-            <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {tabs.map((tab) => {
+          const isActive = currentTab === tab.key;
+          return (
+            <TouchableOpacity
+              key={tab.key}
+              style={[styles.tabItem, isActive && styles.tabItemActive]}
+              onPress={() => onSelectTab(tab.key)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.iconContainer}>
+                <Text style={styles.iconText}>{tab.icon}</Text>
+                {typeof tab.badge === 'number' && tab.badge > 0 && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{tab.badge}</Text>
+                  </View>
+                )}
+              </View>
+              <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   navContainer: {
-    flexDirection: 'row',
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-    paddingHorizontal: 12,
+  },
+  scrollContent: {
+    flexDirection: 'row',
+    paddingHorizontal: 8,
   },
   tabItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     borderBottomWidth: 3,
     borderBottomColor: 'transparent',
   },

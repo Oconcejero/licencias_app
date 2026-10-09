@@ -8,8 +8,8 @@ interface CompradorCardProps {
   comprador: Comprador;
   allVendedores: Vendedor[];
   onPress: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   onOpenGestoriaScript: () => void;
 }
 
@@ -174,12 +174,16 @@ export const CompradorCard: React.FC<CompradorCardProps> = ({
           <TouchableOpacity style={[styles.iconBtn, styles.waBtn]} onPress={handleWhatsApp}>
             <Text style={styles.btnIconText}>💬</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn} onPress={onEdit}>
-            <Text style={styles.btnIconText}>✏️</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.iconBtn, styles.delBtn]} onPress={onDelete}>
-            <Text style={styles.btnIconText}>🗑️</Text>
-          </TouchableOpacity>
+          {onEdit && (
+            <TouchableOpacity style={styles.iconBtn} onPress={onEdit}>
+              <Text style={styles.btnIconText}>✏️</Text>
+            </TouchableOpacity>
+          )}
+          {onDelete && (
+            <TouchableOpacity style={[styles.iconBtn, styles.delBtn]} onPress={onDelete}>
+              <Text style={styles.btnIconText}>🗑️</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </View>
