@@ -31,7 +31,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "build:web": "expo export -p web && node -e \"require('fs').writeFileSync('dist/.nojekyll', '')\"",
-    "deploy": "npm run build:web && npx gh-pages -d dist -b gh-pages",
+    "deploy": "npm run build:web && npx gh-pages -d dist -b gh-pages -t --nojekyll",
     "lint": "expo lint"
   },
   "private": true
