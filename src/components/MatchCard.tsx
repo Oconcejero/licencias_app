@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Linking, useWindowDimensions } from 'react-native';
 import { CruceMatch, getCompradorDias } from '../types';
 import { colors } from '../theme/colors';
 import { ExportCardModal } from './ExportCardModal';
@@ -23,6 +23,8 @@ export const MatchCard: React.FC<MatchCardProps> = ({
   onSendToFriend,
   onToggleDerivado,
 }) => {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 720;
   const [showExportModal, setShowExportModal] = useState(false);
   const { vendedor, comprador, match } = cruce;
   const precioSoloLicencia = vendedor.precio;
@@ -102,10 +104,10 @@ export const MatchCard: React.FC<MatchCardProps> = ({
       </TouchableOpacity>
 
       {/* Bloque comparativo: Comprador ↔ Vendedor */}
-      <View style={styles.comparisonGrid}>
+      <View style={[styles.comparisonGrid, isMobile && styles.comparisonGridMobile]}>
         {/* COMPRADOR */}
         <TouchableOpacity
-          style={styles.profileBox}
+          style={[styles.profileBox, isMobile && styles.profileBoxMobile]}
           onPress={() => onOpenDetailComprador(comprador.id)}
           activeOpacity={0.7}
         >
@@ -144,7 +146,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
               style={styles.contactBtn}
               onPress={() => handleCall(comprador.telefono)}
             >
-              <Text style={styles.contactBtnText}>Llamar</Text>
+              <Text style={styles.contactBtnText}>📞 Llamar</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.contactBtn, styles.waBtn]}
@@ -155,18 +157,28 @@ export const MatchCard: React.FC<MatchCardProps> = ({
                 )
               }
             >
-              <Text style={styles.contactBtnText}>WhatsApp</Text>
+              <Text style={styles.contactBtnText}>💬 WhatsApp</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
 
-        <View style={styles.dividerArrow}>
-          <Text style={styles.arrowText}>⇄</Text>
-        </View>
+        {isMobile ? (
+          <View style={styles.mobileConnector}>
+            <View style={styles.connectorLine} />
+            <View style={styles.connectorBadge}>
+              <Text style={styles.connectorText}>⚡ ENCAJA COMERCIALMENTE CON ⚡</Text>
+            </View>
+            <View style={styles.connectorLine} />
+          </View>
+        ) : (
+          <View style={styles.dividerArrow}>
+            <Text style={styles.arrowText}>⇄</Text>
+          </View>
+        )}
 
         {/* VENDEDOR */}
         <TouchableOpacity
-          style={styles.profileBox}
+          style={[styles.profileBox, isMobile && styles.profileBoxMobile]}
           onPress={() => onOpenDetailVendedor(vendedor.id)}
           activeOpacity={0.7}
         >
@@ -265,7 +277,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
               style={styles.contactBtn}
               onPress={() => handleCall(vendedor.telefono)}
             >
-              <Text style={styles.contactBtnText}>Llamar</Text>
+              <Text style={styles.contactBtnText}>📞 Llamar</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.contactBtn, styles.waBtn]}
@@ -276,7 +288,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
                 )
               }
             >
-              <Text style={styles.contactBtnText}>WhatsApp</Text>
+              <Text style={styles.contactBtnText}>💬 WhatsApp</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -467,6 +479,10 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 14,
   },
+  comparisonGridMobile: {
+    flexDirection: 'column',
+    gap: 12,
+  },
   profileBox: {
     flex: 1,
     backgroundColor: colors.surface,
@@ -474,6 +490,36 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: colors.borderLight,
+  },
+  profileBoxMobile: {
+    flex: undefined,
+    width: '100%',
+  },
+  mobileConnector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginVertical: 4,
+  },
+  connectorLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  connectorBadge: {
+    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+    borderColor: colors.accent,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
+  },
+  connectorText: {
+    color: colors.accent,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   dividerArrow: {
     justifyContent: 'center',

@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, useWindowDimensions } from 'react-native';
 import { colors } from '../theme/colors';
-
 import { UserRole } from '../types';
 
 interface HeaderProps {
@@ -21,71 +20,100 @@ export const Header: React.FC<HeaderProps> = ({
   userRole = 'ADMIN',
   onSwitchRole,
 }) => {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
   const isAdmin = userRole === 'ADMIN';
 
   return (
     <View style={styles.header}>
-      <View style={styles.left}>
-        <View style={styles.logoBadge}>
-          <Text style={styles.logoBadgeText}>🚕 TAXI</Text>
-        </View>
-        <View>
-          <Text style={styles.title}>Gestor de Licencias</Text>
-          <Text style={styles.subtitle}>Cruces inteligentes Comprador ↔ Vendedor</Text>
-        </View>
-      </View>
-
-      <View style={styles.actions}>
-        {/* Badge de Rol y Cambio de Perfil */}
-        {userRole && onSwitchRole && (
-          <TouchableOpacity
-            style={[
-              styles.roleTagBtn,
-              isAdmin ? styles.roleTagAdmin : styles.roleTagSocio,
-            ]}
-            onPress={onSwitchRole}
-            activeOpacity={0.8}
-            accessibilityLabel="Pulsar para cambiar perfil"
-          >
-            <Text style={styles.roleTagText}>
-              {isAdmin ? '👑 Admin' : '👀 Socio'}
-            </Text>
-            <Text style={styles.roleTagSwitchIcon}>⇄</Text>
-          </TouchableOpacity>
-        )}
-
-        <TouchableOpacity
-          style={[styles.matchesAlertBtn, totalMatches > 0 && styles.matchesAlertBtnActive]}
-          onPress={onOpenMatches}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.matchesBellIcon}>🔔</Text>
-          <Text style={styles.matchesAlertText}>
-            {totalMatches} {totalMatches === 1 ? 'Aviso Match' : 'Avisos Match'}
-          </Text>
-          {totalMatches > 0 && <View style={styles.pulseDot} />}
-        </TouchableOpacity>
-
-        {isAdmin && (
-          <View style={styles.buttonGroup}>
-            <TouchableOpacity
-              style={[styles.btn, styles.btnVendedor]}
-              onPress={onNewVendedor}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.btnText}>+ Vendedor</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.btn, styles.btnComprador]}
-              onPress={onNewComprador}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.btnText}>+ Comprador</Text>
-            </TouchableOpacity>
+      {/* Barra Superior: Logo / Título y Controles de Usuario / Avisos */}
+      <View style={styles.topRow}>
+        <View style={styles.left}>
+          <View style={styles.logoBadge}>
+            <Text style={styles.logoBadgeText}>🚕 TAXI</Text>
           </View>
-        )}
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>Gestor de Licencias</Text>
+            <Text style={styles.subtitle} numberOfLines={1}>
+              Cruces Comprador ↔ Vendedor
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.rightControls}>
+          {/* Badge de Rol y Cambio de Perfil */}
+          {userRole && onSwitchRole && (
+            <TouchableOpacity
+              style={[
+                styles.roleTagBtn,
+                isAdmin ? styles.roleTagAdmin : styles.roleTagSocio,
+              ]}
+              onPress={onSwitchRole}
+              activeOpacity={0.8}
+              accessibilityLabel="Pulsar para cambiar perfil"
+            >
+              <Text style={styles.roleTagText}>
+                {isAdmin ? '👑 Admin' : '👀 Socio'}
+              </Text>
+              <Text style={styles.roleTagSwitchIcon}>⇄</Text>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            style={[styles.matchesAlertBtn, totalMatches > 0 && styles.matchesAlertBtnActive]}
+            onPress={onOpenMatches}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.matchesBellIcon}>🔔</Text>
+            <Text style={styles.matchesAlertText}>
+              {isMobile ? `${totalMatches} Avisos` : `${totalMatches} ${totalMatches === 1 ? 'Aviso Match' : 'Avisos Match'}`}
+            </Text>
+            {totalMatches > 0 && <View style={styles.pulseDot} />}
+          </TouchableOpacity>
+
+          {/* En Desktop: botones integrados en la misma fila */}
+          {!isMobile && isAdmin && (
+            <View style={styles.buttonGroupDesktop}>
+              <TouchableOpacity
+                style={[styles.btn, styles.btnVendedor]}
+                onPress={onNewVendedor}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.btnText}>+ Nueva Licencia</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.btn, styles.btnComprador]}
+                onPress={onNewComprador}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.btnText}>+ Nuevo Comprador</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
       </View>
+
+      {/* En Mobile: Fila dedicada y destacada con los dos botones principales de añadir */}
+      {isMobile && isAdmin && (
+        <View style={styles.mobileActionButtonsRow}>
+          <TouchableOpacity
+            style={[styles.mobileBtn, styles.btnVendedor]}
+            onPress={onNewVendedor}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.mobileBtnText}>➕ Nueva Licencia</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.mobileBtn, styles.btnComprador]}
+            onPress={onNewComprador}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.mobileBtnText}>➕ Nuevo Comprador</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
@@ -93,59 +121,68 @@ export const Header: React.FC<HeaderProps> = ({
 const styles = StyleSheet.create({
   header: {
     backgroundColor: colors.surface,
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'web' ? 16 : 48,
-    paddingBottom: 16,
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'web' ? 14 : 44,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    width: '100%',
+  },
+  topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 12,
+    width: '100%',
+    gap: 8,
   },
   left: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
+    flex: 1,
+    minWidth: 0,
   },
   logoBadge: {
     backgroundColor: colors.primaryLight,
     borderColor: colors.primary,
     borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
     borderRadius: 8,
   },
   logoBadgeText: {
     color: '#60A5FA',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '800',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
+  },
+  titleContainer: {
+    flex: 1,
+    minWidth: 0,
   },
   title: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '800',
     color: colors.text,
   },
   subtitle: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.textMuted,
-    marginTop: 2,
+    marginTop: 1,
   },
-  actions: {
+  rightControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    flexWrap: 'wrap',
+    gap: 8,
+    flexShrink: 0,
   },
   matchesAlertBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
     backgroundColor: colors.surfaceCard,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.border,
@@ -156,26 +193,27 @@ const styles = StyleSheet.create({
     borderColor: colors.accent,
   },
   matchesBellIcon: {
-    fontSize: 14,
+    fontSize: 13,
   },
   matchesAlertText: {
     color: colors.text,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
   },
   pulseDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
     backgroundColor: colors.accent,
   },
-  buttonGroup: {
+  buttonGroupDesktop: {
     flexDirection: 'row',
     gap: 8,
+    marginLeft: 6,
   },
   btn: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -189,14 +227,32 @@ const styles = StyleSheet.create({
   btnText: {
     color: colors.white,
     fontWeight: '700',
+    fontSize: 12,
+  },
+  mobileActionButtonsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 10,
+    width: '100%',
+  },
+  mobileBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mobileBtnText: {
+    color: colors.white,
+    fontWeight: '800',
     fontSize: 13,
   },
   roleTagBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
     borderRadius: 8,
     borderWidth: 1.5,
   },
@@ -209,12 +265,12 @@ const styles = StyleSheet.create({
     borderColor: colors.accent,
   },
   roleTagText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '800',
     color: colors.text,
   },
   roleTagSwitchIcon: {
-    fontSize: 13,
+    fontSize: 12,
     color: colors.textMuted,
     fontWeight: '800',
   },

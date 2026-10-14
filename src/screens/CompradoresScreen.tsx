@@ -74,8 +74,12 @@ export const CompradoresScreen: React.FC<CompradoresScreenProps> = ({
           </Text>
         </View>
         {userRole === 'ADMIN' && (
-          <TouchableOpacity style={styles.addBtn} onPress={onNewComprador} activeOpacity={0.8}>
-            <Text style={styles.addBtnText}>+ Nuevo Comprador</Text>
+          <TouchableOpacity
+            style={[styles.addBtn, !isTwoCols && { width: '100%', alignItems: 'center', paddingVertical: 11 }]}
+            onPress={onNewComprador}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.addBtnText}>➕ Añadir Nuevo Comprador</Text>
           </TouchableOpacity>
         )}
       </View>

@@ -62,27 +62,29 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
         {isAdmin ? (
           <View style={styles.quickActionBtns}>
-            <TouchableOpacity
-              style={[styles.actionBtn, styles.btnSeller]}
-              onPress={onNewVendedor}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.actionBtnText}>+ Meter Vendedor</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionBtn, styles.btnBuyer]}
-              onPress={onNewComprador}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.actionBtnText}>+ Meter Comprador</Text>
-            </TouchableOpacity>
+            <View style={styles.quickActionMainRow}>
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.btnSeller]}
+                onPress={onNewVendedor}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.actionBtnText}>➕ Nueva Licencia</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.btnBuyer]}
+                onPress={onNewComprador}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.actionBtnText}>➕ Nuevo Comprador</Text>
+              </TouchableOpacity>
+            </View>
             <TouchableOpacity
               style={[styles.actionBtn, styles.btnTramitador]}
               onPress={onOpenConfigTramitador}
               activeOpacity={0.8}
             >
               <Text style={styles.actionBtnText}>
-                👤 {tramitador.nombre && tramitador.nombre !== 'Gestor Operativo' ? `Gestor: ${tramitador.nombre}` : 'Contacto Gestor'}
+                👤 {tramitador.nombre && tramitador.nombre !== 'Gestor Operativo' ? `Gestor: ${tramitador.nombre}` : 'Contacto Gestor Operativo'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -219,14 +221,22 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   quickActionBtns: {
+    width: '100%',
+    gap: 8,
+    marginTop: 10,
+  },
+  quickActionMainRow: {
     flexDirection: 'row',
     gap: 8,
-    flexWrap: 'wrap',
+    width: '100%',
   },
   actionBtn: {
+    flex: 1,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   btnSeller: {
     backgroundColor: colors.primary,
@@ -238,11 +248,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#064E3B',
     borderColor: '#10B981',
     borderWidth: 1,
+    flex: undefined,
+    width: '100%',
   },
   actionBtnText: {
     color: colors.white,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   socioBadgeRow: {
     marginTop: 4,

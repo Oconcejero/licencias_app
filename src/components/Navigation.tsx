@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { colors } from '../theme/colors';
 
 export type TabType = 'dashboard' | 'matches' | 'vendedores' | 'compradores' | 'ajustes';
@@ -14,27 +15,30 @@ export const Navigation: React.FC<NavigationProps> = ({
   onSelectTab,
   matchesCount,
 }) => {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
+
   const tabs: { key: TabType; label: string; icon: string; badge?: number }[] = [
     { key: 'dashboard', label: 'Inicio', icon: '📊' },
-    { key: 'matches', label: 'Cruces & Avisos', icon: '⚡', badge: matchesCount },
-    { key: 'vendedores', label: 'Vendedores', icon: '🏷️' },
+    { key: 'matches', label: isMobile ? 'Cruces' : 'Cruces & Avisos', icon: '⚡', badge: matchesCount },
+    { key: 'vendedores', label: 'Vendedores', icon: '🚕' },
     { key: 'compradores', label: 'Compradores', icon: '👥' },
     { key: 'ajustes', label: 'Ajustes', icon: '⚙️' },
   ];
 
   return (
     <View style={styles.navContainer}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
+      <View style={[styles.barContent, isMobile ? styles.barContentMobile : styles.barContentDesktop]}>
         {tabs.map((tab) => {
           const isActive = currentTab === tab.key;
           return (
             <TouchableOpacity
               key={tab.key}
-              style={[styles.tabItem, isActive && styles.tabItemActive]}
+              style={[
+                styles.tabItem,
+                isMobile ? styles.tabItemMobile : styles.tabItemDesktop,
+                isActive && styles.tabItemActive,
+              ]}
               onPress={() => onSelectTab(tab.key)}
               activeOpacity={0.7}
             >
@@ -46,13 +50,20 @@ export const Navigation: React.FC<NavigationProps> = ({
                   </View>
                 )}
               </View>
-              <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
+              <Text
+                style={[
+                  styles.tabLabel,
+                  isMobile && styles.tabLabelMobile,
+                  isActive && styles.tabLabelActive,
+                ]}
+                numberOfLines={1}
+              >
                 {tab.label}
               </Text>
             </TouchableOpacity>
           );
         })}
-      </ScrollView>
+      </View>
     </View>
   );
 };
@@ -62,19 +73,40 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    width: '100%',
   },
-  scrollContent: {
+  barContent: {
     flexDirection: 'row',
-    paddingHorizontal: 8,
+    width: '100%',
+  },
+  barContentMobile: {
+    justifyContent: 'space-between',
+    paddingHorizontal: 2,
+  },
+  barContentDesktop: {
+    justifyContent: 'center',
+    maxWidth: 1100,
+    alignSelf: 'center',
+    paddingHorizontal: 16,
+    gap: 8,
   },
   tabItem: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    justifyContent: 'center',
     borderBottomWidth: 3,
     borderBottomColor: 'transparent',
+  },
+  tabItemMobile: {
+    flex: 1,
+    flexDirection: 'column',
+    paddingVertical: 8,
+    gap: 3,
+  },
+  tabItemDesktop: {
+    flexDirection: 'row',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    gap: 8,
   },
   tabItemActive: {
     borderBottomColor: colors.primary,
@@ -88,28 +120,32 @@ const styles = StyleSheet.create({
   },
   badge: {
     position: 'absolute',
-    top: -6,
+    top: -5,
     right: -10,
     backgroundColor: colors.accent,
-    borderRadius: 9,
+    borderRadius: 8,
     minWidth: 16,
     height: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: 3,
   },
   badgeText: {
     color: '#000',
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '800',
   },
   tabLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: colors.textMuted,
   },
+  tabLabelMobile: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
   tabLabelActive: {
     color: colors.text,
-    fontWeight: '700',
+    fontWeight: '800',
   },
 });

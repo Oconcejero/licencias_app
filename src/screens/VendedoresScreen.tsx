@@ -69,8 +69,12 @@ export const VendedoresScreen: React.FC<VendedoresScreenProps> = ({
           </Text>
         </View>
         {userRole === 'ADMIN' && (
-          <TouchableOpacity style={styles.addBtn} onPress={onNewVendedor} activeOpacity={0.8}>
-            <Text style={styles.addBtnText}>+ Nueva Licencia</Text>
+          <TouchableOpacity
+            style={[styles.addBtn, !isTwoCols && { width: '100%', alignItems: 'center', paddingVertical: 11 }]}
+            onPress={onNewVendedor}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.addBtnText}>➕ Añadir Nueva Licencia (Vendedor)</Text>
           </TouchableOpacity>
         )}
       </View>
