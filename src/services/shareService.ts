@@ -154,13 +154,11 @@ ${divider}
       ? '🔥 *SÍ, DISPONIBLE PARA SEÑALIZAR DE INMEDIATO*'
       : 'Pendiente de formalizar acuerdo';
 
-    const gestoriaStr = !comprador.tieneGestoria
-      ? 'Sin gestoría _(Candidato a tramitar subvención 6.000 €)_'
-      : comprador.gestoriaSeleccionada === 'GESTORIA_VIP'
-      ? 'Gestoría Asesoría Integral (Subvención 6.000 €)'
-      : comprador.gestoriaSeleccionada === 'GESTORIA_TALAMANCA'
-      ? 'El Casar de Talamanca'
-      : comprador.nombreGestoriaPropia || 'Gestoría propia asignada';
+    const cargasStr = comprador.aceptaConPrestamo === true
+      ? 'Acepta licencia con préstamo existente'
+      : comprador.aceptaConPrestamo === false
+      ? 'Exige 100% libre de cargas'
+      : 'Indiferente';
 
     let contactoLines = `   ▪ *Interesado:* ${comprador.nombre} _(${cleanPerfil(comprador.perfil)})_`;
     if (comprador.telefono) {
@@ -193,8 +191,8 @@ ${divider}
 🚘 *REQUISITO DE VEHÍCULO:*
    ▪ ${cochePref}
 
-📋 *GESTIÓN & ASESORAMIENTO:*
-   ▪ *Gestoría:* ${gestoriaStr}${notasStr}
+⚖️ *CONDICIÓN DE CARGAS:*
+   ▪ ${cargasStr}${notasStr}
 
 👤 *DATOS DEL COMPRADOR:*
 ${contactoLines}

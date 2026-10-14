@@ -21,7 +21,6 @@ interface DashboardScreenProps {
   onNavigateTab: (tab: 'dashboard' | 'matches' | 'vendedores' | 'compradores' | 'ajustes') => void;
   onNewVendedor: () => void;
   onNewComprador: () => void;
-  onOpenGestoriaHelper: (nombre?: string) => void;
   onOpenDetailVendedor: (id: string) => void;
   onOpenDetailComprador: (id: string) => void;
   onSendToFriend: (cruce: CruceMatch) => void;
@@ -38,7 +37,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   onNavigateTab,
   onNewVendedor,
   onNewComprador,
-  onOpenGestoriaHelper,
   onOpenDetailVendedor,
   onOpenDetailComprador,
   onSendToFriend,
@@ -157,7 +155,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               cruce={cruce}
               isDerivado={derivadosIds.includes(cruce.id)}
               tramitadorNombre={tramitador.nombre}
-              onOpenGestoriaScript={(nombre) => onOpenGestoriaHelper(nombre)}
               onOpenDetailVendedor={onOpenDetailVendedor}
               onOpenDetailComprador={onOpenDetailComprador}
               onSendToFriend={onSendToFriend}
@@ -173,21 +170,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           </Text>
         </View>
       )}
-
-      {/* ESTRATEGIA COMERCIAL DE GESTORÍAS EN PRIMERA PLANA */}
-      <View style={styles.strategyBanner}>
-        <View style={styles.strategyTop}>
-          <Text style={styles.strategyBadge}>ESTRATEGIA COMERCIAL & GESTORÍAS</Text>
-          <TouchableOpacity onPress={() => onOpenGestoriaHelper()}>
-            <Text style={styles.strategyLink}>Abrir chuleta completa →</Text>
-          </TouchableOpacity>
-        </View>
-        <Text style={styles.strategyTitle}>¿Cómo ofrecer las gestorías sin parecer comercial?</Text>
-        <Text style={styles.strategyText}>
-          1. Ofrece la <Text style={styles.boldText}>Gestoría VIP Especializada</Text>: gestionan el 100% de la tramitación y solicitan la <Text style={styles.highlightText}>subvención inicial de hasta 6.000€</Text>.{'\n'}
-          2. Ofrece de segunda alternativa la <Text style={styles.boldText}>Gestoría en El Casar de Talamanca</Text> (a desmano): para que tengan alternativa neutra y elijan la primera por comodidad sin presión.
-        </Text>
-      </View>
     </ScrollView>
   );
 };

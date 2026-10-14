@@ -88,8 +88,8 @@ export interface Comprador {
   puedeSenalizarYa: boolean;
   buscaConCoche: TipoPreferenciaCoche;
   
-  tieneGestoria: boolean;
-  gestoriaSeleccionada: TipoGestoria;
+  tieneGestoria?: boolean;
+  gestoriaSeleccionada?: TipoGestoria;
   nombreGestoriaPropia?: string;
   
   guardadoEnEspera: boolean;

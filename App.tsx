@@ -10,7 +10,6 @@ import { Header } from './src/components/Header';
 import { Navigation, TabType } from './src/components/Navigation';
 import { VendedorModal } from './src/components/VendedorModal';
 import { CompradorModal } from './src/components/CompradorModal';
-import { GestoriaHelperModal } from './src/components/GestoriaHelperModal';
 import { DetailModal } from './src/components/DetailModal';
 import { TramitadorModal } from './src/components/TramitadorModal';
 import { AuthModal } from './src/components/AuthModal';
@@ -40,9 +39,6 @@ export default function App() {
 
   const [compradorModalVisible, setCompradorModalVisible] = useState(false);
   const [compradorToEdit, setCompradorToEdit] = useState<Comprador | null>(null);
-
-  const [gestoriaHelperVisible, setGestoriaHelperVisible] = useState(false);
-  const [gestoriaClientName, setGestoriaClientName] = useState<string>('Cliente');
 
   const [tramitadorModalVisible, setTramitadorModalVisible] = useState(false);
   const [pendingCruceToSend, setPendingCruceToSend] = useState<CruceMatch | null>(null);
@@ -145,11 +141,6 @@ export default function App() {
     }
   };
 
-  const handleOpenGestoriaHelper = (nombre?: string) => {
-    setGestoriaClientName(nombre || 'Cliente');
-    setGestoriaHelperVisible(true);
-  };
-
   // Enviar a mi amigo por WhatsApp
   const handleSendToFriend = (cruce: CruceMatch) => {
     if (!tramitador.telefono) {
@@ -233,7 +224,6 @@ export default function App() {
                 setCompradorToEdit(null);
                 setCompradorModalVisible(true);
               }}
-              onOpenGestoriaHelper={handleOpenGestoriaHelper}
               onOpenDetailVendedor={handleOpenDetailVendedor}
               onOpenDetailComprador={handleOpenDetailComprador}
               onSendToFriend={handleSendToFriend}
@@ -246,7 +236,6 @@ export default function App() {
               matches={matches}
               tramitador={tramitador}
               derivadosIds={derivadosIds}
-              onOpenGestoriaScript={handleOpenGestoriaHelper}
               onOpenDetailVendedor={handleOpenDetailVendedor}
               onOpenDetailComprador={handleOpenDetailComprador}
               onSendToFriend={handleSendToFriend}
@@ -287,7 +276,6 @@ export default function App() {
               }}
               onDeleteComprador={handleDeleteComprador}
               onSelectComprador={handleOpenDetailComprador}
-              onOpenGestoriaScript={handleOpenGestoriaHelper}
             />
           )}
 
@@ -299,7 +287,6 @@ export default function App() {
               userRole={userRole || 'ADMIN'}
               onUpdateTramitador={setTramitador}
               onRefreshData={loadData}
-              onOpenGestoriaHelper={() => handleOpenGestoriaHelper()}
               onSwitchRole={handleSwitchRole}
             />
           )}
@@ -319,13 +306,6 @@ export default function App() {
           onSave={handleSaveComprador}
           compradorToEdit={compradorToEdit}
           allVendedores={vendedores}
-          onOpenGestoriaHelper={handleOpenGestoriaHelper}
-        />
-
-        <GestoriaHelperModal
-          visible={gestoriaHelperVisible}
-          onClose={() => setGestoriaHelperVisible(false)}
-          compradorNombre={gestoriaClientName}
         />
 
         <TramitadorModal
@@ -355,7 +335,6 @@ export default function App() {
             setCompradorToEdit(c);
             setCompradorModalVisible(true);
           } : undefined}
-          onOpenGestoriaScript={handleOpenGestoriaHelper}
           onSendMatchToFriend={handleSendToFriend}
           onOpenConfigTramitador={() => setTramitadorModalVisible(true)}
         />

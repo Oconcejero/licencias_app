@@ -6,6 +6,7 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
 } from 'react-native';
 import { Vendedor, Comprador, DiaLibranza, UserRole } from '../types';
 import { colors } from '../theme/colors';
@@ -30,6 +31,8 @@ export const VendedoresScreen: React.FC<VendedoresScreenProps> = ({
   onDeleteVendedor,
   onSelectVendedor,
 }) => {
+  const { width } = useWindowDimensions();
+  const isTwoCols = width >= 768;
   const [search, setSearch] = useState('');
   const [selectedDia, setSelectedDia] = useState<string>('TODOS');
   const [filterCoche, setFilterCoche] = useState<'TODOS' | 'CON_COCHE' | 'SIN_COCHE'>('TODOS');
@@ -147,22 +150,25 @@ export const VendedoresScreen: React.FC<VendedoresScreenProps> = ({
 
       {/* LISTA */}
       {filteredVendedores.length > 0 ? (
-        filteredVendedores.map(vendedor => (
-          <VendedorCard
-            key={vendedor.id}
-            vendedor={vendedor}
-            allCompradores={compradores}
-            onPress={() => onSelectVendedor(vendedor.id)}
-            onEdit={userRole === 'ADMIN' ? () => onEditVendedor(vendedor) : undefined}
-            onDelete={userRole === 'ADMIN' ? () => onDeleteVendedor(vendedor.id) : undefined}
-          />
-        ))
+        <View style={styles.gridContainer}>
+          {filteredVendedores.map(vendedor => (
+            <View key={vendedor.id} style={[styles.gridItem, isTwoCols && styles.gridItemTwoCols]}>
+              <VendedorCard
+                vendedor={vendedor}
+                allCompradores={compradores}
+                onPress={() => onSelectVendedor(vendedor.id)}
+                onEdit={userRole === 'ADMIN' ? () => onEditVendedor(vendedor) : undefined}
+                onDelete={userRole === 'ADMIN' ? () => onDeleteVendedor(vendedor.id) : undefined}
+              />
+            </View>
+          ))}
+        </View>
       ) : (
         <View style={styles.emptyBox}>
           <Text style={styles.emptyIcon}>🚕</Text>
           <Text style={styles.emptyTitle}>No hay licencias con estos criterios</Text>
           <Text style={styles.emptySub}>
-            Modifica los filtros o pulsa "+ Nueva Licencia" para añadir un nuevo vendedor.
+            Modifica los filtros o pulsa «+ Nueva Licencia» para añadir un nuevo vendedor.
           </Text>
         </View>
       )}
@@ -178,9 +184,21 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     paddingBottom: 40,
-    maxWidth: 1100,
+    maxWidth: 1350,
     alignSelf: 'center',
     width: '100%',
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 14,
+  },
+  gridItem: {
+    width: '100%',
+  },
+  gridItemTwoCols: {
+    width: '49%',
   },
   header: {
     flexDirection: 'row',

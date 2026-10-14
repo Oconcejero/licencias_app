@@ -397,16 +397,18 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
 
       ctx.fillStyle = '#10B981';
       ctx.font = 'bold 15px system-ui, -apple-system, sans-serif';
-      ctx.fillText('📋 ASESORÍA / TRAMITACIÓN', 60 + colW + 50, gridY + 35);
+      ctx.fillText('📋 FINANCIACIÓN / SUBROGACIÓN', 60 + colW + 50, gridY + 35);
       ctx.fillStyle = '#FFFFFF';
       ctx.font = 'bold 19px system-ui, -apple-system, sans-serif';
-      const gestText = !comprador.tieneGestoria
-        ? 'Sin Gestoría (Opta a 6.000€)'
-        : 'Gestoría Asignada';
-      ctx.fillText(gestText, 60 + colW + 50, gridY + 65);
+      const cargaText = comprador.aceptaConPrestamo === true
+        ? 'Acepta Préstamo'
+        : comprador.aceptaConPrestamo === false
+        ? 'Solo Sin Cargas'
+        : 'Indiferente / Negociable';
+      ctx.fillText(cargaText, 60 + colW + 50, gridY + 65);
       ctx.fillStyle = '#94A3B8';
       ctx.font = '14px system-ui, -apple-system, sans-serif';
-      ctx.fillText('Apta para tramitación exprés', 60 + colW + 50, gridY + 92);
+      ctx.fillText('Condición de compra', 60 + colW + 50, gridY + 92);
 
       // Caja 3: Titular
       ctx.fillStyle = '#0F172A';
@@ -891,13 +893,15 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
                       </View>
 
                       <View style={styles.flyerGridItem}>
-                        <Text style={styles.flyerGridTitle}>📋 GESTORÍA / ASESORÍA</Text>
+                        <Text style={styles.flyerGridTitle}>📋 FINANCIACIÓN / CARGAS</Text>
                         <Text style={styles.flyerGridMain}>
-                          {!comprador.tieneGestoria ? 'Sin Gestoría (Opta a 6.000€)' : 'Gestoría Asignada'}
+                          {comprador.aceptaConPrestamo === true
+                            ? 'Acepta Préstamo'
+                            : comprador.aceptaConPrestamo === false
+                            ? 'Solo Sin Cargas'
+                            : 'Indiferente'}
                         </Text>
-                        <Text style={styles.flyerGridSub}>
-                          {comprador.gestoriaSeleccionada === 'GESTORIA_VIP' ? 'Asesoría Integral' : 'Trámite oficial'}
-                        </Text>
+                        <Text style={styles.flyerGridSub}>Condición de compra</Text>
                       </View>
 
                       <View style={styles.flyerGridItem}>

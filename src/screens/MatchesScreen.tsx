@@ -6,6 +6,7 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
 } from 'react-native';
 import { CruceMatch, ConfigTramitador } from '../types';
 import { colors } from '../theme/colors';
@@ -15,7 +16,6 @@ interface MatchesScreenProps {
   matches: CruceMatch[];
   tramitador: ConfigTramitador;
   derivadosIds: string[];
-  onOpenGestoriaScript: (nombre: string) => void;
   onOpenDetailVendedor: (id: string) => void;
   onOpenDetailComprador: (id: string) => void;
   onSendToFriend: (cruce: CruceMatch) => void;
@@ -28,16 +28,17 @@ export const MatchesScreen: React.FC<MatchesScreenProps> = ({
   matches,
   tramitador,
   derivadosIds,
-  onOpenGestoriaScript,
   onOpenDetailVendedor,
   onOpenDetailComprador,
   onSendToFriend,
   onToggleDerivado,
 }) => {
+  const { width } = useWindowDimensions();
+  const isTwoCols = width >= 768;
   const [filter, setFilter] = useState<FilterType>('TODOS');
   const [search, setSearch] = useState('');
 
-  const safeDerivados = derivadosIds || [];
+  const safeDerivados = useMemo(() => derivadosIds || [], [derivadosIds]);
 
   const filteredMatches = useMemo(() => {
     return matches.filter(c => {
@@ -148,19 +149,21 @@ export const MatchesScreen: React.FC<MatchesScreenProps> = ({
 
       {/* LISTADO DE MATCHES */}
       {filteredMatches.length > 0 ? (
-        filteredMatches.map(cruce => (
-          <MatchCard
-            key={cruce.id}
-            cruce={cruce}
-            isDerivado={derivadosIds.includes(cruce.id)}
-            tramitadorNombre={tramitador.nombre}
-            onOpenGestoriaScript={onOpenGestoriaScript}
-            onOpenDetailVendedor={onOpenDetailVendedor}
-            onOpenDetailComprador={onOpenDetailComprador}
-            onSendToFriend={onSendToFriend}
-            onToggleDerivado={onToggleDerivado}
-          />
-        ))
+        <View style={styles.gridContainer}>
+          {filteredMatches.map(cruce => (
+            <View key={cruce.id} style={[styles.gridItem, isTwoCols && styles.gridItemTwoCols]}>
+              <MatchCard
+                cruce={cruce}
+                isDerivado={derivadosIds.includes(cruce.id)}
+                tramitadorNombre={tramitador.nombre}
+                onOpenDetailVendedor={onOpenDetailVendedor}
+                onOpenDetailComprador={onOpenDetailComprador}
+                onSendToFriend={onSendToFriend}
+                onToggleDerivado={onToggleDerivado}
+              />
+            </View>
+          ))}
+        </View>
       ) : (
         <View style={styles.emptyBox}>
           <Text style={styles.emptyIcon}>🔍</Text>
@@ -182,9 +185,21 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     paddingBottom: 40,
-    maxWidth: 1100,
+    maxWidth: 1350,
     alignSelf: 'center',
     width: '100%',
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 14,
+  },
+  gridItem: {
+    width: '100%',
+  },
+  gridItemTwoCols: {
+    width: '49%',
   },
   header: {
     marginBottom: 16,

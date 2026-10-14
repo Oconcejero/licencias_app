@@ -15,7 +15,6 @@ import {
   DiaLibranza,
   TipoPerfil,
   TipoPreferenciaCoche,
-  TipoGestoria,
   EstadoRegistro,
   CanalContacto,
   TurnoDescansoDeseado,
@@ -30,7 +29,6 @@ interface CompradorModalProps {
   onSave: (comprador: Comprador) => void;
   compradorToEdit?: Comprador | null;
   allVendedores: Vendedor[];
-  onOpenGestoriaHelper?: (nombre?: string) => void;
 }
 
 const DIAS_LIBRANZA: DiaLibranza[] = [
@@ -50,7 +48,6 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
   onSave,
   compradorToEdit,
   allVendedores,
-  onOpenGestoriaHelper,
 }) => {
   const [nombre, setNombre] = useState('');
   const [telefono, setTelefono] = useState('');
@@ -70,11 +67,6 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
 
   // Coche
   const [buscaConCoche, setBuscaConCoche] = useState<TipoPreferenciaCoche>('INDIFERENTE');
-
-  // Gestoría
-  const [tieneGestoria, setTieneGestoria] = useState(false);
-  const [gestoriaSeleccionada, setGestoriaSeleccionada] = useState<TipoGestoria>('NINGUNA');
-  const [nombreGestoriaPropia, setNombreGestoriaPropia] = useState('');
 
   const [guardadoEnEspera, setGuardadoEnEspera] = useState(false);
   const [notas, setNotas] = useState('');
@@ -127,9 +119,6 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
       setAceptaConPrestamo(compradorToEdit.aceptaConPrestamo);
       setPuedeSenalizarYa(compradorToEdit.puedeSenalizarYa);
       setBuscaConCoche(compradorToEdit.buscaConCoche);
-      setTieneGestoria(compradorToEdit.tieneGestoria);
-      setGestoriaSeleccionada(compradorToEdit.gestoriaSeleccionada);
-      setNombreGestoriaPropia(compradorToEdit.nombreGestoriaPropia || '');
       setGuardadoEnEspera(compradorToEdit.guardadoEnEspera);
       setNotas(compradorToEdit.notas || '');
       setEstado(compradorToEdit.estado);
@@ -145,9 +134,6 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
       setAceptaConPrestamo('INDIFERENTE');
       setPuedeSenalizarYa(false);
       setBuscaConCoche('INDIFERENTE');
-      setTieneGestoria(false);
-      setGestoriaSeleccionada('NINGUNA');
-      setNombreGestoriaPropia('');
       setGuardadoEnEspera(false);
       setNotas('');
       setEstado('DISPONIBLE');
@@ -174,9 +160,6 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
       aceptaConPrestamo,
       puedeSenalizarYa,
       buscaConCoche,
-      tieneGestoria,
-      gestoriaSeleccionada,
-      nombreGestoriaPropia,
       guardadoEnEspera,
       notas,
       estado,
@@ -198,9 +181,6 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
     aceptaConPrestamo,
     puedeSenalizarYa,
     buscaConCoche,
-    tieneGestoria,
-    gestoriaSeleccionada,
-    nombreGestoriaPropia,
     guardadoEnEspera,
     notas,
     estado,
@@ -233,9 +213,6 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
       aceptaConPrestamo,
       puedeSenalizarYa,
       buscaConCoche,
-      tieneGestoria,
-      gestoriaSeleccionada,
-      nombreGestoriaPropia: tieneGestoria && gestoriaSeleccionada === 'PROPIA' ? nombreGestoriaPropia.trim() : undefined,
       guardadoEnEspera,
       notas: notas.trim(),
       estado,
@@ -593,83 +570,7 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
               </View>
             </View>
 
-            {/* SECCIÓN 3: ESTRATEGIA DE GESTORÍA */}
-            <View style={styles.section}>
-              <View style={styles.gestoriaHeader}>
-                <View>
-                  <Text style={styles.sectionTitle}>3. SITUACIÓN DE GESTORÍA</Text>
-                  <Text style={styles.sublabel}>Recomendación de las 2 gestorías y ayuda hasta 6.000€</Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.helpBtn}
-                  onPress={() => onOpenGestoriaHelper && onOpenGestoriaHelper(nombre || 'el comprador')}
-                >
-                  <Text style={styles.helpBtnText}>📖 Ver Guión Comercial</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.selectorRow}>
-                <TouchableOpacity
-                  style={[styles.selectorBtn, !tieneGestoria && styles.selectorBtnActive]}
-                  onPress={() => {
-                    setTieneGestoria(false);
-                    setGestoriaSeleccionada('NINGUNA');
-                  }}
-                >
-                  <Text style={[styles.selectorText, !tieneGestoria && styles.selectorTextActive]}>
-                    No tiene todavía
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.selectorBtn, tieneGestoria && gestoriaSeleccionada === 'GESTORIA_VIP' && styles.selectorBtnActive]}
-                  onPress={() => {
-                    setTieneGestoria(true);
-                    setGestoriaSeleccionada('GESTORIA_VIP');
-                  }}
-                >
-                  <Text style={[styles.selectorText, tieneGestoria && gestoriaSeleccionada === 'GESTORIA_VIP' && styles.selectorTextActive]}>
-                    VIP (Ayuda 6.000€)
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.selectorBtn, tieneGestoria && gestoriaSeleccionada === 'GESTORIA_TALAMANCA' && styles.selectorBtnActive]}
-                  onPress={() => {
-                    setTieneGestoria(true);
-                    setGestoriaSeleccionada('GESTORIA_TALAMANCA');
-                  }}
-                >
-                  <Text style={[styles.selectorText, tieneGestoria && gestoriaSeleccionada === 'GESTORIA_TALAMANCA' && styles.selectorTextActive]}>
-                    El Casar (Disuasoria)
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.selectorBtn, tieneGestoria && gestoriaSeleccionada === 'PROPIA' && styles.selectorBtnActive]}
-                  onPress={() => {
-                    setTieneGestoria(true);
-                    setGestoriaSeleccionada('PROPIA');
-                  }}
-                >
-                  <Text style={[styles.selectorText, tieneGestoria && gestoriaSeleccionada === 'PROPIA' && styles.selectorTextActive]}>
-                    Tiene la suya propia
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {tieneGestoria && gestoriaSeleccionada === 'PROPIA' && (
-                <TextInput
-                  style={[styles.input, { marginTop: 8 }]}
-                  value={nombreGestoriaPropia}
-                  onChangeText={setNombreGestoriaPropia}
-                  placeholder="Nombre de su gestoría..."
-                  placeholderTextColor={colors.textSubtle}
-                />
-              )}
-            </View>
-
-            {/* SECCIÓN 4: MATCHES EN TIEMPO REAL DURANTE LA LLAMADA */}
+            {/* SECCIÓN 3: MATCHES EN TIEMPO REAL DURANTE LA LLAMADA */}
             <View style={[styles.section, styles.liveMatchesBox]}>
               <View style={styles.liveMatchesHeader}>
                 <Text style={styles.liveMatchesTitle}>

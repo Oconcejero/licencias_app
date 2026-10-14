@@ -8,7 +8,6 @@ interface MatchCardProps {
   cruce: CruceMatch;
   isDerivado?: boolean;
   tramitadorNombre?: string;
-  onOpenGestoriaScript: (compradorNombre: string) => void;
   onOpenDetailVendedor: (id: string) => void;
   onOpenDetailComprador: (id: string) => void;
   onSendToFriend: (cruce: CruceMatch) => void;
@@ -19,7 +18,6 @@ export const MatchCard: React.FC<MatchCardProps> = ({
   cruce,
   isDerivado = false,
   tramitadorNombre = 'Gestor Operativo',
-  onOpenGestoriaScript,
   onOpenDetailVendedor,
   onOpenDetailComprador,
   onSendToFriend,
@@ -81,13 +79,6 @@ export const MatchCard: React.FC<MatchCardProps> = ({
             activeOpacity={0.8}
           >
             <Text style={styles.flyerBtnText}>🖼️ Flyer Digital</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.scriptBtn}
-            onPress={() => onOpenGestoriaScript(comprador.nombre)}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.scriptBtnText}>📋 Guión</Text>
           </TouchableOpacity>
         </View>
       </View>

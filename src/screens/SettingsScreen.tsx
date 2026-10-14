@@ -20,7 +20,6 @@ interface SettingsScreenProps {
   userRole?: UserRole;
   onUpdateTramitador: (config: ConfigTramitador) => void;
   onRefreshData: () => void;
-  onOpenGestoriaHelper: () => void;
   onSwitchRole?: () => void;
 }
 
@@ -31,7 +30,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   userRole = 'ADMIN',
   onUpdateTramitador,
   onRefreshData,
-  onOpenGestoriaHelper,
   onSwitchRole,
 }) => {
   const isAdmin = userRole === 'ADMIN';
@@ -86,7 +84,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       setShowImportBox(false);
       onRefreshData();
       alert('¡Copia de seguridad restaurada correctamente!');
-    } catch (e) {
+    } catch {
       alert('Error importando: formato no válido.');
     }
   };
@@ -279,17 +277,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             </TouchableOpacity>
           </View>
         )}
-      </View>
-
-      {/* GUIONES Y ESTRATEGIA */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>🎯 ASISTENTE COMERCIAL Y GUIÓN</Text>
-        <Text style={styles.descText}>
-          Accede al asistente con los guiones de llamada y la estrategia de las dos gestorías (Gestoría VIP con subvención de hasta 6.000€ vs Gestoría en El Casar de Talamanca disuasoria).
-        </Text>
-        <TouchableOpacity style={styles.scriptBtn} onPress={onOpenGestoriaHelper}>
-          <Text style={styles.scriptBtnText}>📖 Abrir Asistente Comercial Completo</Text>
-        </TouchableOpacity>
       </View>
 
       {/* ACCIONES DE DATOS (SOLO ADMIN) */}

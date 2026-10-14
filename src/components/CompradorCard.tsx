@@ -10,7 +10,6 @@ interface CompradorCardProps {
   onPress: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
-  onOpenGestoriaScript: () => void;
 }
 
 export const CompradorCard: React.FC<CompradorCardProps> = ({
@@ -19,13 +18,12 @@ export const CompradorCard: React.FC<CompradorCardProps> = ({
   onPress,
   onEdit,
   onDelete,
-  onOpenGestoriaScript,
 }) => {
   // Cuántas licencias le encajan
   const matchingSellers = allVendedores.filter(v => {
     if (v.estado === 'CERRADO') return false;
     const res = calculateMatch(v, comprador);
-    return res.score >= 50;
+    return res.score >= 45;
   });
 
   const handleCall = () => {
@@ -57,18 +55,16 @@ export const CompradorCard: React.FC<CompradorCardProps> = ({
     : colors.libranza[diasBuscados[0]] || colors.primary;
 
   const badgeText = isCualquiera
-    ? (comprador.turnoDescansoDeseado && comprador.turnoDescansoDeseado !== 'INDIFERENTE'
-        ? `LIBRANZA CUALQUIERA • ${comprador.turnoDescansoDeseado}`
-        : 'BUSCA CUALQUIERA')
+    ? 'LIBRANZA CUALQUIERA'
     : isMulti
-    ? `BUSCA (${diasBuscados.length}): ${diasBuscados.join(' • ')}${comprador.turnoDescansoDeseado && comprador.turnoDescansoDeseado !== 'INDIFERENTE' ? ' • ' + comprador.turnoDescansoDeseado : ''}`
+    ? `DÍAS (${diasBuscados.length}): ${diasBuscados.join(' • ')}`
     : diasBuscados[0] === 'EUROTAXI'
-    ? 'BUSCA EUROTAXI (SIN LIBRANZA)'
+    ? 'EUROTAXI (SIN LIBRANZA)'
     : diasBuscados[0] === 'ELECTRICO_SIN_LIBRANZA'
-    ? 'BUSCA ELÉCTRICO (SIN LIBRANZA)'
+    ? 'ELÉCTRICO (SIN LIBRANZA)'
     : diasBuscados[0] === 'LIBRE_24H'
-    ? 'BUSCA 24H LIBRE'
-    : `BUSCA ${diasBuscados[0]}${comprador.turnoDescansoDeseado && comprador.turnoDescansoDeseado !== 'INDIFERENTE' ? ' • ' + comprador.turnoDescansoDeseado : ''}`;
+    ? '24H LIBRE'
+    : `LIBRANZA ${diasBuscados[0]}`;
 
   return (
     <View style={styles.card}>
@@ -76,7 +72,15 @@ export const CompradorCard: React.FC<CompradorCardProps> = ({
         {/* Cabecera */}
         <View style={styles.topRow}>
           <View style={styles.nameContainer}>
-            <Text style={styles.name}>{comprador.nombre}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <Text style={styles.name}>{comprador.nombre}</Text>
+              {comprador.estado !== 'DISPONIBLE' && (
+                <View style={[styles.statusBadge, comprador.estado === 'EN_NEGOCIACION' ? styles.statusNegotiating : styles.statusClosed]}>
+                  <Text style={styles.statusText}>{comprador.estado.replace('_', ' ')}</Text>
+                </View>
+              )}
+            </View>
+
             <View style={styles.badgesRow}>
               <View style={[styles.dayBadge, { backgroundColor: badgeBg }]}>
                 <Text style={styles.dayText}>{badgeText}</Text>
@@ -99,6 +103,11 @@ export const CompradorCard: React.FC<CompradorCardProps> = ({
                   <Text style={styles.hotText}>🔥 SEÑALIZA YA</Text>
                 </View>
               )}
+              {comprador.guardadoEnEspera && (
+                <View style={styles.waitingBadge}>
+                  <Text style={styles.waitingText}>⏳ EN ESPERA</Text>
+                </View>
+              )}
             </View>
           </View>
 
@@ -108,73 +117,108 @@ export const CompradorCard: React.FC<CompradorCardProps> = ({
           </View>
         </View>
 
-        {/* Detalles */}
+        {/* DETALLES COMPLETOS RECOPILADOS */}
         <View style={styles.detailsGrid}>
-          {!comprador.telefono && (
-            <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Contacto:</Text>
-              <Text style={[styles.detailValue, { color: colors.accent, fontWeight: '700' }]}>
-                {comprador.contactoOrigen ? `${comprador.contactoOrigen} (${comprador.canalContacto || 'Chat'})` : `Chat ${comprador.canalContacto || 'online'} (Teléfono pendiente)`}
-              </Text>
-            </View>
-          )}
-
+          {/* Teléfono y Origen */}
           <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>Coche:</Text>
-            <Text style={styles.detailValue}>
-              {comprador.buscaConCoche === 'CON_COCHE'
-                ? 'Con coche imprescindible'
-                : comprador.buscaConCoche === 'SOLO_LICENCIA'
-                ? 'Solo licencia'
-                : 'Indiferente (con o sin)'}
+            <Text style={styles.detailLabel}>📞 Contacto:</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.detailValue, { fontWeight: '700', color: colors.text }]}>
+                {comprador.telefono || 'Sin teléfono guardado'}
+              </Text>
+              {comprador.contactoOrigen && (
+                <Text style={[styles.subValueText, { color: colors.accent }]}>
+                  🔗 {comprador.contactoOrigen}
+                </Text>
+              )}
+            </View>
+          </View>
+
+          {/* Días y Turno */}
+          <View style={styles.detailItem}>
+            <Text style={styles.detailLabel}>📅 Días libranza:</Text>
+            <Text style={[styles.detailValue, { color: colors.text, fontWeight: '700' }]}>
+              {isCualquiera ? 'Cualquier día (Indiferente)' : diasBuscados.join(', ')}
             </Text>
           </View>
 
           <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>Financiación/Préstamo:</Text>
+            <Text style={styles.detailLabel}>🔢 Turno finde:</Text>
             <Text style={styles.detailValue}>
-              {comprador.aceptaConPrestamo === true
-                ? 'Acepta licencia con préstamo'
-                : comprador.aceptaConPrestamo === false
-                ? 'Solo limpia sin cargas'
+              {comprador.turnoDescansoDeseado === 'INDIFERENTE'
+                ? 'Indiferente (acepta Par o Impar)'
+                : comprador.turnoDescansoDeseado === 'PAR'
+                ? 'Busca turno PAR'
+                : comprador.turnoDescansoDeseado === 'IMPAR'
+                ? 'Busca turno IMPAR'
+                : comprador.turnoDescansoDeseado === 'ROTATIVO'
+                ? 'Finde alterno rotativo'
+                : comprador.turnoDescansoDeseado === 'LIBRE_24H'
+                ? 'Libre 24H (sin turnos)'
                 : 'Indiferente'}
             </Text>
           </View>
 
+          {/* Preferencia de coche */}
           <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>Gestoría:</Text>
-            <Text style={[styles.detailValue, !comprador.tieneGestoria ? styles.orangeValue : styles.greenValue]}>
-              {!comprador.tieneGestoria
-                ? 'No tiene (Ofrecer Gestoría VIP 6.000€)'
-                : comprador.gestoriaSeleccionada === 'GESTORIA_VIP'
-                ? 'VIP Recomendada (Ayuda 6.000€)'
-                : comprador.gestoriaSeleccionada === 'GESTORIA_TALAMANCA'
-                ? 'El Casar de Talamanca'
-                : comprador.nombreGestoriaPropia || 'Tiene gestoría propia'}
+            <Text style={styles.detailLabel}>🚗 Vehículo:</Text>
+            <Text style={[styles.detailValue, comprador.buscaConCoche === 'CON_COCHE' ? styles.blueValue : styles.detailValue]}>
+              {comprador.buscaConCoche === 'CON_COCHE'
+                ? '🚗 Con coche (imprescindible pack con vehículo)'
+                : comprador.buscaConCoche === 'SOLO_LICENCIA'
+                ? '📄 Solo licencia (no quiere vehículo)'
+                : '🔄 Indiferente (con o sin vehículo)'}
             </Text>
           </View>
 
-          {comprador.notas ? (
-            <Text style={styles.notesText} numberOfLines={2}>
-              📝 {comprador.notas}
+          {/* Financiación / Carga */}
+          <View style={styles.detailItem}>
+            <Text style={styles.detailLabel}>⚖️ Financiación:</Text>
+            <Text style={[styles.detailValue, comprador.aceptaConPrestamo === true ? styles.greenValue : comprador.aceptaConPrestamo === false ? styles.orangeValue : styles.detailValue]}>
+              {comprador.aceptaConPrestamo === true
+                ? '💳 Acepta licencia con préstamo existente'
+                : comprador.aceptaConPrestamo === false
+                ? '🛡️ Exige 100% libre de cargas / sin préstamos'
+                : '🔄 Indiferente respecto a cargas'}
             </Text>
+          </View>
+
+          {/* Disponibilidad de señal */}
+          <View style={styles.detailItem}>
+            <Text style={styles.detailLabel}>💰 Señalización:</Text>
+            <Text style={[styles.detailValue, comprador.puedeSenalizarYa ? styles.hotValue : styles.detailValue]}>
+              {comprador.puedeSenalizarYa
+                ? '🔥 Disponible para señalizar de INMEDIATO'
+                : '⏱️ Normal (evaluando opciones)'}
+            </Text>
+          </View>
+
+          {/* Fecha de alta */}
+          <View style={styles.detailItem}>
+            <Text style={styles.detailLabel}>🗓️ Registrado:</Text>
+            <Text style={[styles.detailValue, { color: colors.textMuted }]}>
+              {new Date(comprador.fechaCreacion).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+            </Text>
+          </View>
+
+          {/* Notas */}
+          {comprador.notas ? (
+            <View style={styles.notesBox}>
+              <Text style={styles.notesText}>
+                📝 <Text style={{ fontWeight: '700' }}>Notas:</Text> {comprador.notas}
+              </Text>
+            </View>
           ) : null}
         </View>
       </TouchableOpacity>
 
       {/* Footer */}
       <View style={styles.footer}>
-        <View style={styles.footerLeft}>
-          <TouchableOpacity style={styles.matchesBadge} onPress={onPress}>
-            <Text style={styles.matchesText}>
-              🎯 {matchingSellers.length} {matchingSellers.length === 1 ? 'Licencia encaja' : 'Licencias encajan'}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.scriptBtn} onPress={onOpenGestoriaScript}>
-            <Text style={styles.scriptBtnText}>📋 Guión & Ayuda</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity style={styles.matchesBadge} onPress={onPress}>
+          <Text style={styles.matchesText}>
+            🎯 {matchingSellers.length} {matchingSellers.length === 1 ? 'Licencia encaja' : 'Licencias encajan'}
+          </Text>
+        </TouchableOpacity>
 
         <View style={styles.actionBtns}>
           <TouchableOpacity style={styles.iconBtn} onPress={handleCall}>
@@ -354,19 +398,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
-  scriptBtn: {
-    backgroundColor: colors.surfaceHighlight,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: 8,
-  },
-  scriptBtnText: {
-    color: colors.text,
-    fontSize: 12,
-    fontWeight: '600',
-  },
   actionBtns: {
     flexDirection: 'row',
     gap: 6,
@@ -391,5 +422,55 @@ const styles = StyleSheet.create({
   },
   btnIconText: {
     fontSize: 14,
+  },
+  statusBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+  },
+  statusNegotiating: {
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    borderColor: colors.accent,
+  },
+  statusClosed: {
+    backgroundColor: 'rgba(148, 163, 184, 0.15)',
+    borderColor: colors.textMuted,
+  },
+  statusText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: colors.text,
+  },
+  waitingBadge: {
+    backgroundColor: 'rgba(99, 102, 241, 0.2)',
+    borderWidth: 1,
+    borderColor: '#818CF8',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  waitingText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#A5B4FC',
+  },
+  blueValue: {
+    color: '#38BDF8',
+    fontWeight: '700',
+  },
+  hotValue: {
+    color: '#F87171',
+    fontWeight: '800',
+  },
+  subValueText: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  notesBox: {
+    marginTop: 6,
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
   },
 });

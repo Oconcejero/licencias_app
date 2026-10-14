@@ -106,29 +106,45 @@ export const VendedorCard: React.FC<VendedorCardProps> = ({
           </View>
         </View>
 
-        {/* Cargas y Condiciones */}
+        {/* Cargas y Condiciones Completas */}
         <View style={styles.detailsGrid}>
-          {!vendedor.telefono && (
-            <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Contacto:</Text>
-              <Text style={[styles.detailValue, { color: colors.accent, fontWeight: '700' }]}>
-                {vendedor.contactoOrigen ? `${vendedor.contactoOrigen} (${vendedor.canalContacto || 'Chat'})` : `Chat ${vendedor.canalContacto || 'online'} (Teléfono pendiente)`}
-              </Text>
-            </View>
-          )}
-
+          {/* Teléfono / Contacto */}
           <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>Carga Licencia:</Text>
-            <Text style={[styles.detailValue, vendedor.cargaLicencia === 'SIN_CARGA' ? styles.greenValue : styles.orangeValue]}>
-              {vendedor.cargaLicencia === 'SIN_CARGA'
-                ? 'Libre de cargas'
-                : `Con préstamo (${vendedor.detalleCargaLicencia || 'Pendiente'})`}
+            <Text style={styles.detailLabel}>📞 Contacto:</Text>
+            <View style={{ flex: 1, alignItems: 'flex-end' }}>
+              <Text style={[styles.detailValue, { fontWeight: '700', color: colors.text }]}>
+                {vendedor.telefono || 'Sin teléfono guardado'}
+              </Text>
+              {vendedor.contactoOrigen && (
+                <Text style={{ fontSize: 11, color: colors.accent, marginTop: 2 }}>
+                  🔗 {vendedor.contactoOrigen}
+                </Text>
+              )}
+            </View>
+          </View>
+
+          {/* Libranza y Turno */}
+          <View style={styles.detailItem}>
+            <Text style={styles.detailLabel}>📅 Libranza y Turno:</Text>
+            <Text style={[styles.detailValue, { color: colors.text, fontWeight: '700' }]}>
+              {vendedor.diaLibranza} • Turno {vendedor.turnoDescanso || 'PAR'}
             </Text>
           </View>
 
+          {/* Carga Licencia */}
           <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>Vehículo:</Text>
-            <View style={{ flex: 1 }}>
+            <Text style={styles.detailLabel}>⚖️ Carga Licencia:</Text>
+            <Text style={[styles.detailValue, vendedor.cargaLicencia === 'SIN_CARGA' ? styles.greenValue : styles.orangeValue]}>
+              {vendedor.cargaLicencia === 'SIN_CARGA'
+                ? '100% Libre de cargas'
+                : `Con préstamo (${vendedor.detalleCargaLicencia || 'Pendiente liquidar'})`}
+            </Text>
+          </View>
+
+          {/* Vehículo */}
+          <View style={styles.detailItem}>
+            <Text style={styles.detailLabel}>🚗 Vehículo:</Text>
+            <View style={{ flex: 1, alignItems: 'flex-end' }}>
               <Text style={styles.detailValue}>
                 {vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES'
                   ? `Flexible: solo lic. o con ${vendedor.vehiculo?.modelo || 'coche'} (${vendedor.vehiculo?.anoMatriculacion || ''})`
@@ -142,28 +158,40 @@ export const VendedorCard: React.FC<VendedorCardProps> = ({
                 </Text>
               )}
               {vendedor.vehiculo?.carga === 'PRESTAMO' && (
-                <Text style={{ color: colors.warning, fontSize: 11, fontWeight: '600', marginTop: 2 }}>
+                <Text style={{ color: colors.warning, fontSize: 11, fontWeight: '700', marginTop: 2 }}>
                   🚗 Deuda coche: {vendedor.vehiculo.detalleCarga || 'con reserva de dominio'}
                 </Text>
               )}
             </View>
           </View>
 
-          {vendedor.condicionVenta !== 'INMEDIATA' && (
-            <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Condición venta:</Text>
-              <Text style={[styles.detailValue, styles.orangeValue]}>
-                {vendedor.condicionVenta === 'JUBILACION'
-                  ? `Tras jubilación (${vendedor.fechaJubilacion || 'Prevista'})`
-                  : vendedor.detalleCondicion || 'Condición especial'}
+          {/* Condición Venta */}
+          <View style={styles.detailItem}>
+            <Text style={styles.detailLabel}>⏱️ Condición venta:</Text>
+            <Text style={[styles.detailValue, vendedor.condicionVenta !== 'INMEDIATA' ? styles.orangeValue : styles.greenValue]}>
+              {vendedor.condicionVenta === 'INMEDIATA'
+                ? 'Inmediata para firma y traspaso'
+                : vendedor.condicionVenta === 'JUBILACION'
+                ? `Tras jubilación (${vendedor.fechaJubilacion || 'Prevista'})`
+                : vendedor.detalleCondicion || 'Condición especial'}
+            </Text>
+          </View>
+
+          {/* Fecha de registro */}
+          <View style={styles.detailItem}>
+            <Text style={styles.detailLabel}>🗓️ Registrado:</Text>
+            <Text style={[styles.detailValue, { color: colors.textMuted }]}>
+              {new Date(vendedor.fechaCreacion).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+            </Text>
+          </View>
+
+          {/* Notas */}
+          {vendedor.notas ? (
+            <View style={{ marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: colors.borderLight }}>
+              <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                📝 <Text style={{ fontWeight: '700' }}>Notas:</Text> {vendedor.notas}
               </Text>
             </View>
-          )}
-
-          {vendedor.notas ? (
-            <Text style={styles.notesText} numberOfLines={2}>
-              📝 {vendedor.notas}
-            </Text>
           ) : null}
         </View>
       </TouchableOpacity>

@@ -6,6 +6,7 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
 } from 'react-native';
 import { Comprador, Vendedor, DiaLibranza, UserRole, getCompradorDias } from '../types';
 import { colors } from '../theme/colors';
@@ -19,7 +20,6 @@ interface CompradoresScreenProps {
   onEditComprador: (comprador: Comprador) => void;
   onDeleteComprador: (id: string) => void;
   onSelectComprador: (id: string) => void;
-  onOpenGestoriaScript: (nombre: string) => void;
 }
 
 export const CompradoresScreen: React.FC<CompradoresScreenProps> = ({
@@ -30,12 +30,12 @@ export const CompradoresScreen: React.FC<CompradoresScreenProps> = ({
   onEditComprador,
   onDeleteComprador,
   onSelectComprador,
-  onOpenGestoriaScript,
 }) => {
+  const { width } = useWindowDimensions();
+  const isTwoCols = width >= 768;
   const [search, setSearch] = useState('');
   const [selectedDia, setSelectedDia] = useState<string>('TODOS');
   const [onlyHot, setOnlyHot] = useState<boolean>(false);
-  const [filterGestoria, setFilterGestoria] = useState<'TODOS' | 'SIN_GESTORIA' | 'CON_GESTORIA'>('TODOS');
 
   const filteredCompradores = useMemo(() => {
     return compradores.filter(c => {
@@ -48,8 +48,6 @@ export const CompradoresScreen: React.FC<CompradoresScreenProps> = ({
         }
       }
       if (onlyHot && !c.puedeSenalizarYa) return false;
-      if (filterGestoria === 'SIN_GESTORIA' && c.tieneGestoria) return false;
-      if (filterGestoria === 'CON_GESTORIA' && !c.tieneGestoria) return false;
 
       if (search.trim()) {
         const q = search.toLowerCase();
@@ -61,7 +59,7 @@ export const CompradoresScreen: React.FC<CompradoresScreenProps> = ({
 
       return true;
     });
-  }, [compradores, search, selectedDia, onlyHot, filterGestoria]);
+  }, [compradores, search, selectedDia, onlyHot]);
 
   const DIAS_OPCIONES = ['TODOS', 'CUALQUIERA', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'EUROTAXI', 'ELECTRICO_SIN_LIBRANZA'];
 
@@ -135,45 +133,29 @@ export const CompradoresScreen: React.FC<CompradoresScreenProps> = ({
             🔥 Solo Señalizan Ya
           </Text>
         </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.secChip, filterGestoria === 'SIN_GESTORIA' && styles.secChipActive]}
-          onPress={() => setFilterGestoria(filterGestoria === 'SIN_GESTORIA' ? 'TODOS' : 'SIN_GESTORIA')}
-        >
-          <Text style={[styles.secText, filterGestoria === 'SIN_GESTORIA' && styles.secTextActive]}>
-            ⚠️ Sin Gestoría (Ofrecer VIP 6.000€)
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.secChip, filterGestoria === 'CON_GESTORIA' && styles.secChipActive]}
-          onPress={() => setFilterGestoria(filterGestoria === 'CON_GESTORIA' ? 'TODOS' : 'CON_GESTORIA')}
-        >
-          <Text style={[styles.secText, filterGestoria === 'CON_GESTORIA' && styles.secTextActive]}>
-            ✓ Con Gestoría
-          </Text>
-        </TouchableOpacity>
       </View>
 
       {/* LISTA */}
       {filteredCompradores.length > 0 ? (
-        filteredCompradores.map(comprador => (
-          <CompradorCard
-            key={comprador.id}
-            comprador={comprador}
-            allVendedores={vendedores}
-            onPress={() => onSelectComprador(comprador.id)}
-            onEdit={userRole === 'ADMIN' ? () => onEditComprador(comprador) : undefined}
-            onDelete={userRole === 'ADMIN' ? () => onDeleteComprador(comprador.id) : undefined}
-            onOpenGestoriaScript={() => onOpenGestoriaScript(comprador.nombre)}
-          />
-        ))
+        <View style={styles.gridContainer}>
+          {filteredCompradores.map(comprador => (
+            <View key={comprador.id} style={[styles.gridItem, isTwoCols && styles.gridItemTwoCols]}>
+              <CompradorCard
+                comprador={comprador}
+                allVendedores={vendedores}
+                onPress={() => onSelectComprador(comprador.id)}
+                onEdit={userRole === 'ADMIN' ? () => onEditComprador(comprador) : undefined}
+                onDelete={userRole === 'ADMIN' ? () => onDeleteComprador(comprador.id) : undefined}
+              />
+            </View>
+          ))}
+        </View>
       ) : (
         <View style={styles.emptyBox}>
           <Text style={styles.emptyIcon}>👥</Text>
           <Text style={styles.emptyTitle}>No hay compradores con estos criterios</Text>
           <Text style={styles.emptySub}>
-            Modifica los filtros o pulsa "+ Nuevo Comprador" para añadir una persona en búsqueda.
+            Modifica los filtros o pulsa «+ Nuevo Comprador» para añadir una persona en búsqueda.
           </Text>
         </View>
       )}
@@ -189,9 +171,21 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     paddingBottom: 40,
-    maxWidth: 1100,
+    maxWidth: 1350,
     alignSelf: 'center',
     width: '100%',
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 14,
+  },
+  gridItem: {
+    width: '100%',
+  },
+  gridItemTwoCols: {
+    width: '49%',
   },
   header: {
     flexDirection: 'row',

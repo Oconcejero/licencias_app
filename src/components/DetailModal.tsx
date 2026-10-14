@@ -25,7 +25,6 @@ interface DetailModalProps {
   tramitadorTelefono?: string;
   onEditVendedor?: (v: Vendedor) => void;
   onEditComprador?: (c: Comprador) => void;
-  onOpenGestoriaScript?: (nombre: string) => void;
   onSendMatchToFriend?: (cruce: CruceMatch) => void;
   onOpenConfigTramitador?: () => void;
 }
@@ -41,7 +40,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({
   tramitadorTelefono = '',
   onEditVendedor,
   onEditComprador,
-  onOpenGestoriaScript,
   onSendMatchToFriend,
   onOpenConfigTramitador,
 }) => {
@@ -472,29 +470,16 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                   </View>
 
                   <View style={styles.specBox}>
-                    <Text style={styles.specLabel}>Gestoría</Text>
+                    <Text style={styles.specLabel}>Financiación / Carga</Text>
                     <Text style={styles.specValue}>
-                      {!comprador.tieneGestoria
-                        ? 'Sin Gestoría'
-                        : comprador.gestoriaSeleccionada === 'GESTORIA_VIP'
-                        ? 'VIP 6.000€'
-                        : comprador.gestoriaSeleccionada === 'GESTORIA_TALAMANCA'
-                        ? 'El Casar'
-                        : 'Propia'}
+                      {comprador.aceptaConPrestamo === true
+                        ? 'Acepta préstamo'
+                        : comprador.aceptaConPrestamo === false
+                        ? 'Limpia sin cargas'
+                        : 'Indiferente'}
                     </Text>
                   </View>
                 </View>
-
-                {onOpenGestoriaScript && (
-                  <TouchableOpacity
-                    style={styles.gestoriaHelperBtn}
-                    onPress={() => onOpenGestoriaScript(comprador.nombre)}
-                  >
-                    <Text style={styles.gestoriaHelperText}>
-                      📋 Abrir Guión Comercial & Estrategia de Gestoría (Ayuda hasta 6.000€)
-                    </Text>
-                  </TouchableOpacity>
-                )}
 
                 {/* LICENCIAS COMPATIBLES */}
                 <View style={styles.matchesSection}>
