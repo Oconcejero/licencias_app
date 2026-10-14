@@ -1,4 +1,4 @@
-import { Vendedor, Comprador, MatchScore, CruceMatch } from '../types';
+import { Vendedor, Comprador, MatchScore, CruceMatch, getCompradorDias } from '../types';
 
 export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchScore {
   let score = 0;
@@ -26,24 +26,29 @@ export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchS
   let turnoEncaja = false;
 
   // 1.1 Día entre semana
+  const diasBuscados = getCompradorDias(comprador);
+
   const isVendedorExento =
     vendedor.diaLibranza === 'EUROTAXI' ||
     vendedor.diaLibranza === 'ELECTRICO_SIN_LIBRANZA' ||
     vendedor.diaLibranza === 'LIBRE_24H';
 
   const isCompradorExento =
-    comprador.diaLibranzaDeseada === 'EUROTAXI' ||
-    comprador.diaLibranzaDeseada === 'ELECTRICO_SIN_LIBRANZA' ||
-    comprador.diaLibranzaDeseada === 'LIBRE_24H';
+    diasBuscados.includes('EUROTAXI') ||
+    diasBuscados.includes('ELECTRICO_SIN_LIBRANZA') ||
+    diasBuscados.includes('LIBRE_24H');
 
-  if (
-    comprador.diaLibranzaDeseada === 'CUALQUIERA' ||
-    comprador.diaLibranzaDeseada === vendedor.diaLibranza
-  ) {
+  const diaCoincide =
+    diasBuscados.includes('CUALQUIERA') ||
+    diasBuscados.includes(vendedor.diaLibranza);
+
+  if (diaCoincide) {
     diaEncaja = true;
     score += 25;
-    if (comprador.diaLibranzaDeseada === 'CUALQUIERA') {
+    if (diasBuscados.includes('CUALQUIERA')) {
       razones.push(`Comprador busca cualquier libranza (Vendedor tiene ${vendedor.diaLibranza})`);
+    } else if (diasBuscados.length > 1) {
+      razones.push(`Día de libranza coincide: ${vendedor.diaLibranza} (entre sus opciones: ${diasBuscados.join(', ')})`);
     } else {
       razones.push(`Día de libranza coincide exactamente: ${vendedor.diaLibranza}`);
     }
@@ -54,7 +59,7 @@ export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchS
       nivel: 'POTENCIAL',
       razones: [],
       alertas: [
-        `Día de libranza no coincide: Vendedor tiene ${vendedor.diaLibranza}, comprador busca ${comprador.diaLibranzaDeseada}`,
+        `Día de libranza no coincide: Vendedor tiene ${vendedor.diaLibranza}, comprador busca ${diasBuscados.join(', ')}`,
       ],
       diferenciaPrecio: vendedor.precio - comprador.precioMaximo,
       precioEncaja: false,

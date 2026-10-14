@@ -30,13 +30,23 @@ function cleanPerfil(perfil: string): string {
   return perfil === 'PARTICULAR' ? 'Particular' : 'Profesional / Gestoría';
 }
 
-function formatLibranzaText(dia: string, turno?: string): string {
+function formatLibranzaSingle(dia: string, turno?: string): string {
   if (dia === 'EUROTAXI') return '♿ EUROTAXI (Exento de libranza)';
   if (dia === 'ELECTRICO_SIN_LIBRANZA') return '⚡ ELÉCTRICO CERO (Exento de libranza)';
   if (dia === 'LIBRE_24H') return '🟢 24H LIBRE (Sin libranza fija)';
   if (dia === 'CUALQUIERA') return 'Cualquiera (Indiferente)';
   const diaNom = dia.charAt(0) + dia.slice(1).toLowerCase();
   return `${diaNom}${turno && turno !== 'INDIFERENTE' ? ' (Turno ' + turno + ')' : ''}`;
+}
+
+function formatLibranzaText(dia: string, turno?: string): string {
+  if (!dia) return 'Cualquiera (Indiferente)';
+  if (dia.includes(',')) {
+    const list = dia.split(',').map(d => formatLibranzaSingle(d.trim()));
+    const turnoStr = turno && turno !== 'INDIFERENTE' ? ` • Turno ${turno}` : '';
+    return `${list.join(' o ')}${turnoStr}`;
+  }
+  return formatLibranzaSingle(dia, turno);
 }
 
 export const shareService = {
@@ -132,22 +142,7 @@ ${divider}
   generateCompradorReport(comprador: Comprador): string {
     const divider = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
 
-    let libranzaStr = '';
-    if (comprador.diaLibranzaDeseada === 'CUALQUIERA') {
-      libranzaStr = 'Cualquier día _(Indiferente)_';
-    } else if (comprador.diaLibranzaDeseada === 'EUROTAXI') {
-      libranzaStr = '♿ *Busca EUROTAXI (Sin libranza)*';
-    } else if (comprador.diaLibranzaDeseada === 'ELECTRICO_SIN_LIBRANZA') {
-      libranzaStr = '⚡ *Busca ELÉCTRICO CERO (Sin libranza)*';
-    } else if (comprador.diaLibranzaDeseada === 'LIBRE_24H') {
-      libranzaStr = '🟢 *Busca 24H LIBRE*';
-    } else {
-      const diaNom = comprador.diaLibranzaDeseada.charAt(0) + comprador.diaLibranzaDeseada.slice(1).toLowerCase();
-      const turno = comprador.turnoDescansoDeseado && comprador.turnoDescansoDeseado !== 'INDIFERENTE'
-        ? ` • Turno ${comprador.turnoDescansoDeseado}`
-        : ' • Turno Indiferente';
-      libranzaStr = `*${diaNom}${turno}*`;
-    }
+    const libranzaStr = `*${formatLibranzaText(comprador.diaLibranzaDeseada, comprador.turnoDescansoDeseado)}*`;
 
     const cochePref = comprador.buscaConCoche === 'CON_COCHE'
       ? 'Exige vehículo incluido en la compra'

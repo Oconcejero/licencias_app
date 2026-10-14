@@ -79,7 +79,8 @@ export interface Comprador {
   fechaCreacion: string;
   perfil: TipoPerfil;
   
-  diaLibranzaDeseada: DiaLibranza;
+  diaLibranzaDeseada: DiaLibranza | string;
+  diasLibranzaDeseados?: DiaLibranza[];
   turnoDescansoDeseado?: TurnoDescansoDeseado;
   precioMaximo: number;
   
@@ -123,3 +124,19 @@ export interface ConfigTramitador {
 }
 
 export type UserRole = 'ADMIN' | 'SOCIO';
+
+export function getCompradorDias(comprador: { diaLibranzaDeseada?: string; diasLibranzaDeseados?: DiaLibranza[] }): DiaLibranza[] {
+  if (comprador.diasLibranzaDeseados && comprador.diasLibranzaDeseados.length > 0) {
+    return comprador.diasLibranzaDeseados;
+  }
+  if (comprador.diaLibranzaDeseada) {
+    if (comprador.diaLibranzaDeseada.includes(',')) {
+      return comprador.diaLibranzaDeseada
+        .split(',')
+        .map(s => s.trim() as DiaLibranza)
+        .filter(Boolean);
+    }
+    return [comprador.diaLibranzaDeseada as DiaLibranza];
+  }
+  return ['CUALQUIERA'];
+}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
-import { Comprador, Vendedor } from '../types';
+import { Comprador, Vendedor, getCompradorDias } from '../types';
 import { colors } from '../theme/colors';
 import { calculateMatch } from '../services/matchEngine';
 
@@ -49,6 +49,27 @@ export const CompradorCard: React.FC<CompradorCardProps> = ({
     Linking.openURL(`https://wa.me/${cleanPhone}`);
   };
 
+  const diasBuscados = getCompradorDias(comprador);
+  const isCualquiera = diasBuscados.includes('CUALQUIERA');
+  const isMulti = diasBuscados.length > 1;
+  const badgeBg = isMulti
+    ? '#4F46E5'
+    : colors.libranza[diasBuscados[0]] || colors.primary;
+
+  const badgeText = isCualquiera
+    ? (comprador.turnoDescansoDeseado && comprador.turnoDescansoDeseado !== 'INDIFERENTE'
+        ? `LIBRANZA CUALQUIERA • ${comprador.turnoDescansoDeseado}`
+        : 'BUSCA CUALQUIERA')
+    : isMulti
+    ? `BUSCA (${diasBuscados.length}): ${diasBuscados.join(' • ')}${comprador.turnoDescansoDeseado && comprador.turnoDescansoDeseado !== 'INDIFERENTE' ? ' • ' + comprador.turnoDescansoDeseado : ''}`
+    : diasBuscados[0] === 'EUROTAXI'
+    ? 'BUSCA EUROTAXI (SIN LIBRANZA)'
+    : diasBuscados[0] === 'ELECTRICO_SIN_LIBRANZA'
+    ? 'BUSCA ELÉCTRICO (SIN LIBRANZA)'
+    : diasBuscados[0] === 'LIBRE_24H'
+    ? 'BUSCA 24H LIBRE'
+    : `BUSCA ${diasBuscados[0]}${comprador.turnoDescansoDeseado && comprador.turnoDescansoDeseado !== 'INDIFERENTE' ? ' • ' + comprador.turnoDescansoDeseado : ''}`;
+
   return (
     <View style={styles.card}>
       <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
@@ -57,20 +78,8 @@ export const CompradorCard: React.FC<CompradorCardProps> = ({
           <View style={styles.nameContainer}>
             <Text style={styles.name}>{comprador.nombre}</Text>
             <View style={styles.badgesRow}>
-              <View style={[styles.dayBadge, { backgroundColor: colors.libranza[comprador.diaLibranzaDeseada] || colors.primary }]}>
-                <Text style={styles.dayText}>
-                  {comprador.diaLibranzaDeseada === 'CUALQUIERA'
-                    ? (comprador.turnoDescansoDeseado && comprador.turnoDescansoDeseado !== 'INDIFERENTE'
-                        ? `LIBRANZA CUALQUIERA • ${comprador.turnoDescansoDeseado}`
-                        : 'BUSCA CUALQUIERA')
-                    : comprador.diaLibranzaDeseada === 'EUROTAXI'
-                    ? 'BUSCA EUROTAXI (SIN LIBRANZA)'
-                    : comprador.diaLibranzaDeseada === 'ELECTRICO_SIN_LIBRANZA'
-                    ? 'BUSCA ELÉCTRICO (SIN LIBRANZA)'
-                    : comprador.diaLibranzaDeseada === 'LIBRE_24H'
-                    ? 'BUSCA 24H LIBRE'
-                    : `BUSCA ${comprador.diaLibranzaDeseada}${comprador.turnoDescansoDeseado && comprador.turnoDescansoDeseado !== 'INDIFERENTE' ? ' • ' + comprador.turnoDescansoDeseado : ''}`}
-                </Text>
+              <View style={[styles.dayBadge, { backgroundColor: badgeBg }]}>
+                <Text style={styles.dayText}>{badgeText}</Text>
               </View>
               <View style={styles.perfilBadge}>
                 <Text style={styles.perfilText}>{comprador.perfil}</Text>

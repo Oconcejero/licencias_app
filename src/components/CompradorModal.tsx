@@ -19,6 +19,7 @@ import {
   EstadoRegistro,
   CanalContacto,
   TurnoDescansoDeseado,
+  getCompradorDias,
 } from '../types';
 import { colors } from '../theme/colors';
 import { calculateMatch } from '../services/matchEngine';
@@ -29,7 +30,7 @@ interface CompradorModalProps {
   onSave: (comprador: Comprador) => void;
   compradorToEdit?: Comprador | null;
   allVendedores: Vendedor[];
-  onOpenGestoriaHelper: (nombre: string) => void;
+  onOpenGestoriaHelper?: (nombre?: string) => void;
 }
 
 const DIAS_LIBRANZA: DiaLibranza[] = [
@@ -57,7 +58,7 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
   const [contactoOrigen, setContactoOrigen] = useState('');
   const [perfil, setPerfil] = useState<TipoPerfil>('PARTICULAR');
 
-  const [diaLibranzaDeseada, setDiaLibranzaDeseada] = useState<DiaLibranza>('CUALQUIERA');
+  const [diasLibranzaDeseados, setDiasLibranzaDeseados] = useState<DiaLibranza[]>(['CUALQUIERA']);
   const [turnoDescansoDeseado, setTurnoDescansoDeseado] = useState<TurnoDescansoDeseado>('INDIFERENTE');
   const [precioMaximo, setPrecioMaximo] = useState('');
 
@@ -79,6 +80,40 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
   const [notas, setNotas] = useState('');
   const [estado, setEstado] = useState<EstadoRegistro>('DISPONIBLE');
 
+  const toggleDia = (dia: DiaLibranza) => {
+    if (dia === 'CUALQUIERA') {
+      setDiasLibranzaDeseados(['CUALQUIERA']);
+      if (turnoDescansoDeseado === 'LIBRE_24H') {
+        setTurnoDescansoDeseado('INDIFERENTE');
+      }
+      return;
+    }
+
+    setDiasLibranzaDeseados(prev => {
+      const sinCualquiera = prev.filter(d => d !== 'CUALQUIERA');
+      const exists = sinCualquiera.includes(dia);
+      let updated: DiaLibranza[];
+      if (exists) {
+        updated = sinCualquiera.filter(d => d !== dia);
+        if (updated.length === 0) {
+          updated = ['CUALQUIERA'];
+        }
+      } else {
+        updated = [...sinCualquiera, dia];
+      }
+
+      if (dia === 'EUROTAXI' || dia === 'ELECTRICO_SIN_LIBRANZA') {
+        if (!exists && updated.length === 1) {
+          setTurnoDescansoDeseado('LIBRE_24H');
+        }
+      } else if (turnoDescansoDeseado === 'LIBRE_24H') {
+        setTurnoDescansoDeseado('INDIFERENTE');
+      }
+
+      return updated;
+    });
+  };
+
   useEffect(() => {
     if (compradorToEdit) {
       setNombre(compradorToEdit.nombre);
@@ -86,7 +121,7 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
       setCanalContacto(compradorToEdit.canalContacto || 'TELEFONO');
       setContactoOrigen(compradorToEdit.contactoOrigen || '');
       setPerfil(compradorToEdit.perfil);
-      setDiaLibranzaDeseada(compradorToEdit.diaLibranzaDeseada);
+      setDiasLibranzaDeseados(getCompradorDias(compradorToEdit));
       setTurnoDescansoDeseado(compradorToEdit.turnoDescansoDeseado || 'INDIFERENTE');
       setPrecioMaximo(compradorToEdit.precioMaximo ? String(compradorToEdit.precioMaximo) : '');
       setAceptaConPrestamo(compradorToEdit.aceptaConPrestamo);
@@ -104,7 +139,7 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
       setCanalContacto('TELEFONO');
       setContactoOrigen('');
       setPerfil('PARTICULAR');
-      setDiaLibranzaDeseada('CUALQUIERA');
+      setDiasLibranzaDeseados(['CUALQUIERA']);
       setTurnoDescansoDeseado('INDIFERENTE');
       setPrecioMaximo('');
       setAceptaConPrestamo('INDIFERENTE');
@@ -122,7 +157,7 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
   // Cálculo en vivo de qué licencias le encajan con lo que tiene introducido
   const liveMatches = useMemo(() => {
     const pMax = parseFloat(precioMaximo.replace(/[^\d.]/g, '')) || 0;
-    if (pMax === 0 && diaLibranzaDeseada === 'CUALQUIERA') {
+    if (pMax === 0 && diasLibranzaDeseados.includes('CUALQUIERA')) {
       return [];
     }
 
@@ -132,7 +167,8 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
       telefono: telefono || '',
       fechaCreacion: new Date().toISOString(),
       perfil,
-      diaLibranzaDeseada,
+      diaLibranzaDeseada: diasLibranzaDeseados.join(','),
+      diasLibranzaDeseados,
       turnoDescansoDeseado,
       precioMaximo: pMax || 999999,
       aceptaConPrestamo,
@@ -140,8 +176,10 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
       buscaConCoche,
       tieneGestoria,
       gestoriaSeleccionada,
+      nombreGestoriaPropia,
       guardadoEnEspera,
-      estado: 'DISPONIBLE',
+      notas,
+      estado,
     };
 
     return allVendedores
@@ -154,7 +192,7 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
     nombre,
     telefono,
     perfil,
-    diaLibranzaDeseada,
+    diasLibranzaDeseados,
     turnoDescansoDeseado,
     precioMaximo,
     aceptaConPrestamo,
@@ -162,7 +200,10 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
     buscaConCoche,
     tieneGestoria,
     gestoriaSeleccionada,
+    nombreGestoriaPropia,
     guardadoEnEspera,
+    notas,
+    estado,
   ]);
 
   const handleSave = () => {
@@ -176,6 +217,7 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
       return;
     }
 
+    const diasStr = diasLibranzaDeseados.join(',');
     const item: Comprador = {
       id: compradorToEdit ? compradorToEdit.id : `c-${Date.now()}`,
       nombre: nombre.trim(),
@@ -184,7 +226,8 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
       contactoOrigen: canalContacto !== 'TELEFONO' ? contactoOrigen.trim() || undefined : undefined,
       fechaCreacion: compradorToEdit ? compradorToEdit.fechaCreacion : new Date().toISOString(),
       perfil,
-      diaLibranzaDeseada,
+      diaLibranzaDeseada: diasStr,
+      diasLibranzaDeseados,
       turnoDescansoDeseado,
       precioMaximo: precioNum,
       aceptaConPrestamo,
@@ -357,10 +400,23 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
               <Text style={styles.sectionTitle}>2. CRITERIOS DE LICENCIA Y PRESUPUESTO</Text>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>¿Qué día de libranza busca?</Text>
+                <View style={styles.libranzaHeaderRow}>
+                  <Text style={styles.label}>¿Qué días de libranza busca? (Multiselección)</Text>
+                  <View style={styles.selectedCountBadge}>
+                    <Text style={styles.selectedCountText}>
+                      {diasLibranzaDeseados.includes('CUALQUIERA')
+                        ? 'Cualquier día'
+                        : `${diasLibranzaDeseados.length} ${diasLibranzaDeseados.length === 1 ? 'día seleccionado' : 'días seleccionados'}`}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.sublabel}>
+                  💡 Puedes marcar uno o varios días compatibles (ej. Martes y Jueves). Si no tiene preferencia, marca "Cualquiera".
+                </Text>
+
                 <View style={styles.diasRow}>
                   {DIAS_LIBRANZA.map(dia => {
-                    const isSelected = diaLibranzaDeseada === dia;
+                    const isSelected = diasLibranzaDeseados.includes(dia);
                     return (
                       <TouchableOpacity
                         key={dia}
@@ -371,28 +427,32 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
                             borderColor: colors.libranza[dia] || colors.primary,
                           },
                         ]}
-                        onPress={() => {
-                          setDiaLibranzaDeseada(dia);
-                          if (dia === 'EUROTAXI' || dia === 'ELECTRICO_SIN_LIBRANZA') {
-                            setTurnoDescansoDeseado('LIBRE_24H');
-                          } else if (turnoDescansoDeseado === 'LIBRE_24H') {
-                            setTurnoDescansoDeseado('INDIFERENTE');
-                          }
-                        }}
+                        onPress={() => toggleDia(dia)}
+                        activeOpacity={0.7}
                       >
                         <Text style={[styles.diaBtnText, isSelected && styles.diaBtnTextActive]}>
+                          {isSelected ? '✓ ' : ''}
                           {dia === 'CUALQUIERA'
                             ? 'CUALQUIERA'
                             : dia === 'EUROTAXI'
                             ? '♿ EUROTAXI'
                             : dia === 'ELECTRICO_SIN_LIBRANZA'
-                            ? '⚡ ELÉCTRICO (Sin libranza)'
+                            ? '⚡ ELÉCTRICO'
                             : dia}
                         </Text>
                       </TouchableOpacity>
                     );
                   })}
                 </View>
+
+                {/* Resumen de días elegidos */}
+                {!diasLibranzaDeseados.includes('CUALQUIERA') && (
+                  <View style={styles.diasSummaryBox}>
+                    <Text style={styles.diasSummaryText}>
+                      🎯 Cruzará con licencias de: <Text style={styles.diasSummaryHighlight}>{diasLibranzaDeseados.join(' • ')}</Text>
+                    </Text>
+                  </View>
+                )}
               </View>
 
               {/* RÉGIMEN DE TURNO / FIN DE SEMANA */}
@@ -542,7 +602,7 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
                 </View>
                 <TouchableOpacity
                   style={styles.helpBtn}
-                  onPress={() => onOpenGestoriaHelper(nombre || 'el comprador')}
+                  onPress={() => onOpenGestoriaHelper && onOpenGestoriaHelper(nombre || 'el comprador')}
                 >
                   <Text style={styles.helpBtnText}>📖 Ver Guión Comercial</Text>
                 </TouchableOpacity>
@@ -907,6 +967,43 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   diaBtnTextActive: {
+    color: colors.white,
+  },
+  libranzaHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  selectedCountBadge: {
+    backgroundColor: 'rgba(14, 165, 233, 0.15)',
+    borderColor: colors.secondary,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  selectedCountText: {
+    fontSize: 11,
+    color: colors.secondary,
+    fontWeight: '800',
+  },
+  diasSummaryBox: {
+    marginTop: 8,
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    borderColor: colors.success,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  diasSummaryText: {
+    fontSize: 12,
+    color: '#A7F3D0',
+    fontWeight: '600',
+  },
+  diasSummaryHighlight: {
+    fontWeight: '800',
     color: colors.white,
   },
   hotBox: {

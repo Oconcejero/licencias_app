@@ -7,7 +7,7 @@ import {
   TextInput,
   TouchableOpacity,
 } from 'react-native';
-import { Comprador, Vendedor, DiaLibranza, UserRole } from '../types';
+import { Comprador, Vendedor, DiaLibranza, UserRole, getCompradorDias } from '../types';
 import { colors } from '../theme/colors';
 import { CompradorCard } from '../components/CompradorCard';
 
@@ -39,7 +39,14 @@ export const CompradoresScreen: React.FC<CompradoresScreenProps> = ({
 
   const filteredCompradores = useMemo(() => {
     return compradores.filter(c => {
-      if (selectedDia !== 'TODOS' && c.diaLibranzaDeseada !== selectedDia) return false;
+      if (selectedDia !== 'TODOS') {
+        const dias = getCompradorDias(c);
+        if (selectedDia === 'CUALQUIERA') {
+          if (!dias.includes('CUALQUIERA')) return false;
+        } else {
+          if (!dias.includes(selectedDia as any) && !dias.includes('CUALQUIERA')) return false;
+        }
+      }
       if (onlyHot && !c.puedeSenalizarYa) return false;
       if (filterGestoria === 'SIN_GESTORIA' && c.tieneGestoria) return false;
       if (filterGestoria === 'CON_GESTORIA' && !c.tieneGestoria) return false;

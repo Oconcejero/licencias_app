@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
-import { CruceMatch } from '../types';
+import { CruceMatch, getCompradorDias } from '../types';
 import { colors } from '../theme/colors';
 import { ExportCardModal } from './ExportCardModal';
 
@@ -40,6 +40,11 @@ export const MatchCard: React.FC<MatchCardProps> = ({
 
   const scoreBadgeColor =
     match.score >= 80 ? colors.success : match.score >= 65 ? colors.accent : colors.secondary;
+
+  const diasComprador = getCompradorDias(comprador);
+  const isMultiDias = diasComprador.length > 1;
+  const compradorBadgeBg = isMultiDias ? '#4F46E5' : colors.libranza[diasComprador[0]] || colors.primary;
+  const compradorBadgeTxt = diasComprador.includes('CUALQUIERA') ? 'Cualquiera' : diasComprador.join(' • ');
 
   return (
     <View style={[styles.card, isDerivado && styles.cardDerivado]}>
@@ -116,8 +121,8 @@ export const MatchCard: React.FC<MatchCardProps> = ({
 
           <View style={styles.itemRow}>
             <Text style={styles.itemLabel}>Libranza:</Text>
-            <View style={[styles.dayBadge, { backgroundColor: colors.libranza[comprador.diaLibranzaDeseada] || colors.primary }]}>
-              <Text style={styles.dayText}>{comprador.diaLibranzaDeseada}</Text>
+            <View style={[styles.dayBadge, { backgroundColor: compradorBadgeBg }]}>
+              <Text style={styles.dayText}>{compradorBadgeTxt}</Text>
             </View>
           </View>
 

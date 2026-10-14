@@ -9,7 +9,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import { Vendedor, Comprador, CruceMatch } from '../types';
+import { Vendedor, Comprador, CruceMatch, getCompradorDias } from '../types';
 import { colors } from '../theme/colors';
 import { shareService } from '../services/shareService';
 
@@ -309,18 +309,22 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
     } else if (comprador) {
       // 1. Badge de Demanda de Libranza
       const badgeY = 145;
-      const diaTexto =
-        comprador.diaLibranzaDeseada === 'EUROTAXI'
-          ? '♿ DEMANDA: EUROTAXI • EXENTO DE LIBRANZA'
-          : comprador.diaLibranzaDeseada === 'ELECTRICO_SIN_LIBRANZA'
-          ? '⚡ DEMANDA: ELÉCTRICO CERO • SIN LIBRANZA'
-          : comprador.diaLibranzaDeseada === 'LIBRE_24H'
-          ? '🟢 DEMANDA: 24H LIBRE'
-          : comprador.diaLibranzaDeseada === 'CUALQUIERA'
-          ? '🔄 DEMANDA: CUALQUIER DÍA (INDIFERENTE)'
-          : `DEMANDA: ${comprador.diaLibranzaDeseada} • TURNO ${comprador.turnoDescansoDeseado || 'INDIFERENTE'}`;
+      const diasBuscados = getCompradorDias(comprador);
+      const isMulti = diasBuscados.length > 1;
+      const isCualquiera = diasBuscados.includes('CUALQUIERA');
+      const diaTexto = isCualquiera
+        ? '🔄 DEMANDA: CUALQUIER DÍA (INDIFERENTE)'
+        : isMulti
+        ? `DEMANDA (${diasBuscados.length}): ${diasBuscados.join(' • ')}`
+        : diasBuscados[0] === 'EUROTAXI'
+        ? '♿ DEMANDA: EUROTAXI • EXENTO DE LIBRANZA'
+        : diasBuscados[0] === 'ELECTRICO_SIN_LIBRANZA'
+        ? '⚡ DEMANDA: ELÉCTRICO CERO • SIN LIBRANZA'
+        : diasBuscados[0] === 'LIBRE_24H'
+        ? '🟢 DEMANDA: 24H LIBRE'
+        : `DEMANDA: ${diasBuscados[0]} • TURNO ${comprador.turnoDescansoDeseado || 'INDIFERENTE'}`;
 
-      ctx.fillStyle = colors.libranza[comprador.diaLibranzaDeseada] || '#3B82F6';
+      ctx.fillStyle = isMulti ? '#4F46E5' : colors.libranza[diasBuscados[0]] || '#3B82F6';
       ctx.beginPath();
       ctx.roundRect(60, badgeY, 520, 48, 10);
       ctx.fill();
@@ -547,7 +551,7 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
       ctx.fillText('👤 DEMANDA: ' + cruce.comprador.nombre, 60 + colW + 50, gridY + 35);
       ctx.fillStyle = '#FFFFFF';
       ctx.font = 'bold 18px system-ui, -apple-system, sans-serif';
-      ctx.fillText(`Busca: ${cruce.comprador.diaLibranzaDeseada}`, 60 + colW + 50, gridY + 65);
+      ctx.fillText(`Busca: ${getCompradorDias(cruce.comprador).join(', ')}`, 60 + colW + 50, gridY + 65);
       ctx.fillStyle = '#94A3B8';
       ctx.font = '14px system-ui, -apple-system, sans-serif';
       ctx.fillText(cruce.comprador.telefono ? `📞 ${cruce.comprador.telefono}` : 'Chat online', 60 + colW + 50, gridY + 92);
@@ -815,26 +819,28 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
                       <Text style={styles.flyerDate}>REF: #{comprador.id?.slice(-6) || 'APC'}</Text>
                     </View>
 
-                    <View
-                      style={[
-                        styles.flyerLibranzaBadge,
-                        {
-                          backgroundColor: colors.libranza[comprador.diaLibranzaDeseada] || colors.primary,
-                        },
-                      ]}
-                    >
-                      <Text style={styles.flyerLibranzaText}>
-                        {comprador.diaLibranzaDeseada === 'EUROTAXI'
-                          ? '♿ BUSCA EUROTAXI • EXENTO DE LIBRANZA'
-                          : comprador.diaLibranzaDeseada === 'ELECTRICO_SIN_LIBRANZA'
-                          ? '⚡ BUSCA ELÉCTRICO CERO • SIN LIBRANZA'
-                          : comprador.diaLibranzaDeseada === 'LIBRE_24H'
-                          ? '🟢 BUSCA 24H LIBRE'
-                          : comprador.diaLibranzaDeseada === 'CUALQUIERA'
-                          ? '🔄 BUSCA CUALQUIER DÍA (INDIFERENTE)'
-                          : `BUSCA ${comprador.diaLibranzaDeseada} • TURNO ${comprador.turnoDescansoDeseado || 'INDIFERENTE'}`}
-                      </Text>
-                    </View>
+                    {(() => {
+                      const diasBuscados = getCompradorDias(comprador);
+                      const isMulti = diasBuscados.length > 1;
+                      const isCualquiera = diasBuscados.includes('CUALQUIERA');
+                      const bg = isMulti ? '#4F46E5' : colors.libranza[diasBuscados[0]] || colors.primary;
+                      const txt = isCualquiera
+                        ? '🔄 BUSCA CUALQUIER DÍA (INDIFERENTE)'
+                        : isMulti
+                        ? `BUSCA (${diasBuscados.length}): ${diasBuscados.join(' • ')}`
+                        : diasBuscados[0] === 'EUROTAXI'
+                        ? '♿ BUSCA EUROTAXI • EXENTO DE LIBRANZA'
+                        : diasBuscados[0] === 'ELECTRICO_SIN_LIBRANZA'
+                        ? '⚡ BUSCA ELÉCTRICO CERO • SIN LIBRANZA'
+                        : diasBuscados[0] === 'LIBRE_24H'
+                        ? '🟢 BUSCA 24H LIBRE'
+                        : `BUSCA ${diasBuscados[0]} • TURNO ${comprador.turnoDescansoDeseado || 'INDIFERENTE'}`;
+                      return (
+                        <View style={[styles.flyerLibranzaBadge, { backgroundColor: bg }]}>
+                          <Text style={styles.flyerLibranzaText}>{txt}</Text>
+                        </View>
+                      );
+                    })()}
 
                     <View style={styles.flyerPriceBox}>
                       <Text style={styles.flyerPriceLabel}>PRESUPUESTO MÁXIMO DISPONIBLE</Text>
@@ -961,7 +967,7 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
                       <View style={styles.flyerGridItem}>
                         <Text style={styles.flyerGridTitle}>👤 DEMANDA (COMPRADOR)</Text>
                         <Text style={styles.flyerGridMain}>
-                          {cruce.comprador.nombre} ({cruce.comprador.diaLibranzaDeseada})
+                          {cruce.comprador.nombre} ({getCompradorDias(cruce.comprador).join(', ')})
                         </Text>
                         <Text style={styles.flyerGridSub}>
                           {cruce.comprador.telefono || 'Canal online'}

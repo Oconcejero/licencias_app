@@ -8,7 +8,7 @@ import {
   ScrollView,
   Linking,
 } from 'react-native';
-import { Vendedor, Comprador, CruceMatch } from '../types';
+import { Vendedor, Comprador, CruceMatch, getCompradorDias } from '../types';
 import { colors } from '../theme/colors';
 import { calculateMatch } from '../services/matchEngine';
 import { shareService } from '../services/shareService';
@@ -113,7 +113,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                 {vendedor ? `🚕 Licencia de ${vendedor.nombre}` : `👤 Comprador: ${comprador?.nombre}`}
               </Text>
               <Text style={styles.subtitle}>
-                {vendedor ? `Libranza ${vendedor.diaLibranza} • ${vendedor.perfil}` : `Busca ${comprador?.diaLibranzaDeseada} • ${comprador?.perfil}`}
+                {vendedor ? `Libranza ${vendedor.diaLibranza} • ${vendedor.perfil}` : `Busca ${comprador ? getCompradorDias(comprador).join(', ') : ''} • ${comprador?.perfil}`}
               </Text>
             </View>
             <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
@@ -319,7 +319,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                           <View>
                             <Text style={styles.candidateName}>{c.nombre}</Text>
                             <Text style={styles.candidateInfo}>
-                              Busca: {c.diaLibranzaDeseada} • Presupuesto máx: {c.precioMaximo.toLocaleString()} €
+                              Busca: {getCompradorDias(c).join(', ')} • Presupuesto máx: {c.precioMaximo.toLocaleString()} €
                             </Text>
                           </View>
                           <View style={styles.candidateScore}>
@@ -429,17 +429,30 @@ export const DetailModal: React.FC<DetailModalProps> = ({
 
                   <View style={styles.specBox}>
                     <Text style={styles.specLabel}>Libranza Buscada</Text>
-                    <View style={[styles.dayPill, { backgroundColor: colors.libranza[comprador.diaLibranzaDeseada] || colors.primary }]}>
-                      <Text style={styles.dayPillText}>
-                        {comprador.diaLibranzaDeseada === 'EUROTAXI'
-                          ? '♿ EUROTAXI (Sin libranza)'
-                          : comprador.diaLibranzaDeseada === 'ELECTRICO_SIN_LIBRANZA'
-                          ? '⚡ ELÉCTRICO (Sin libranza)'
-                          : comprador.diaLibranzaDeseada === 'LIBRE_24H'
-                          ? '24H LIBRE'
-                          : `${comprador.diaLibranzaDeseada} (${comprador.turnoDescansoDeseado || 'Indiferente'})`}
-                      </Text>
-                    </View>
+                    {(() => {
+                      const diasBuscados = getCompradorDias(comprador);
+                      const isMulti = diasBuscados.length > 1;
+                      const isCualquiera = diasBuscados.includes('CUALQUIERA');
+                      const bg = isMulti ? '#4F46E5' : colors.libranza[diasBuscados[0]] || colors.primary;
+                      const txt = isCualquiera
+                        ? (comprador.turnoDescansoDeseado && comprador.turnoDescansoDeseado !== 'INDIFERENTE'
+                            ? `Cualquiera • ${comprador.turnoDescansoDeseado}`
+                            : 'Cualquiera (Indiferente)')
+                        : isMulti
+                        ? `${diasBuscados.join(', ')} (${comprador.turnoDescansoDeseado || 'Indiferente'})`
+                        : diasBuscados[0] === 'EUROTAXI'
+                        ? '♿ EUROTAXI (Sin libranza)'
+                        : diasBuscados[0] === 'ELECTRICO_SIN_LIBRANZA'
+                        ? '⚡ ELÉCTRICO (Sin libranza)'
+                        : diasBuscados[0] === 'LIBRE_24H'
+                        ? '24H LIBRE'
+                        : `${diasBuscados[0]} (${comprador.turnoDescansoDeseado || 'Indiferente'})`;
+                      return (
+                        <View style={[styles.dayPill, { backgroundColor: bg }]}>
+                          <Text style={styles.dayPillText}>{txt}</Text>
+                        </View>
+                      );
+                    })()}
                   </View>
 
                   <View style={styles.specBox}>

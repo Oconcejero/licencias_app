@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Vendedor, Comprador, ConfigTramitador, UserRole } from '../types';
+import { Vendedor, Comprador, ConfigTramitador, UserRole, DiaLibranza } from '../types';
 import { initialVendedores, initialCompradores } from './demoData';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 
@@ -72,13 +72,17 @@ function mapRowToVendedor(row: any): Vendedor {
 }
 
 function mapCompradorToRow(c: Comprador, includeCanal = true) {
+  const diasStr = c.diasLibranzaDeseados && c.diasLibranzaDeseados.length > 0
+    ? c.diasLibranzaDeseados.join(',')
+    : (c.diaLibranzaDeseada || 'CUALQUIERA');
+
   const row: any = {
     id: c.id,
     nombre: c.nombre,
     telefono: c.telefono,
     fecha_creacion: c.fechaCreacion,
     perfil: c.perfil,
-    dia_libranza_deseada: c.diaLibranzaDeseada,
+    dia_libranza_deseada: diasStr,
     precio_maximo: c.precioMaximo,
     acepta_con_prestamo: String(c.aceptaConPrestamo),
     puede_senalizar_ya: c.puedeSenalizarYa,
@@ -103,6 +107,11 @@ function mapRowToComprador(row: any): Comprador {
   if (row.acepta_con_prestamo === 'true') aceptaPrestamo = true;
   else if (row.acepta_con_prestamo === 'false') aceptaPrestamo = false;
 
+  const rawLibranza = row.dia_libranza_deseada || 'CUALQUIERA';
+  const parsedDias: DiaLibranza[] = rawLibranza.includes(',')
+    ? rawLibranza.split(',').map((s: string) => s.trim() as DiaLibranza).filter(Boolean)
+    : [rawLibranza as DiaLibranza];
+
   return {
     id: row.id,
     nombre: row.nombre,
@@ -111,7 +120,8 @@ function mapRowToComprador(row: any): Comprador {
     contactoOrigen: row.contacto_origen || undefined,
     fechaCreacion: row.fecha_creacion || new Date().toISOString(),
     perfil: row.perfil || 'PARTICULAR',
-    diaLibranzaDeseada: row.dia_libranza_deseada || 'CUALQUIERA',
+    diaLibranzaDeseada: rawLibranza,
+    diasLibranzaDeseados: parsedDias,
     turnoDescansoDeseado: row.turno_descanso_deseado || 'INDIFERENTE',
     precioMaximo: Number(row.precio_maximo) || 0,
     aceptaConPrestamo: aceptaPrestamo,
