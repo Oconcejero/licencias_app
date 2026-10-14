@@ -102,7 +102,9 @@ export interface MatchScore {
   nivel: 'EXCELENTE' | 'BUENO' | 'POTENCIAL';
   razones: string[];
   alertas: string[];
-  diferenciaPrecio: number; // vendedor.precio - comprador.precioMaximo
+  diferenciaPrecio: number; // precioEvaluado - comprador.precioMaximo
+  precioEvaluado?: number;
+  modalidadEvaluada?: 'CON_COCHE' | 'SOLO_LICENCIA';
   precioEncaja: boolean;
   libranzaEncaja: boolean;
   turnoEncaja?: boolean;
@@ -127,16 +129,16 @@ export type UserRole = 'ADMIN' | 'SOCIO';
 
 export function getCompradorDias(comprador: { diaLibranzaDeseada?: string; diasLibranzaDeseados?: DiaLibranza[] }): DiaLibranza[] {
   if (comprador.diasLibranzaDeseados && comprador.diasLibranzaDeseados.length > 0) {
-    return comprador.diasLibranzaDeseados;
+    return comprador.diasLibranzaDeseados.map(d => String(d).trim().toUpperCase() as DiaLibranza);
   }
   if (comprador.diaLibranzaDeseada) {
     if (comprador.diaLibranzaDeseada.includes(',')) {
       return comprador.diaLibranzaDeseada
         .split(',')
-        .map(s => s.trim() as DiaLibranza)
+        .map(s => s.trim().toUpperCase() as DiaLibranza)
         .filter(Boolean);
     }
-    return [comprador.diaLibranzaDeseada as DiaLibranza];
+    return [comprador.diaLibranzaDeseada.trim().toUpperCase() as DiaLibranza];
   }
   return ['CUALQUIERA'];
 }

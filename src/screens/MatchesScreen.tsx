@@ -65,7 +65,7 @@ export const MatchesScreen: React.FC<MatchesScreenProps> = ({
 
       return true;
     });
-  }, [matches, filter, search, derivadosIds]);
+  }, [matches, filter, search, safeDerivados]);
 
   const pendientesCount = matches.filter(c => !safeDerivados.includes(c.id)).length;
 

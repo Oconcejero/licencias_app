@@ -207,10 +207,17 @@ ${divider}
     const divider = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
 
     let precioVendStr = `${vendedor.precio.toLocaleString('es-ES')} €`;
-    if (vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES' && vendedor.precioConCoche) {
-      precioVendStr = `${precioVendStr} (solo lic.) / ${vendedor.precioConCoche.toLocaleString('es-ES')} € (con coche)`;
+    if (vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES' || (vendedor.precioConCoche && vendedor.precioConCoche !== vendedor.precio)) {
+      const pCon = (vendedor.precioConCoche || vendedor.precio).toLocaleString('es-ES');
+      const pSin = vendedor.precio.toLocaleString('es-ES');
+      precioVendStr = `Con coche: ${pCon} € | Sin coche: ${pSin} €`;
+      if (match.precioEvaluado) {
+        precioVendStr += `\n   ▪ *Precio Evaluado Cruce:* *${match.precioEvaluado.toLocaleString('es-ES')} €* _(${match.modalidadEvaluada === 'CON_COCHE' ? 'Pack con coche' : 'Solo licencia'})_`;
+      }
     } else if (vendedor.modalidadVentaCoche === 'CON_COCHE') {
-      precioVendStr = `${precioVendStr} (pack con coche)`;
+      precioVendStr = `${(vendedor.precioConCoche || vendedor.precio).toLocaleString('es-ES')} € (pack con coche)`;
+    } else {
+      precioVendStr = `${vendedor.precio.toLocaleString('es-ES')} € (solo licencia)`;
     }
     precioVendStr += vendedor.precioNegociable ? ' _(Negociable)_' : ' _(Fijo)_';
 

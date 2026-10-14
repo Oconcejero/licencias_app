@@ -319,7 +319,12 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                           <View>
                             <Text style={styles.candidateName}>{c.nombre}</Text>
                             <Text style={styles.candidateInfo}>
-                              Busca: {getCompradorDias(c).join(', ')} • Presupuesto máx: {c.precioMaximo.toLocaleString()} €
+                              Busca: {getCompradorDias(c).join(', ')} • Hasta {c.precioMaximo.toLocaleString()} € •{' '}
+                              {c.buscaConCoche === 'CON_COCHE'
+                                ? '🚗 Con coche'
+                                : c.buscaConCoche === 'SOLO_LICENCIA'
+                                ? '📄 Solo licencia'
+                                : 'Coche indiferente'}
                             </Text>
                           </View>
                           <View style={styles.candidateScore}>
@@ -503,9 +508,11 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                           <View>
                             <Text style={styles.candidateName}>{v.nombre}</Text>
                             <Text style={styles.candidateInfo}>
-                              Libranza {v.diaLibranza} • Pide {v.precio.toLocaleString()} €{' '}
-                              {v.precioNegociable ? '(Negociable)' : '(Fijo)'} •{' '}
-                              {v.vendeConCoche ? `Con coche` : 'Solo Licencia'}
+                              Libranza {v.diaLibranza} •{' '}
+                              {v.modalidadVentaCoche === 'AMBAS_OPCIONES' || (v.precioConCoche && v.precioConCoche !== v.precio)
+                                ? `🚗 Con coche: ${(v.precioConCoche || v.precio).toLocaleString()} € | 📄 Sin coche: ${v.precio.toLocaleString()} €`
+                                : `Pide ${(match.precioEvaluado || v.precio).toLocaleString()} € (${v.modalidadVentaCoche === 'CON_COCHE' ? 'Con coche' : 'Solo lic.'})`}{' '}
+                              {v.precioNegociable ? '(Negociable)' : '(Fijo)'}
                             </Text>
                           </View>
                           <View style={styles.candidateScore}>

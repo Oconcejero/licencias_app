@@ -483,36 +483,54 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
       ctx.fillText(`⚡ MATCH ${cruce.match.score}% ${cruce.match.nivel}`, 80, badgeY + 32);
 
       // 2. Bloque dual de precios
-      const priceBoxY = 225;
+      const priceBoxY = 215;
       ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
       ctx.beginPath();
-      ctx.roundRect(60, priceBoxY, width - 120, 150, 14);
+      ctx.roundRect(60, priceBoxY, width - 120, 165, 14);
       ctx.fill();
       ctx.strokeStyle = '#334155';
       ctx.stroke();
 
       ctx.fillStyle = '#94A3B8';
-      ctx.font = 'bold 16px system-ui, -apple-system, sans-serif';
-      ctx.fillText('OFERTA (VENDEDOR)  vs  DEMANDA (COMPRADOR)', 90, priceBoxY + 40);
+      ctx.font = 'bold 15px system-ui, -apple-system, sans-serif';
+      ctx.fillText('OFERTA (VENDEDOR)  vs  DEMANDA (COMPRADOR)', 90, priceBoxY + 32);
 
+      const precioVendEval = cruce.match.precioEvaluado || cruce.vendedor.precio;
       ctx.fillStyle = '#F59E0B';
-      ctx.font = 'bold 44px system-ui, -apple-system, sans-serif';
-      ctx.fillText(`${cruce.vendedor.precio.toLocaleString('es-ES')} €`, 90, priceBoxY + 100);
+      ctx.font = 'bold 40px system-ui, -apple-system, sans-serif';
+      ctx.fillText(`${precioVendEval.toLocaleString('es-ES')} €`, 90, priceBoxY + 80);
 
       ctx.fillStyle = '#64748B';
-      ctx.font = 'bold 36px system-ui, -apple-system, sans-serif';
-      ctx.fillText('↔', 400, priceBoxY + 98);
+      ctx.font = 'bold 32px system-ui, -apple-system, sans-serif';
+      ctx.fillText('↔', 390, priceBoxY + 78);
 
       ctx.fillStyle = '#10B981';
-      ctx.font = 'bold 44px system-ui, -apple-system, sans-serif';
-      ctx.fillText(`${cruce.comprador.precioMaximo.toLocaleString('es-ES')} €`, 470, priceBoxY + 100);
+      ctx.font = 'bold 40px system-ui, -apple-system, sans-serif';
+      ctx.fillText(`${cruce.comprador.precioMaximo.toLocaleString('es-ES')} €`, 450, priceBoxY + 80);
+
+      // Subetiquetas de precios y coche
+      ctx.fillStyle = '#CBD5E1';
+      ctx.font = 'bold 13px system-ui, -apple-system, sans-serif';
+      const vendPriceSub = cruce.vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES'
+        ? `🚗 Con coche: ${(cruce.vendedor.precioConCoche || cruce.vendedor.precio).toLocaleString('es-ES')}€ | 📄 Sin coche: ${cruce.vendedor.precio.toLocaleString('es-ES')}€`
+        : cruce.vendedor.modalidadVentaCoche === 'CON_COCHE'
+        ? '🚗 Pack con vehículo incluido'
+        : '📄 Solo licencia (sin vehículo)';
+      ctx.fillText(vendPriceSub, 90, priceBoxY + 112);
+
+      const compPrefSub = cruce.comprador.buscaConCoche === 'CON_COCHE'
+        ? '🚗 Demanda: Pack con coche'
+        : cruce.comprador.buscaConCoche === 'SOLO_LICENCIA'
+        ? '📄 Demanda: Solo licencia'
+        : 'Demanda: Coche indiferente';
+      ctx.fillText(compPrefSub, 450, priceBoxY + 112);
 
       ctx.fillStyle = '#38BDF8';
-      ctx.font = 'bold 15px system-ui, -apple-system, sans-serif';
+      ctx.font = 'bold 14px system-ui, -apple-system, sans-serif';
       ctx.fillText(
-        cruce.comprador.puedeSenalizarYa ? '🔥 Comprador listo para señalizar de inmediato' : '• Operación viable',
+        cruce.comprador.puedeSenalizarYa ? '🔥 Comprador listo para señalizar de inmediato' : '• Operación viable comercialmente',
         90,
-        priceBoxY + 132
+        priceBoxY + 145
       );
 
       // 3. Grid

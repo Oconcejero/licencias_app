@@ -1,4 +1,4 @@
-import { Vendedor, Comprador, MatchScore, CruceMatch, getCompradorDias } from '../types';
+import { Vendedor, Comprador, MatchScore, CruceMatch, getCompradorDias, DiaLibranza } from '../types';
 
 export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchScore {
   let score = 0;
@@ -13,6 +13,8 @@ export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchS
       razones: [],
       alertas: ['Uno de los perfiles ya está cerrado'],
       diferenciaPrecio: vendedor.precio - comprador.precioMaximo,
+      precioEvaluado: vendedor.precio,
+      modalidadEvaluada: 'SOLO_LICENCIA',
       precioEncaja: false,
       libranzaEncaja: false,
       cocheEncaja: false,
@@ -21,47 +23,44 @@ export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchS
   }
 
   // 1. LIBRANZA Y TURNO (Hasta 35 puntos: 25 por día + 10 por turno Par/Impar)
-  // PREMISA INDISPENSABLE: Si el día de LIBRANZA no coincide, el encaje es 0 absoluto.
+  // PREMISA INDISPENSABLE: Si el día de LIBRANZA no coincide, el encaje es 0 absoluto a no ser que sea "CUALQUIERA".
   let diaEncaja = false;
   let turnoEncaja = false;
 
-  // 1.1 Día entre semana
   const diasBuscados = getCompradorDias(comprador);
+  const diaVend = String(vendedor.diaLibranza || '').trim().toUpperCase() as DiaLibranza;
 
   const isVendedorExento =
-    vendedor.diaLibranza === 'EUROTAXI' ||
-    vendedor.diaLibranza === 'ELECTRICO_SIN_LIBRANZA' ||
-    vendedor.diaLibranza === 'LIBRE_24H';
-
-  const isCompradorExento =
-    diasBuscados.includes('EUROTAXI') ||
-    diasBuscados.includes('ELECTRICO_SIN_LIBRANZA') ||
-    diasBuscados.includes('LIBRE_24H');
+    diaVend === 'EUROTAXI' ||
+    diaVend === 'ELECTRICO_SIN_LIBRANZA' ||
+    diaVend === 'LIBRE_24H';
 
   const diaCoincide =
     diasBuscados.includes('CUALQUIERA') ||
-    diasBuscados.includes(vendedor.diaLibranza);
+    diasBuscados.includes(diaVend);
 
   if (diaCoincide) {
     diaEncaja = true;
     score += 25;
     if (diasBuscados.includes('CUALQUIERA')) {
-      razones.push(`Comprador busca cualquier libranza (Vendedor tiene ${vendedor.diaLibranza})`);
+      razones.push(`Comprador busca cualquier libranza (Vendedor tiene ${diaVend})`);
     } else if (diasBuscados.length > 1) {
-      razones.push(`Día de libranza coincide: ${vendedor.diaLibranza} (entre sus opciones: ${diasBuscados.join(', ')})`);
+      razones.push(`Día de libranza coincide: ${diaVend} (entre sus opciones: ${diasBuscados.join(', ')})`);
     } else {
-      razones.push(`Día de libranza coincide exactamente: ${vendedor.diaLibranza}`);
+      razones.push(`Día de libranza coincide exactamente: ${diaVend}`);
     }
   } else {
-    // Si el día de libranza no coincide, el encaje es 0
+    // Si el día de libranza no coincide, el encaje es 0 absoluto
     return {
       score: 0,
       nivel: 'POTENCIAL',
       razones: [],
       alertas: [
-        `Día de libranza no coincide: Vendedor tiene ${vendedor.diaLibranza}, comprador busca ${diasBuscados.join(', ')}`,
+        `Día de libranza no coincide: Vendedor tiene ${diaVend}, comprador busca ${diasBuscados.join(', ')}`,
       ],
       diferenciaPrecio: vendedor.precio - comprador.precioMaximo,
+      precioEvaluado: vendedor.precio,
+      modalidadEvaluada: 'SOLO_LICENCIA',
       precioEncaja: false,
       libranzaEncaja: false,
       turnoEncaja: false,
@@ -127,9 +126,12 @@ export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchS
     evaluandoConCoche = false;
   }
 
+  const modalidadEvaluada: 'CON_COCHE' | 'SOLO_LICENCIA' = evaluandoConCoche ? 'CON_COCHE' : 'SOLO_LICENCIA';
+
   // 2. PRECIO (Hasta 35 puntos)
   const diferenciaPrecio = precioComparar - comprador.precioMaximo;
   let precioEncaja = false;
+  let maxScoreCap = 100;
 
   if (diferenciaPrecio <= 0) {
     precioEncaja = true;
@@ -143,25 +145,46 @@ export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchS
       razones.push(`Precio exacto en presupuesto: ${precioComparar.toLocaleString()}€ ${evaluandoConCoche ? '(con coche)' : '(solo licencia)'}`);
     }
   } else {
-    // El vendedor pide más de lo que el comprador quiere pagar
-    const pctExceso = (diferenciaPrecio / comprador.precioMaximo) * 100;
+    // El vendedor pide más de lo que el comprador tiene presupuestado
+    // REGLA FUNDAMENTAL: Si el precio supera el presupuesto, NUNCA puede ser "EXCELENTE" (Tope < 80%)
+    maxScoreCap = 74;
+
     if (vendedor.precioNegociable) {
-      if (pctExceso <= 6) {
-        score += 25;
-        alertas.push(`Precio (${precioComparar.toLocaleString()}€) supera en ${diferenciaPrecio.toLocaleString()}€ pero el vendedor es NEGOCIABLE (margen salvable)`);
-      } else if (pctExceso <= 12) {
+      if (diferenciaPrecio <= 3000) {
         score += 15;
-        alertas.push(`Precio (${precioComparar.toLocaleString()}€) supera en ${diferenciaPrecio.toLocaleString()}€ (negociable, requiere acuerdo)`);
+        maxScoreCap = 75;
+        alertas.push(`Precio (${precioComparar.toLocaleString()}€) supera en ${diferenciaPrecio.toLocaleString()}€ pero el vendedor es NEGOCIABLE (margen salvable con acuerdo rápido)`);
+      } else if (diferenciaPrecio <= 7000) {
+        score += 8;
+        maxScoreCap = 68;
+        alertas.push(`Precio (${precioComparar.toLocaleString()}€) supera presupuesto en ${diferenciaPrecio.toLocaleString()}€: vendedor negociable, requiere rebaja`);
+      } else if (diferenciaPrecio <= 12000) {
+        score += 3;
+        maxScoreCap = 58;
+        alertas.push(`Precio (${precioComparar.toLocaleString()}€) supera en ${diferenciaPrecio.toLocaleString()}€: brecha considerable, requiere negociación fuerte`);
+      } else if (diferenciaPrecio <= 15000) {
+        score += 0;
+        maxScoreCap = 50;
+        alertas.push(`Brecha de ${diferenciaPrecio.toLocaleString()}€: vendedor pide bastante más del presupuesto del comprador`);
       } else {
-        score += 5;
-        alertas.push(`Supera presupuesto en ${diferenciaPrecio.toLocaleString()}€ aunque vendedor indica negociable`);
+        score += 0;
+        maxScoreCap = 40;
+        alertas.push(`Brecha de precio de ${diferenciaPrecio.toLocaleString()}€: supera ampliamente el presupuesto del comprador`);
       }
     } else {
-      if (pctExceso <= 5) {
-        score += 10;
-        alertas.push(`Supera presupuesto en ${diferenciaPrecio.toLocaleString()}€ y NO es negociable`);
+      // Precio NO negociable / Fijo
+      if (diferenciaPrecio <= 2000) {
+        score += 5;
+        maxScoreCap = 60;
+        alertas.push(`Supera presupuesto en ${diferenciaPrecio.toLocaleString()}€ y NO es negociable (diferencia pequeña pero precio cerrado)`);
+      } else if (diferenciaPrecio <= 10000) {
+        score += 0;
+        maxScoreCap = 45;
+        alertas.push(`Supera presupuesto en ${diferenciaPrecio.toLocaleString()}€ y NO es negociable (operación inviable sin que comprador aumente presupuesto)`);
       } else {
-        alertas.push(`Supera presupuesto en ${diferenciaPrecio.toLocaleString()}€ (NO negociable)`);
+        score += 0;
+        maxScoreCap = 35;
+        alertas.push(`Supera presupuesto en ${diferenciaPrecio.toLocaleString()}€ con precio cerrado (inviable)`);
       }
     }
   }
@@ -189,6 +212,7 @@ export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchS
       razones.push(`Ambos coinciden: incluye vehículo ${vendedor.vehiculo?.modelo || ''} (${vendedor.vehiculo?.anoMatriculacion || ''})`);
     } else {
       alertas.push('Comprador exige coche pero el vendedor vende SOLO licencia');
+      maxScoreCap = Math.min(maxScoreCap, 50);
     }
   } else if (buscaCocheComp === 'SOLO_LICENCIA') {
     if (modalidadVend === 'SOLO_LICENCIA') {
@@ -196,22 +220,23 @@ export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchS
       score += 15;
       razones.push('Ambos coinciden: solo licencia sin vehículo');
     } else {
-      score += 5;
-      alertas.push(`Vendedor exige venta con coche incluido (${vendedor.vehiculo?.modelo || ''})`);
+      alertas.push(`Vendedor exige venta con coche incluido (${vendedor.vehiculo?.modelo || ''}) y comprador busca solo licencia`);
+      maxScoreCap = Math.min(maxScoreCap, 50);
     }
   }
 
-  // Valor añadido del vehículo (exenciones o alertas de préstamo de coche)
+  // Valor añadido del vehículo o penalización por deuda del coche
   if (evaluandoConCoche && vendedor.vehiculo) {
     if (vendedor.vehiculo.exentoLibranza) {
-      razones.push(`⚡ Coche con exención de descanso (${vendedor.vehiculo.detalleExencion || 'CERO Emisiones'}): ¡permite trabajar sin libranza obligatoria!`);
+      razones.push(`⚡ Coche con exención de descanso (${vendedor.vehiculo.detalleExencion || 'CERO Emisiones'}): ¡permite trabajar sin descanso obligatorio!`);
     }
     if (vendedor.vehiculo.carga === 'PRESTAMO') {
+      score = Math.max(0, score - 5);
       alertas.push(`🚗 Vehículo con financiación/reserva de dominio: ${vendedor.vehiculo.detalleCarga || 'cancelar con el precio'}`);
     }
   }
 
-  // 4. CARGAS Y FINANCIACIÓN (Hasta 15 puntos)
+  // 4. CARGAS Y FINANCIACIÓN DE LA LICENCIA (Hasta 15 puntos)
   let cargaEncaja = false;
   if (vendedor.cargaLicencia === 'SIN_CARGA') {
     cargaEncaja = true;
@@ -221,10 +246,11 @@ export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchS
     // Vendedor tiene préstamo u otra carga
     if (comprador.aceptaConPrestamo === true || comprador.aceptaConPrestamo === 'INDIFERENTE') {
       cargaEncaja = true;
-      score += 15;
-      razones.push(`Licencia con ${vendedor.cargaLicencia === 'PRESTAMO' ? 'préstamo' : 'carga'} asumible por el comprador`);
+      score += 10;
+      razones.push(`Licencia con ${vendedor.cargaLicencia === 'PRESTAMO' ? 'préstamo' : 'carga'} asumible por el comprador (subrogación o liquidación)`);
     } else {
-      alertas.push(`Licencia con ${vendedor.cargaLicencia === 'PRESTAMO' ? 'préstamo bancario' : 'otra carga'} pendiente (${vendedor.detalleCargaLicencia || 'consultar'})`);
+      maxScoreCap = Math.min(maxScoreCap, 55);
+      alertas.push(`Licencia con ${vendedor.cargaLicencia === 'PRESTAMO' ? 'préstamo bancario' : 'otra carga'} pendiente (${vendedor.detalleCargaLicencia || 'consultar'}) y el comprador no desea cargas`);
     }
   }
 
@@ -240,6 +266,10 @@ export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchS
     alertas.push(`Condición del vendedor: ${vendedor.detalleCondicion}`);
   }
 
+  // Aplicar tope de puntuación realista (maxScoreCap)
+  score = Math.min(score, maxScoreCap);
+  score = Math.max(0, Math.min(100, score));
+
   // Nivel
   let nivel: 'EXCELENTE' | 'BUENO' | 'POTENCIAL' = 'POTENCIAL';
   if (score >= 80) {
@@ -254,6 +284,8 @@ export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchS
     razones,
     alertas,
     diferenciaPrecio,
+    precioEvaluado: precioComparar,
+    modalidadEvaluada,
     precioEncaja,
     libranzaEncaja,
     turnoEncaja,
@@ -272,8 +304,8 @@ export function findMatches(vendedores: Vendedor[], compradores: Comprador[]): C
       if (vendedor.estado === 'CERRADO') continue;
 
       const match = calculateMatch(vendedor, comprador);
-      // Filtramos cruces que tengan al menos una afinidad mínima (score >= 50)
-      if (match.score >= 50) {
+      // Filtramos cruces que tengan al menos una afinidad mínima (score >= 45)
+      if (match.score >= 45) {
         matches.push({
           id: `${vendedor.id}_${comprador.id}`,
           vendedor,

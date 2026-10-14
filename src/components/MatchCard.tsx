@@ -27,6 +27,12 @@ export const MatchCard: React.FC<MatchCardProps> = ({
 }) => {
   const [showExportModal, setShowExportModal] = useState(false);
   const { vendedor, comprador, match } = cruce;
+  const precioSoloLicencia = vendedor.precio;
+  const precioConCoche = vendedor.precioConCoche || vendedor.precio;
+  const tieneAmbasOpciones =
+    vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES' ||
+    Boolean(vendedor.precioConCoche && vendedor.precioConCoche !== vendedor.precio);
+  const evaluadoConCoche = match.modalidadEvaluada === 'CON_COCHE';
 
   const handleCall = (phone: string) => {
     Linking.openURL(`tel:${phone.replace(/\s+/g, '')}`);
@@ -39,7 +45,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
   };
 
   const scoreBadgeColor =
-    match.score >= 80 ? colors.success : match.score >= 65 ? colors.accent : colors.secondary;
+    match.score >= 80 ? colors.success : match.score >= 60 ? colors.accent : colors.secondary;
 
   const diasComprador = getCompradorDias(comprador);
   const isMultiDias = diasComprador.length > 1;
@@ -117,7 +123,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
             <Text style={styles.perfilBadge}>{comprador.perfil}</Text>
           </View>
           <Text style={styles.personName}>{comprador.nombre}</Text>
-          <Text style={styles.phoneText}>📞 {comprador.telefono}</Text>
+          <Text style={styles.phoneText}>📞 {comprador.telefono || 'Sin teléfono'}</Text>
 
           <View style={styles.itemRow}>
             <Text style={styles.itemLabel}>Libranza:</Text>
@@ -135,9 +141,9 @@ export const MatchCard: React.FC<MatchCardProps> = ({
             <Text style={styles.itemLabel}>Coche:</Text>
             <Text style={styles.itemValue}>
               {comprador.buscaConCoche === 'CON_COCHE'
-                ? 'Con coche'
+                ? '🚗 Con coche'
                 : comprador.buscaConCoche === 'SOLO_LICENCIA'
-                ? 'Solo licencia'
+                ? '📄 Solo licencia'
                 : 'Indiferente'}
             </Text>
           </View>
@@ -154,7 +160,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
               onPress={() =>
                 handleWhatsApp(
                   comprador.telefono,
-                  `Hola ${comprador.nombre}, te contacto porque tenemos una licencia de taxi que encaja con lo que buscas (Libranza ${vendedor.diaLibranza}, ${vendedor.precio.toLocaleString()}€).`
+                  `Hola ${comprador.nombre}, te contacto porque tenemos una licencia de taxi que encaja con lo que buscas (Libranza ${vendedor.diaLibranza}, ${(match.precioEvaluado || vendedor.precio).toLocaleString()}€).`
                 )
               }
             >
@@ -178,7 +184,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
             <Text style={styles.perfilBadge}>{vendedor.perfil}</Text>
           </View>
           <Text style={styles.personName}>{vendedor.nombre}</Text>
-          <Text style={styles.phoneText}>📞 {vendedor.telefono}</Text>
+          <Text style={styles.phoneText}>📞 {vendedor.telefono || 'Sin teléfono'}</Text>
 
           <View style={styles.itemRow}>
             <Text style={styles.itemLabel}>Libranza:</Text>
@@ -187,23 +193,80 @@ export const MatchCard: React.FC<MatchCardProps> = ({
             </View>
           </View>
 
-          <View style={styles.itemRow}>
-            <Text style={styles.itemLabel}>Pide:</Text>
-            <View style={styles.priceRow}>
-              <Text style={styles.priceSeller}>{vendedor.precio.toLocaleString()} €</Text>
-              {vendedor.precioNegociable ? (
-                <Text style={styles.negotiablePill}>Negociable</Text>
-              ) : (
-                <Text style={styles.fixedPill}>Fijo</Text>
-              )}
+          {/* PRECIOS: Si ofrece ambas opciones o modalidad única */}
+          {tieneAmbasOpciones ? (
+            <View style={styles.dualPriceCard}>
+              <View style={[styles.dualPriceRow, evaluadoConCoche && styles.dualPriceRowHighlight]}>
+                <View style={styles.dualPriceLabelGroup}>
+                  <Text style={[styles.dualPriceLabel, evaluadoConCoche && styles.dualPriceLabelHighlight]}>
+                    🚗 Con coche:
+                  </Text>
+                  {evaluadoConCoche && (
+                    <View style={styles.activeEvalBadge}>
+                      <Text style={styles.activeEvalBadgeText}>Evaluado</Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={[styles.dualPriceVal, evaluadoConCoche && styles.dualPriceValHighlight]}>
+                  {precioConCoche.toLocaleString()} €
+                </Text>
+              </View>
+
+              <View style={[styles.dualPriceRow, !evaluadoConCoche && styles.dualPriceRowHighlight]}>
+                <View style={styles.dualPriceLabelGroup}>
+                  <Text style={[styles.dualPriceLabel, !evaluadoConCoche && styles.dualPriceLabelHighlight]}>
+                    📄 Sin coche:
+                  </Text>
+                  {!evaluadoConCoche && (
+                    <View style={styles.activeEvalBadge}>
+                      <Text style={styles.activeEvalBadgeText}>Evaluado</Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={[styles.dualPriceVal, !evaluadoConCoche && styles.dualPriceValHighlight]}>
+                  {precioSoloLicencia.toLocaleString()} €
+                </Text>
+              </View>
+
+              <View style={styles.negotiableRow}>
+                {vendedor.precioNegociable ? (
+                  <Text style={styles.negotiablePill}>Negociable</Text>
+                ) : (
+                  <Text style={styles.fixedPill}>Precio Fijo</Text>
+                )}
+              </View>
             </View>
-          </View>
+          ) : (
+            <View style={styles.itemRow}>
+              <Text style={styles.itemLabel}>Pide:</Text>
+              <View style={styles.priceRow}>
+                <Text style={styles.priceSeller}>
+                  {(match.precioEvaluado || vendedor.precio).toLocaleString()} €
+                </Text>
+                <Text style={styles.priceModeBadge}>
+                  {vendedor.modalidadVentaCoche === 'CON_COCHE' ? 'Con coche' : 'Solo lic.'}
+                </Text>
+                {vendedor.precioNegociable ? (
+                  <Text style={styles.negotiablePill}>Negociable</Text>
+                ) : (
+                  <Text style={styles.fixedPill}>Fijo</Text>
+                )}
+              </View>
+            </View>
+          )}
 
           <View style={styles.itemRow}>
             <Text style={styles.itemLabel}>Coche:</Text>
-            <Text style={styles.itemValue}>
-              {vendedor.vendeConCoche ? `Sí (${vendedor.vehiculo?.modelo || 'Coche'})` : 'No (Solo Licencia)'}
-            </Text>
+            <View style={{ flex: 1, alignItems: 'flex-end' }}>
+              <Text style={styles.itemValue}>
+                {vendedor.vendeConCoche ? `Sí (${vendedor.vehiculo?.modelo || 'Coche'})` : 'No (Solo Licencia)'}
+              </Text>
+              {vendedor.vehiculo?.carga === 'PRESTAMO' && (
+                <Text style={styles.carDebtMiniAlert}>
+                  🚗 Deuda: {vendedor.vehiculo.detalleCarga || 'con préstamo'}
+                </Text>
+              )}
+            </View>
           </View>
 
           <View style={styles.quickContactRow}>
@@ -604,5 +667,83 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: colors.textMuted,
     fontWeight: '600',
+  },
+  dualPriceCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderRadius: 6,
+    padding: 6,
+    marginVertical: 4,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    gap: 3,
+  },
+  dualPriceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 3,
+    paddingHorizontal: 5,
+    borderRadius: 4,
+  },
+  dualPriceRowHighlight: {
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.35)',
+  },
+  dualPriceLabelGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  dualPriceLabel: {
+    fontSize: 10,
+    color: colors.textMuted,
+    fontWeight: '600',
+  },
+  dualPriceLabelHighlight: {
+    color: colors.text,
+    fontWeight: '700',
+  },
+  activeEvalBadge: {
+    backgroundColor: colors.success,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 3,
+  },
+  activeEvalBadgeText: {
+    fontSize: 8,
+    fontWeight: '800',
+    color: '#062B1D',
+  },
+  dualPriceVal: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textSubtle,
+  },
+  dualPriceValHighlight: {
+    fontSize: 12,
+    fontWeight: '900',
+    color: colors.success,
+  },
+  negotiableRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 2,
+  },
+  priceModeBadge: {
+    fontSize: 9,
+    color: colors.textMuted,
+    backgroundColor: colors.surfaceHighlight,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 4,
+    fontWeight: '600',
+  },
+  carDebtMiniAlert: {
+    fontSize: 9,
+    color: colors.accent,
+    fontWeight: '700',
+    marginTop: 2,
+    textAlign: 'right',
   },
 });
