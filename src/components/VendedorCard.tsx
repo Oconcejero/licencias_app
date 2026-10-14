@@ -54,32 +54,6 @@ export const VendedorCard: React.FC<VendedorCardProps> = ({
         <View style={styles.topRow}>
           <View style={styles.nameContainer}>
             <Text style={styles.name}>{vendedor.nombre}</Text>
-            <View style={styles.badgesRow}>
-              <View style={[styles.dayBadge, { backgroundColor: colors.libranza[vendedor.diaLibranza] || colors.primary }]}>
-                <Text style={styles.dayText}>
-                  {vendedor.diaLibranza === 'EUROTAXI'
-                    ? '♿ EUROTAXI (SIN LIBRANZA)'
-                    : vendedor.diaLibranza === 'ELECTRICO_SIN_LIBRANZA'
-                    ? '⚡ ELÉCTRICO (SIN LIBRANZA)'
-                    : vendedor.diaLibranza === 'LIBRE_24H'
-                    ? '24H LIBRE'
-                    : `LIBRANZA ${vendedor.diaLibranza} • ${vendedor.turnoDescanso || 'PAR'}`}
-                </Text>
-              </View>
-              <View style={styles.perfilBadge}>
-                <Text style={styles.perfilText}>{vendedor.perfil}</Text>
-              </View>
-              {vendedor.canalContacto && vendedor.canalContacto !== 'TELEFONO' && (
-                <View style={[styles.canalBadge, { backgroundColor: colors.canales[vendedor.canalContacto] || colors.secondary }]}>
-                  <Text style={styles.canalText}>
-                    {vendedor.canalContacto === 'WALLAPOP' ? '🟠 WALLAPOP'
-                     : vendedor.canalContacto === 'MILANUNCIOS' ? '🟢 MILANUNCIOS'
-                     : vendedor.canalContacto === 'FACEBOOK' ? '🔵 FACEBOOK'
-                     : '💬 ' + vendedor.canalContacto}
-                  </Text>
-                </View>
-              )}
-            </View>
           </View>
 
           <View style={styles.priceContainer}>
@@ -104,6 +78,34 @@ export const VendedorCard: React.FC<VendedorCardProps> = ({
               {vendedor.precioNegociable ? 'Negociable' : 'Precio Fijo'}
             </Text>
           </View>
+        </View>
+
+        {/* Insignias a Ancho Completo */}
+        <View style={styles.badgesRow}>
+          <View style={[styles.dayBadge, { backgroundColor: colors.libranza[vendedor.diaLibranza] || colors.primary }]}>
+            <Text style={styles.dayText}>
+              {vendedor.diaLibranza === 'EUROTAXI'
+                ? '♿ EUROTAXI (SIN LIBRANZA)'
+                : vendedor.diaLibranza === 'ELECTRICO_SIN_LIBRANZA'
+                ? '⚡ ELÉCTRICO (SIN LIBRANZA)'
+                : vendedor.diaLibranza === 'LIBRE_24H'
+                ? '24H LIBRE'
+                : `LIBRANZA ${vendedor.diaLibranza} • ${vendedor.turnoDescanso || 'PAR'}`}
+            </Text>
+          </View>
+          <View style={styles.perfilBadge}>
+            <Text style={styles.perfilText}>{vendedor.perfil}</Text>
+          </View>
+          {vendedor.canalContacto && vendedor.canalContacto !== 'TELEFONO' && (
+            <View style={[styles.canalBadge, { backgroundColor: colors.canales[vendedor.canalContacto] || colors.secondary }]}>
+              <Text style={styles.canalText}>
+                {vendedor.canalContacto === 'WALLAPOP' ? '🟠 WALLAPOP'
+                 : vendedor.canalContacto === 'MILANUNCIOS' ? '🟢 MILANUNCIOS'
+                 : vendedor.canalContacto === 'FACEBOOK' ? '🔵 FACEBOOK'
+                 : '💬 ' + vendedor.canalContacto}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Cargas y Condiciones Completas */}
@@ -239,8 +241,8 @@ const styles = StyleSheet.create({
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
+    alignItems: 'center',
+    marginBottom: 6,
   },
   nameContainer: {
     flex: 1,
@@ -249,13 +251,13 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '800',
     color: colors.text,
-    marginBottom: 4,
   },
   badgesRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     flexWrap: 'wrap',
+    marginBottom: 12,
   },
   dayBadge: {
     paddingHorizontal: 8,
@@ -353,6 +355,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.borderLight,
     paddingTop: 10,
+    marginTop: 10,
     flexWrap: 'wrap',
     gap: 8,
   },

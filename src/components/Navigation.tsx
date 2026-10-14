@@ -98,9 +98,10 @@ const styles = StyleSheet.create({
   },
   tabItemMobile: {
     flex: 1,
-    flexDirection: 'column',
-    paddingVertical: 8,
-    gap: 3,
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 4,
   },
   tabItemDesktop: {
     flexDirection: 'row',
@@ -113,15 +114,20 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(37, 99, 235, 0.08)',
   },
   iconContainer: {
+    width: 32,
+    height: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
     position: 'relative',
   },
   iconText: {
     fontSize: 16,
+    textAlign: 'center',
   },
   badge: {
     position: 'absolute',
-    top: -5,
-    right: -10,
+    top: -4,
+    right: -4,
     backgroundColor: colors.accent,
     borderRadius: 8,
     minWidth: 16,
@@ -133,7 +139,7 @@ const styles = StyleSheet.create({
   badgeText: {
     color: '#000',
     fontSize: 9,
-    fontWeight: '800',
+    fontWeight: '900',
   },
   tabLabel: {
     fontSize: 13,
@@ -143,6 +149,8 @@ const styles = StyleSheet.create({
   tabLabelMobile: {
     fontSize: 10,
     fontWeight: '700',
+    marginTop: 2,
+    textAlign: 'center',
   },
   tabLabelActive: {
     color: colors.text,

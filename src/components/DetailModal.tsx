@@ -161,29 +161,32 @@ export const DetailModal: React.FC<DetailModalProps> = ({
             {vendedor && (
               <View style={styles.profileSection}>
                 <View style={styles.profileHeader}>
-                  <View style={{ flex: 1 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                      <Text style={styles.name}>{vendedor.nombre}</Text>
-                      {vendedor.canalContacto && vendedor.canalContacto !== 'TELEFONO' && (
-                        <View style={[styles.dayPill, { backgroundColor: colors.canales[vendedor.canalContacto] || colors.secondary }]}>
-                          <Text style={styles.dayPillText}>{vendedor.canalContacto}</Text>
-                        </View>
+                  <View style={styles.profileInfoRow}>
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <Text style={styles.name}>{vendedor.nombre}</Text>
+                        {vendedor.canalContacto && vendedor.canalContacto !== 'TELEFONO' && (
+                          <View style={[styles.dayPill, { backgroundColor: colors.canales[vendedor.canalContacto] || colors.secondary }]}>
+                            <Text style={styles.dayPillText}>{vendedor.canalContacto}</Text>
+                          </View>
+                        )}
+                      </View>
+                      {vendedor.telefono ? (
+                        <Text style={styles.phone}>📞 {vendedor.telefono}</Text>
+                      ) : (
+                        <Text style={[styles.phone, { color: colors.accent, fontWeight: '700' }]}>
+                          💬 {vendedor.contactoOrigen ? `${vendedor.contactoOrigen}` : `Chat ${vendedor.canalContacto || ''} (Teléfono pendiente)`}
+                        </Text>
                       )}
                     </View>
-                    {vendedor.telefono ? (
-                      <Text style={styles.phone}>📞 {vendedor.telefono}</Text>
-                    ) : (
-                      <Text style={[styles.phone, { color: colors.accent, fontWeight: '700' }]}>
-                        💬 {vendedor.contactoOrigen ? `${vendedor.contactoOrigen}` : `Chat ${vendedor.canalContacto || ''} (Teléfono pendiente)`}
-                      </Text>
-                    )}
                   </View>
+
                   <View style={styles.actionRow}>
                     <TouchableOpacity
                       style={styles.btnAction}
                       onPress={() => handleCall(vendedor.telefono, vendedor.canalContacto)}
                     >
-                      <Text style={styles.btnActionText}>Llamar</Text>
+                      <Text style={styles.btnActionText}>📞 Llamar</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.btnAction, styles.waBtn]}
@@ -195,7 +198,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                       )}
                     >
                       <Text style={styles.btnActionText}>
-                        {vendedor.telefono ? 'WhatsApp' : vendedor.contactoOrigen?.startsWith('http') ? 'Abrir Chat' : 'WhatsApp'}
+                        {vendedor.telefono ? '💬 WhatsApp' : vendedor.contactoOrigen?.startsWith('http') ? '💬 Abrir Chat' : '💬 WhatsApp'}
                       </Text>
                     </TouchableOpacity>
                     {onEditVendedor && (
@@ -206,7 +209,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                           onEditVendedor(vendedor);
                         }}
                       >
-                        <Text style={styles.btnActionText}>Editar</Text>
+                        <Text style={styles.btnActionText}>✏️ Editar</Text>
                       </TouchableOpacity>
                     )}
                   </View>
@@ -314,21 +317,24 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                     matchingBuyers.map(({ comprador: c, match }) => (
                       <View key={c.id} style={styles.candidateCard}>
                         <View style={styles.candidateTop}>
-                          <View>
+                          <View style={{ flex: 1 }}>
                             <Text style={styles.candidateName}>{c.nombre}</Text>
-                            <Text style={styles.candidateInfo}>
-                              Busca: {getCompradorDias(c).join(', ')} • Hasta {c.precioMaximo.toLocaleString()} € •{' '}
-                              {c.buscaConCoche === 'CON_COCHE'
-                                ? '🚗 Con coche'
-                                : c.buscaConCoche === 'SOLO_LICENCIA'
-                                ? '📄 Solo licencia'
-                                : 'Coche indiferente'}
-                            </Text>
                           </View>
                           <View style={styles.candidateScore}>
                             <Text style={styles.candidateScoreText}>{match.score}% MATCH</Text>
                             {c.puedeSenalizarYa && <Text style={styles.hotTag}>🔥 SEÑALIZA YA</Text>}
                           </View>
+                        </View>
+
+                        <View style={styles.candidateSummaryBox}>
+                          <Text style={styles.candidateInfo}>
+                            Busca: {getCompradorDias(c).join(', ')} • Hasta {c.precioMaximo.toLocaleString()} € •{' '}
+                            {c.buscaConCoche === 'CON_COCHE'
+                              ? '🚗 Con coche'
+                              : c.buscaConCoche === 'SOLO_LICENCIA'
+                              ? '📄 Solo licencia'
+                              : 'Coche indiferente'}
+                          </Text>
                         </View>
 
                         <View style={styles.candidateFooter}>
@@ -367,29 +373,32 @@ export const DetailModal: React.FC<DetailModalProps> = ({
             {comprador && (
               <View style={styles.profileSection}>
                 <View style={styles.profileHeader}>
-                  <View style={{ flex: 1 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                      <Text style={styles.name}>{comprador.nombre}</Text>
-                      {comprador.canalContacto && comprador.canalContacto !== 'TELEFONO' && (
-                        <View style={[styles.dayPill, { backgroundColor: colors.canales[comprador.canalContacto] || colors.secondary }]}>
-                          <Text style={styles.dayPillText}>{comprador.canalContacto}</Text>
-                        </View>
+                  <View style={styles.profileInfoRow}>
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <Text style={styles.name}>{comprador.nombre}</Text>
+                        {comprador.canalContacto && comprador.canalContacto !== 'TELEFONO' && (
+                          <View style={[styles.dayPill, { backgroundColor: colors.canales[comprador.canalContacto] || colors.secondary }]}>
+                            <Text style={styles.dayPillText}>{comprador.canalContacto}</Text>
+                          </View>
+                        )}
+                      </View>
+                      {comprador.telefono ? (
+                        <Text style={styles.phone}>📞 {comprador.telefono}</Text>
+                      ) : (
+                        <Text style={[styles.phone, { color: colors.accent, fontWeight: '700' }]}>
+                          💬 {comprador.contactoOrigen ? `${comprador.contactoOrigen}` : `Chat ${comprador.canalContacto || ''} (Teléfono pendiente)`}
+                        </Text>
                       )}
                     </View>
-                    {comprador.telefono ? (
-                      <Text style={styles.phone}>📞 {comprador.telefono}</Text>
-                    ) : (
-                      <Text style={[styles.phone, { color: colors.accent, fontWeight: '700' }]}>
-                        💬 {comprador.contactoOrigen ? `${comprador.contactoOrigen}` : `Chat ${comprador.canalContacto || ''} (Teléfono pendiente)`}
-                      </Text>
-                    )}
                   </View>
+
                   <View style={styles.actionRow}>
                     <TouchableOpacity
                       style={styles.btnAction}
                       onPress={() => handleCall(comprador.telefono, comprador.canalContacto)}
                     >
-                      <Text style={styles.btnActionText}>Llamar</Text>
+                      <Text style={styles.btnActionText}>📞 Llamar</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.btnAction, styles.waBtn]}
@@ -401,7 +410,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                       )}
                     >
                       <Text style={styles.btnActionText}>
-                        {comprador.telefono ? 'WhatsApp' : comprador.contactoOrigen?.startsWith('http') ? 'Abrir Chat' : 'WhatsApp'}
+                        {comprador.telefono ? '💬 WhatsApp' : comprador.contactoOrigen?.startsWith('http') ? '💬 Abrir Chat' : '💬 WhatsApp'}
                       </Text>
                     </TouchableOpacity>
                     {onEditComprador && (
@@ -412,7 +421,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                           onEditComprador(comprador);
                         }}
                       >
-                        <Text style={styles.btnActionText}>Editar</Text>
+                        <Text style={styles.btnActionText}>✏️ Editar</Text>
                       </TouchableOpacity>
                     )}
                   </View>
@@ -490,19 +499,22 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                     matchingSellers.map(({ vendedor: v, match }) => (
                       <View key={v.id} style={styles.candidateCard}>
                         <View style={styles.candidateTop}>
-                          <View>
+                          <View style={{ flex: 1 }}>
                             <Text style={styles.candidateName}>{v.nombre}</Text>
-                            <Text style={styles.candidateInfo}>
-                              Libranza {v.diaLibranza} •{' '}
-                              {v.modalidadVentaCoche === 'AMBAS_OPCIONES' || (v.precioConCoche && v.precioConCoche !== v.precio)
-                                ? `🚗 Con coche: ${(v.precioConCoche || v.precio).toLocaleString()} € | 📄 Sin coche: ${v.precio.toLocaleString()} €`
-                                : `Pide ${(match.precioEvaluado || v.precio).toLocaleString()} € (${v.modalidadVentaCoche === 'CON_COCHE' ? 'Con coche' : 'Solo lic.'})`}{' '}
-                              {v.precioNegociable ? '(Negociable)' : '(Fijo)'}
-                            </Text>
                           </View>
                           <View style={styles.candidateScore}>
                             <Text style={styles.candidateScoreText}>{match.score}% MATCH</Text>
                           </View>
+                        </View>
+
+                        <View style={styles.candidateSummaryBox}>
+                          <Text style={styles.candidateInfo}>
+                            Libranza {v.diaLibranza} •{' '}
+                            {v.modalidadVentaCoche === 'AMBAS_OPCIONES' || (v.precioConCoche && v.precioConCoche !== v.precio)
+                              ? `🚗 Con coche: ${(v.precioConCoche || v.precio).toLocaleString()} € | 📄 Sin coche: ${v.precio.toLocaleString()} €`
+                              : `Pide ${(match.precioEvaluado || v.precio).toLocaleString()} € (${v.modalidadVentaCoche === 'CON_COCHE' ? 'Con coche' : 'Solo lic.'})`}{' '}
+                            {v.precioNegociable ? '(Negociable)' : '(Fijo)'}
+                          </Text>
                         </View>
 
                         <View style={styles.candidateFooter}>
@@ -676,16 +688,20 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   profileHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     backgroundColor: colors.surfaceCard,
     padding: 14,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.border,
+    gap: 12,
+  },
+  profileInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     flexWrap: 'wrap',
     gap: 8,
+    width: '100%',
   },
   name: {
     fontSize: 18,
@@ -699,22 +715,32 @@ const styles = StyleSheet.create({
   },
   actionRow: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 8,
+    flexWrap: 'wrap',
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+    paddingTop: 10,
+    width: '100%',
   },
   btnAction: {
+    flex: 1,
+    minWidth: 90,
+    minHeight: 36,
     backgroundColor: colors.surfaceHighlight,
     paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 6,
+    paddingVertical: 7,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   waBtn: {
     backgroundColor: 'rgba(16, 185, 129, 0.15)',
     borderColor: colors.success,
   },
   btnActionText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
     color: colors.text,
   },
@@ -840,17 +866,26 @@ const styles = StyleSheet.create({
   candidateTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    gap: 8,
   },
   candidateName: {
     fontSize: 13,
     fontWeight: '700',
     color: colors.text,
   },
+  candidateSummaryBox: {
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderRadius: 6,
+    padding: 8,
+    marginVertical: 2,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
   candidateInfo: {
     fontSize: 11,
     color: colors.textMuted,
-    marginTop: 2,
+    lineHeight: 16,
   },
   candidateScore: {
     alignItems: 'flex-end',
@@ -868,16 +903,23 @@ const styles = StyleSheet.create({
   },
   candidateFooter: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 8,
     flexWrap: 'wrap',
+    marginTop: 2,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
   },
   candBtn: {
     flex: 1,
     minWidth: 90,
+    minHeight: 34,
     backgroundColor: colors.surfaceHighlight,
     paddingVertical: 6,
+    paddingHorizontal: 8,
     borderRadius: 6,
     alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: colors.border,
   },

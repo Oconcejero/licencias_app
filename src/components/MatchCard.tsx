@@ -62,16 +62,6 @@ export const MatchCard: React.FC<MatchCardProps> = ({
               ⚡ {match.score}% MATCH {match.nivel}
             </Text>
           </View>
-          {comprador.puedeSenalizarYa && (
-            <View style={styles.hotPill}>
-              <Text style={styles.hotText}>🔥 SEÑALIZA YA</Text>
-            </View>
-          )}
-          {isDerivado && (
-            <View style={styles.derivadoBadge}>
-              <Text style={styles.derivadoText}>✓ DERIVADO A GESTIÓN</Text>
-            </View>
-          )}
         </View>
 
         <View style={styles.headerRightActions}>
@@ -84,6 +74,21 @@ export const MatchCard: React.FC<MatchCardProps> = ({
           </TouchableOpacity>
         </View>
       </View>
+
+      {(comprador.puedeSenalizarYa || isDerivado) && (
+        <View style={styles.secondaryBadgesRow}>
+          {comprador.puedeSenalizarYa && (
+            <View style={styles.hotPill}>
+              <Text style={styles.hotText}>🔥 SEÑALIZA YA</Text>
+            </View>
+          )}
+          {isDerivado && (
+            <View style={styles.derivadoBadge}>
+              <Text style={styles.derivadoText}>✓ DERIVADO A GESTIÓN</Text>
+            </View>
+          )}
+        </View>
+      )}
 
       {/* BOTÓN ESTRELLA: DERIVAR A GESTOR POR WHATSAPP */}
       <TouchableOpacity
@@ -296,6 +301,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
 
       {/* RAZONES Y ALERTAS */}
       <View style={styles.feedbackSection}>
+        <Text style={styles.feedbackSectionTitle}>📋 RESUMEN Y ESTADO DEL CRUCE</Text>
         {match.razones.length > 0 && (
           <View style={styles.reasonsList}>
             {match.razones.map((r, i) => (
@@ -359,9 +365,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
     flexWrap: 'wrap',
     gap: 8,
+  },
+  secondaryBadgesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexWrap: 'wrap',
+    marginBottom: 12,
+    width: '100%',
   },
   scoreRow: {
     flexDirection: 'row',
@@ -629,13 +643,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 6,
     marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
   },
   contactBtn: {
     flex: 1,
+    minHeight: 38,
     backgroundColor: colors.surfaceHighlight,
-    paddingVertical: 6,
-    borderRadius: 6,
+    paddingVertical: 7,
+    borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -653,6 +672,14 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 10,
     gap: 8,
+    marginTop: 6,
+  },
+  feedbackSectionTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: colors.textMuted,
+    letterSpacing: 0.5,
+    marginBottom: 2,
   },
   reasonsList: {
     gap: 4,

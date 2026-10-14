@@ -69,7 +69,7 @@ export const CompradorCard: React.FC<CompradorCardProps> = ({
   return (
     <View style={styles.card}>
       <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
-        {/* Cabecera */}
+        {/* Cabecera: Nombre a la izquierda y Precio a la derecha */}
         <View style={styles.topRow}>
           <View style={styles.nameContainer}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
@@ -80,41 +80,42 @@ export const CompradorCard: React.FC<CompradorCardProps> = ({
                 </View>
               )}
             </View>
-
-            <View style={styles.badgesRow}>
-              <View style={[styles.dayBadge, { backgroundColor: badgeBg }]}>
-                <Text style={styles.dayText}>{badgeText}</Text>
-              </View>
-              <View style={styles.perfilBadge}>
-                <Text style={styles.perfilText}>{comprador.perfil}</Text>
-              </View>
-              {comprador.canalContacto && comprador.canalContacto !== 'TELEFONO' && (
-                <View style={[styles.canalBadge, { backgroundColor: colors.canales[comprador.canalContacto] || colors.secondary }]}>
-                  <Text style={styles.canalText}>
-                    {comprador.canalContacto === 'WALLAPOP' ? '🟠 WALLAPOP'
-                     : comprador.canalContacto === 'MILANUNCIOS' ? '🟢 MILANUNCIOS'
-                     : comprador.canalContacto === 'FACEBOOK' ? '🔵 FACEBOOK'
-                     : '💬 ' + comprador.canalContacto}
-                  </Text>
-                </View>
-              )}
-              {comprador.puedeSenalizarYa && (
-                <View style={styles.hotBadge}>
-                  <Text style={styles.hotText}>🔥 SEÑALIZA YA</Text>
-                </View>
-              )}
-              {comprador.guardadoEnEspera && (
-                <View style={styles.waitingBadge}>
-                  <Text style={styles.waitingText}>⏳ EN ESPERA</Text>
-                </View>
-              )}
-            </View>
           </View>
 
           <View style={styles.priceContainer}>
             <Text style={styles.price}>{comprador.precioMaximo.toLocaleString()} €</Text>
             <Text style={styles.priceLabel}>Presupuesto Máx</Text>
           </View>
+        </View>
+
+        {/* Fila de Insignias a Ancho Completo (el fuego 🔥 nunca se saldrá) */}
+        <View style={styles.badgesRow}>
+          <View style={[styles.dayBadge, { backgroundColor: badgeBg }]}>
+            <Text style={styles.dayText}>{badgeText}</Text>
+          </View>
+          <View style={styles.perfilBadge}>
+            <Text style={styles.perfilText}>{comprador.perfil}</Text>
+          </View>
+          {comprador.canalContacto && comprador.canalContacto !== 'TELEFONO' && (
+            <View style={[styles.canalBadge, { backgroundColor: colors.canales[comprador.canalContacto] || colors.secondary }]}>
+              <Text style={styles.canalText}>
+                {comprador.canalContacto === 'WALLAPOP' ? '🟠 WALLAPOP'
+                 : comprador.canalContacto === 'MILANUNCIOS' ? '🟢 MILANUNCIOS'
+                 : comprador.canalContacto === 'FACEBOOK' ? '🔵 FACEBOOK'
+                 : '💬 ' + comprador.canalContacto}
+              </Text>
+            </View>
+          )}
+          {comprador.puedeSenalizarYa && (
+            <View style={styles.hotBadge}>
+              <Text style={styles.hotText}>🔥 SEÑALIZA YA</Text>
+            </View>
+          )}
+          {comprador.guardadoEnEspera && (
+            <View style={styles.waitingBadge}>
+              <Text style={styles.waitingText}>⏳ EN ESPERA</Text>
+            </View>
+          )}
         </View>
 
         {/* DETALLES COMPLETOS RECOPILADOS */}
@@ -255,8 +256,8 @@ const styles = StyleSheet.create({
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
+    alignItems: 'center',
+    marginBottom: 6,
   },
   nameContainer: {
     flex: 1,
@@ -265,13 +266,13 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '800',
     color: colors.text,
-    marginBottom: 4,
   },
   badgesRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     flexWrap: 'wrap',
+    marginBottom: 12,
   },
   dayBadge: {
     paddingHorizontal: 8,
@@ -360,14 +361,16 @@ const styles = StyleSheet.create({
   orangeValue: {
     color: colors.accent,
   },
+  notesBox: {
+    marginTop: 6,
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+  },
   notesText: {
     fontSize: 11,
     color: colors.textMuted,
-    fontStyle: 'italic',
-    marginTop: 4,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
-    paddingTop: 4,
+    lineHeight: 16,
   },
   footer: {
     flexDirection: 'row',
@@ -376,6 +379,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.borderLight,
     paddingTop: 10,
+    marginTop: 10,
     flexWrap: 'wrap',
     gap: 8,
   },
@@ -466,11 +470,5 @@ const styles = StyleSheet.create({
   subValueText: {
     fontSize: 11,
     marginTop: 2,
-  },
-  notesBox: {
-    marginTop: 6,
-    paddingTop: 6,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
   },
 });
