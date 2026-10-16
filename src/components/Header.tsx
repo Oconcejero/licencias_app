@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, useWindowDimensions, Image } from 'react-native';
 import { colors } from '../theme/colors';
 import { UserRole } from '../types';
 
@@ -29,9 +29,11 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Barra Superior: Logo / Título y Controles de Usuario / Avisos */}
       <View style={styles.topRow}>
         <View style={styles.left}>
-          <View style={styles.logoBadge}>
-            <Text style={styles.logoBadgeText}>🚕 TAXI</Text>
-          </View>
+          <Image
+            source={require('../../assets/logo.png')}
+            style={styles.logoImage}
+            resizeMode="cover"
+          />
           <View style={styles.titleContainer}>
             <Text style={styles.title}>Gestor de Licencias</Text>
             <Text style={styles.subtitle} numberOfLines={1}>
@@ -142,19 +144,12 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
-  logoBadge: {
-    backgroundColor: colors.primaryLight,
-    borderColor: colors.primary,
+  logoImage: {
+    width: 38,
+    height: 38,
+    borderRadius: 9,
     borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: 8,
-  },
-  logoBadgeText: {
-    color: '#60A5FA',
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   titleContainer: {
     flex: 1,
