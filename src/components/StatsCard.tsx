@@ -27,10 +27,16 @@ export const StatsCard: React.FC<StatsCardProps> = ({
       activeOpacity={0.8}
     >
       <View style={styles.content}>
-        <View>
-          <Text style={styles.title}>{title}</Text>
+        <View style={styles.textContainer}>
+          <Text style={styles.title} numberOfLines={2}>
+            {title}
+          </Text>
           <Text style={[styles.value, { color }]}>{value}</Text>
-          {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+          {subtitle ? (
+            <Text style={styles.subtitle} numberOfLines={1}>
+              {subtitle}
+            </Text>
+          ) : null}
         </View>
         <View style={[styles.iconBox, { backgroundColor: `${color}20` }]}>
           <Text style={styles.iconText}>{icon}</Text>
@@ -46,15 +52,22 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     flex: 1,
-    minWidth: 140,
+    minWidth: 130,
     borderWidth: 1,
     borderColor: colors.border,
     borderLeftWidth: 4,
+    overflow: 'hidden',
   },
   content: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    width: '100%',
+  },
+  textContainer: {
+    flex: 1,
+    minWidth: 0,
+    marginRight: 6,
   },
   title: {
     fontSize: 10,
@@ -62,6 +75,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    lineHeight: 13,
   },
   value: {
     fontSize: 22,
@@ -74,15 +88,14 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   iconBox: {
-    width: 32,
-    height: 32,
+    width: 30,
+    height: 30,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 6,
     flexShrink: 0,
   },
   iconText: {
-    fontSize: 16,
+    fontSize: 15,
   },
 });

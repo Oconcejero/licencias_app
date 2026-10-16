@@ -26,7 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <View style={styles.header}>
-      {/* Barra Superior: Logo / Título y Controles de Usuario / Avisos */}
+      {/* Barra Superior Minimalista: Logo L a la izquierda, Controles a la derecha */}
       <View style={styles.topRow}>
         <View style={styles.left}>
           <Image
@@ -34,12 +34,6 @@ export const Header: React.FC<HeaderProps> = ({
             style={styles.logoImage}
             resizeMode="cover"
           />
-          <View style={styles.titleContainer}>
-            <Text style={styles.title}>Gestor de Licencias</Text>
-            <Text style={styles.subtitle} numberOfLines={1}>
-              Cruces Comprador ↔ Vendedor
-            </Text>
-          </View>
         </View>
 
         <View style={styles.rightControls}>
@@ -140,30 +134,13 @@ const styles = StyleSheet.create({
   left: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    flex: 1,
-    minWidth: 0,
   },
   logoImage: {
     width: 38,
     height: 38,
-    borderRadius: 9,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.15)',
-  },
-  titleContainer: {
-    flex: 1,
-    minWidth: 0,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.text,
-  },
-  subtitle: {
-    fontSize: 11,
-    color: colors.textMuted,
-    marginTop: 1,
   },
   rightControls: {
     flexDirection: 'row',
