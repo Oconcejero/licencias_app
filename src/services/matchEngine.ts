@@ -93,7 +93,7 @@ export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchS
 
   // Determinar modalidad de venta respecto al vehículo
   const modalidadVend = vendedor.modalidadVentaCoche || (vendedor.vendeConCoche ? 'CON_COCHE' : 'SOLO_LICENCIA');
-  const buscaCocheComp = comprador.buscaConCoche;
+  const buscaCocheComp = comprador.buscaConCoche || 'INDIFERENTE';
 
   // Seleccionar qué precio del vendedor aplica para este comprador
   let precioComparar = vendedor.precio;
@@ -128,72 +128,14 @@ export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchS
 
   const modalidadEvaluada: 'CON_COCHE' | 'SOLO_LICENCIA' = evaluandoConCoche ? 'CON_COCHE' : 'SOLO_LICENCIA';
 
-  // 2. PRECIO (Hasta 35 puntos)
-  const diferenciaPrecio = precioComparar - comprador.precioMaximo;
-  let precioEncaja = false;
-  let maxScoreCap = 100;
-
-  if (diferenciaPrecio <= 0) {
-    precioEncaja = true;
-    score += 35;
-    const ahorro = Math.abs(diferenciaPrecio);
-    if (ahorro > 0) {
-      razones.push(
-        `Precio en rango: ${precioComparar.toLocaleString()}€ ${evaluandoConCoche ? '(con coche)' : '(solo licencia)'} (Comprador tiene hasta ${comprador.precioMaximo.toLocaleString()}€, sobran ${ahorro.toLocaleString()}€)`
-      );
-    } else {
-      razones.push(`Precio exacto en presupuesto: ${precioComparar.toLocaleString()}€ ${evaluandoConCoche ? '(con coche)' : '(solo licencia)'}`);
-    }
-  } else {
-    // El vendedor pide más de lo que el comprador tiene presupuestado
-    // REGLA FUNDAMENTAL: Si el precio supera el presupuesto, NUNCA puede ser "EXCELENTE" (Tope < 80%)
-    maxScoreCap = 74;
-
-    if (vendedor.precioNegociable) {
-      if (diferenciaPrecio <= 3000) {
-        score += 15;
-        maxScoreCap = 75;
-        alertas.push(`Precio (${precioComparar.toLocaleString()}€) supera en ${diferenciaPrecio.toLocaleString()}€ pero el vendedor es NEGOCIABLE (margen salvable con acuerdo rápido)`);
-      } else if (diferenciaPrecio <= 7000) {
-        score += 8;
-        maxScoreCap = 68;
-        alertas.push(`Precio (${precioComparar.toLocaleString()}€) supera presupuesto en ${diferenciaPrecio.toLocaleString()}€: vendedor negociable, requiere rebaja`);
-      } else if (diferenciaPrecio <= 12000) {
-        score += 3;
-        maxScoreCap = 58;
-        alertas.push(`Precio (${precioComparar.toLocaleString()}€) supera en ${diferenciaPrecio.toLocaleString()}€: brecha considerable, requiere negociación fuerte`);
-      } else if (diferenciaPrecio <= 15000) {
-        score += 0;
-        maxScoreCap = 50;
-        alertas.push(`Brecha de ${diferenciaPrecio.toLocaleString()}€: vendedor pide bastante más del presupuesto del comprador`);
-      } else {
-        score += 0;
-        maxScoreCap = 40;
-        alertas.push(`Brecha de precio de ${diferenciaPrecio.toLocaleString()}€: supera ampliamente el presupuesto del comprador`);
-      }
-    } else {
-      // Precio NO negociable / Fijo
-      if (diferenciaPrecio <= 2000) {
-        score += 5;
-        maxScoreCap = 60;
-        alertas.push(`Supera presupuesto en ${diferenciaPrecio.toLocaleString()}€ y NO es negociable (diferencia pequeña pero precio cerrado)`);
-      } else if (diferenciaPrecio <= 10000) {
-        score += 0;
-        maxScoreCap = 45;
-        alertas.push(`Supera presupuesto en ${diferenciaPrecio.toLocaleString()}€ y NO es negociable (operación inviable sin que comprador aumente presupuesto)`);
-      } else {
-        score += 0;
-        maxScoreCap = 35;
-        alertas.push(`Supera presupuesto en ${diferenciaPrecio.toLocaleString()}€ con precio cerrado (inviable)`);
-      }
-    }
-  }
-
-  // 3. VEHÍCULO (Hasta 15 puntos)
+  // 2. VEHÍCULO (Hasta 30 puntos - peso decisivo)
+  // REGLA FUNDAMENTAL: Si uno quiere coche y el otro no, la afinidad máxima es COMO MUCHO 10%.
   let cocheEncaja = false;
+  let hayDiscrepanciaCoche = false;
+
   if (modalidadVend === 'AMBAS_OPCIONES') {
     cocheEncaja = true;
-    score += 15;
+    score += 30;
     if (buscaCocheComp === 'SOLO_LICENCIA') {
       razones.push(`Vendedor acepta vender solo licencia por ${vendedor.precio.toLocaleString()}€`);
     } else if (buscaCocheComp === 'CON_COCHE') {
@@ -203,25 +145,25 @@ export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchS
     }
   } else if (buscaCocheComp === 'INDIFERENTE') {
     cocheEncaja = true;
-    score += 15;
+    score += 30;
     razones.push(modalidadVend === 'CON_COCHE' ? `Incluye coche (${vendedor.vehiculo?.modelo || 'Vehículo'}) y comprador es indiferente` : 'Vende solo licencia y comprador es indiferente');
   } else if (buscaCocheComp === 'CON_COCHE') {
     if (modalidadVend === 'CON_COCHE') {
       cocheEncaja = true;
-      score += 15;
+      score += 30;
       razones.push(`Ambos coinciden: incluye vehículo ${vendedor.vehiculo?.modelo || ''} (${vendedor.vehiculo?.anoMatriculacion || ''})`);
     } else {
-      alertas.push('Comprador exige coche pero el vendedor vende SOLO licencia');
-      maxScoreCap = Math.min(maxScoreCap, 50);
+      hayDiscrepanciaCoche = true;
+      alertas.push('❌ Incompatibilidad de vehículo: El comprador EXIGE coche pero el vendedor vende SOLO licencia (Afinidad máxima 10%)');
     }
   } else if (buscaCocheComp === 'SOLO_LICENCIA') {
     if (modalidadVend === 'SOLO_LICENCIA') {
       cocheEncaja = true;
-      score += 15;
+      score += 30;
       razones.push('Ambos coinciden: solo licencia sin vehículo');
     } else {
-      alertas.push(`Vendedor exige venta con coche incluido (${vendedor.vehiculo?.modelo || ''}) y comprador busca solo licencia`);
-      maxScoreCap = Math.min(maxScoreCap, 50);
+      hayDiscrepanciaCoche = true;
+      alertas.push(`❌ Incompatibilidad de vehículo: El vendedor exige venta CON coche (${vendedor.vehiculo?.modelo || ''}) y el comprador busca SOLO licencia (Afinidad máxima 10%)`);
     }
   }
 
@@ -236,22 +178,85 @@ export function calculateMatch(vendedor: Vendedor, comprador: Comprador): MatchS
     }
   }
 
-  // 4. CARGAS Y FINANCIACIÓN DE LA LICENCIA (Hasta 15 puntos)
+  // 3. PRECIO (Hasta 25 puntos)
+  const diferenciaPrecio = precioComparar - comprador.precioMaximo;
+  let precioEncaja = false;
+  let maxScoreCap = 100;
+
+  if (diferenciaPrecio <= 0) {
+    precioEncaja = true;
+    score += 25;
+    const ahorro = Math.abs(diferenciaPrecio);
+    if (ahorro > 0) {
+      razones.push(
+        `Precio en rango: ${precioComparar.toLocaleString()}€ ${evaluandoConCoche ? '(con coche)' : '(solo licencia)'} (Comprador tiene hasta ${comprador.precioMaximo.toLocaleString()}€, sobran ${ahorro.toLocaleString()}€)`
+      );
+    } else {
+      razones.push(`Precio exacto en presupuesto: ${precioComparar.toLocaleString()}€ ${evaluandoConCoche ? '(con coche)' : '(solo licencia)'}`);
+    }
+  } else {
+    // El vendedor pide más de lo que el comprador tiene presupuestado
+    maxScoreCap = 74;
+
+    if (vendedor.precioNegociable) {
+      if (diferenciaPrecio <= 3000) {
+        score += 12;
+        maxScoreCap = 75;
+        alertas.push(`Precio (${precioComparar.toLocaleString()}€) supera en ${diferenciaPrecio.toLocaleString()}€ pero el vendedor es NEGOCIABLE (margen salvable con acuerdo rápido)`);
+      } else if (diferenciaPrecio <= 7000) {
+        score += 6;
+        maxScoreCap = 65;
+        alertas.push(`Precio (${precioComparar.toLocaleString()}€) supera presupuesto en ${diferenciaPrecio.toLocaleString()}€: vendedor negociable, requiere rebaja`);
+      } else if (diferenciaPrecio <= 12000) {
+        score += 2;
+        maxScoreCap = 55;
+        alertas.push(`Precio (${precioComparar.toLocaleString()}€) supera en ${diferenciaPrecio.toLocaleString()}€: brecha considerable, requiere negociación fuerte`);
+      } else {
+        score += 0;
+        maxScoreCap = 40;
+        alertas.push(`Brecha de precio de ${diferenciaPrecio.toLocaleString()}€: supera ampliamente el presupuesto del comprador`);
+      }
+    } else {
+      // Precio NO negociable / Fijo
+      if (diferenciaPrecio <= 2000) {
+        score += 4;
+        maxScoreCap = 55;
+        alertas.push(`Supera presupuesto en ${diferenciaPrecio.toLocaleString()}€ y NO es negociable (diferencia pequeña pero precio cerrado)`);
+      } else if (diferenciaPrecio <= 10000) {
+        score += 0;
+        maxScoreCap = 40;
+        alertas.push(`Supera presupuesto en ${diferenciaPrecio.toLocaleString()}€ y NO es negociable (operación inviable sin que comprador aumente presupuesto)`);
+      } else {
+        score += 0;
+        maxScoreCap = 30;
+        alertas.push(`Supera presupuesto en ${diferenciaPrecio.toLocaleString()}€ con precio cerrado (inviable)`);
+      }
+    }
+  }
+
+  // 4. CARGAS Y FINANCIACIÓN DE LA LICENCIA (Hasta 10 puntos)
   let cargaEncaja = false;
   if (vendedor.cargaLicencia === 'SIN_CARGA') {
     cargaEncaja = true;
-    score += 15;
+    score += 10;
     razones.push('Licencia libre de cargas/préstamos');
   } else {
     // Vendedor tiene préstamo u otra carga
     if (comprador.aceptaConPrestamo === true || comprador.aceptaConPrestamo === 'INDIFERENTE') {
       cargaEncaja = true;
-      score += 10;
+      score += 6;
       razones.push(`Licencia con ${vendedor.cargaLicencia === 'PRESTAMO' ? 'préstamo' : 'carga'} asumible por el comprador (subrogación o liquidación)`);
     } else {
-      maxScoreCap = Math.min(maxScoreCap, 55);
+      maxScoreCap = Math.min(maxScoreCap, 50);
       alertas.push(`Licencia con ${vendedor.cargaLicencia === 'PRESTAMO' ? 'préstamo bancario' : 'otra carga'} pendiente (${vendedor.detalleCargaLicencia || 'consultar'}) y el comprador no desea cargas`);
     }
+  }
+
+  // REGLA ESTRICTA DE VEHÍCULO:
+  // Si uno quiere coche y el otro no, la afinidad máxima es de COMO MUCHO 10%
+  if (hayDiscrepanciaCoche) {
+    maxScoreCap = Math.min(maxScoreCap, 10);
+    score = Math.min(score, 10);
   }
 
   // 5. BONUS COMERCIAL: SEÑALIZACIÓN INMEDIATA
