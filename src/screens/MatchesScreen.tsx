@@ -37,11 +37,12 @@ export const MatchesScreen: React.FC<MatchesScreenProps> = ({
   const isTwoCols = width >= 768;
   const [filter, setFilter] = useState<FilterType>('TODOS');
   const [search, setSearch] = useState('');
+  const [sortPrice, setSortPrice] = useState<'NONE' | 'ASC' | 'DESC'>('NONE');
 
   const safeDerivados = useMemo(() => derivadosIds || [], [derivadosIds]);
 
   const filteredMatches = useMemo(() => {
-    return matches.filter(c => {
+    const list = matches.filter(c => {
       const isDerivado = safeDerivados.includes(c.id);
 
       // Filtro de categoría
@@ -66,7 +67,23 @@ export const MatchesScreen: React.FC<MatchesScreenProps> = ({
 
       return true;
     });
-  }, [matches, filter, search, safeDerivados]);
+
+    if (sortPrice === 'ASC') {
+      return list.slice().sort((a, b) => {
+        const pA = a.match.precioEvaluado || a.vendedor.precio || 0;
+        const pB = b.match.precioEvaluado || b.vendedor.precio || 0;
+        return pA - pB;
+      });
+    } else if (sortPrice === 'DESC') {
+      return list.slice().sort((a, b) => {
+        const pA = a.match.precioEvaluado || a.vendedor.precio || 0;
+        const pB = b.match.precioEvaluado || b.vendedor.precio || 0;
+        return pB - pA;
+      });
+    }
+
+    return list;
+  }, [matches, filter, search, safeDerivados, sortPrice]);
 
   const pendientesCount = matches.filter(c => !safeDerivados.includes(c.id)).length;
 
@@ -77,7 +94,7 @@ export const MatchesScreen: React.FC<MatchesScreenProps> = ({
         <View>
           <Text style={styles.title}>⚡ Cruces Inteligentes & Avisos</Text>
           <Text style={styles.subtitle}>
-            Detecta coincidencias comerciales y derívalas a {tramitador.nombre || 'Gestión'} en 1 clic
+            {filteredMatches.length} {filteredMatches.length === 1 ? 'cruce detectado' : 'cruces detectados'} {sortPrice === 'ASC' ? '• 📈 Menor a mayor precio' : sortPrice === 'DESC' ? '• 📉 Mayor a menor precio' : ''}
           </Text>
         </View>
       </View>
@@ -145,6 +162,39 @@ export const MatchesScreen: React.FC<MatchesScreenProps> = ({
             💶 Negociables
           </Text>
         </TouchableOpacity>
+      </View>
+
+      {/* ORDENACIÓN POR PRECIO */}
+      <View style={styles.sortContainer}>
+        <View style={styles.sortHeader}>
+          <Text style={styles.sortTitle}>💶 ORDENAR POR PRECIO DE LA OPERACIÓN:</Text>
+          {sortPrice !== 'NONE' && (
+            <TouchableOpacity onPress={() => setSortPrice('NONE')} style={styles.clearSortBtn}>
+              <Text style={styles.clearSortText}>Resetear orden ✕</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        <View style={styles.sortButtonsRow}>
+          <TouchableOpacity
+            style={[styles.sortBtn, sortPrice === 'ASC' && styles.sortBtnActiveAsc]}
+            onPress={() => setSortPrice(prev => prev === 'ASC' ? 'NONE' : 'ASC')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.sortBtnText, sortPrice === 'ASC' && styles.sortBtnTextActive]}>
+              📈 Menor a Mayor (€ → €€€) {sortPrice === 'ASC' ? '✓' : ''}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.sortBtn, sortPrice === 'DESC' && styles.sortBtnActiveDesc]}
+            onPress={() => setSortPrice(prev => prev === 'DESC' ? 'NONE' : 'DESC')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.sortBtnText, sortPrice === 'DESC' && styles.sortBtnTextActive]}>
+              📉 Mayor a Menor (€€€ → €) {sortPrice === 'DESC' ? '✓' : ''}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* LISTADO DE MATCHES */}
@@ -243,7 +293,74 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    marginBottom: 10,
+  },
+  sortContainer: {
+    backgroundColor: colors.surfaceCard,
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
     marginBottom: 16,
+    gap: 8,
+  },
+  sortHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  sortTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: colors.textMuted,
+    letterSpacing: 0.5,
+  },
+  clearSortBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+  },
+  clearSortText: {
+    fontSize: 10,
+    color: '#F87171',
+    fontWeight: '700',
+  },
+  sortButtonsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  sortBtn: {
+    flex: 1,
+    minWidth: 140,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: colors.surfaceHighlight,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sortBtnActiveAsc: {
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    borderColor: colors.success,
+  },
+  sortBtnActiveDesc: {
+    backgroundColor: 'rgba(37, 99, 235, 0.15)',
+    borderColor: colors.primary,
+  },
+  sortBtnText: {
+    fontSize: 12,
+    color: colors.textMuted,
+    fontWeight: '700',
+  },
+  sortBtnTextActive: {
+    color: colors.white,
+    fontWeight: '800',
   },
   filterChip: {
     paddingHorizontal: 12,

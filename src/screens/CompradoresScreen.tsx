@@ -36,9 +36,10 @@ export const CompradoresScreen: React.FC<CompradoresScreenProps> = ({
   const [search, setSearch] = useState('');
   const [selectedDia, setSelectedDia] = useState<string>('TODOS');
   const [onlyHot, setOnlyHot] = useState<boolean>(false);
+  const [sortPrice, setSortPrice] = useState<'NONE' | 'ASC' | 'DESC'>('NONE');
 
   const filteredCompradores = useMemo(() => {
-    return compradores.filter(c => {
+    const list = compradores.filter(c => {
       if (selectedDia !== 'TODOS') {
         const dias = getCompradorDias(c);
         if (selectedDia === 'CUALQUIERA') {
@@ -59,7 +60,15 @@ export const CompradoresScreen: React.FC<CompradoresScreenProps> = ({
 
       return true;
     });
-  }, [compradores, search, selectedDia, onlyHot]);
+
+    if (sortPrice === 'ASC') {
+      return list.slice().sort((a, b) => (a.precioMaximo || 0) - (b.precioMaximo || 0));
+    } else if (sortPrice === 'DESC') {
+      return list.slice().sort((a, b) => (b.precioMaximo || 0) - (a.precioMaximo || 0));
+    }
+
+    return list;
+  }, [compradores, search, selectedDia, onlyHot, sortPrice]);
 
   const DIAS_OPCIONES = ['TODOS', 'CUALQUIERA', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'EUROTAXI', 'ELECTRICO_SIN_LIBRANZA'];
 
@@ -70,7 +79,7 @@ export const CompradoresScreen: React.FC<CompradoresScreenProps> = ({
         <View>
           <Text style={styles.title}>👥 Cartera de Compradores</Text>
           <Text style={styles.subtitle}>
-            {compradores.length} {compradores.length === 1 ? 'comprador registrado' : 'compradores registrados'} en búsqueda activa o bolsa de espera
+            {filteredCompradores.length} {filteredCompradores.length === 1 ? 'comprador' : 'compradores'} {selectedDia !== 'TODOS' ? `(Libranza ${selectedDia})` : ''} {sortPrice === 'ASC' ? '• 📈 Menor a mayor presupuesto' : sortPrice === 'DESC' ? '• 📉 Mayor a menor presupuesto' : ''}
           </Text>
         </View>
         {userRole === 'ADMIN' && (
@@ -137,6 +146,39 @@ export const CompradoresScreen: React.FC<CompradoresScreenProps> = ({
             🔥 Solo Señalizan Ya
           </Text>
         </TouchableOpacity>
+      </View>
+
+      {/* ORDENACIÓN POR PRESUPUESTO */}
+      <View style={styles.sortContainer}>
+        <View style={styles.sortHeader}>
+          <Text style={styles.sortTitle}>💶 ORDENAR POR PRESUPUESTO:</Text>
+          {sortPrice !== 'NONE' && (
+            <TouchableOpacity onPress={() => setSortPrice('NONE')} style={styles.clearSortBtn}>
+              <Text style={styles.clearSortText}>Resetear orden ✕</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        <View style={styles.sortButtonsRow}>
+          <TouchableOpacity
+            style={[styles.sortBtn, sortPrice === 'ASC' && styles.sortBtnActiveAsc]}
+            onPress={() => setSortPrice(prev => prev === 'ASC' ? 'NONE' : 'ASC')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.sortBtnText, sortPrice === 'ASC' && styles.sortBtnTextActive]}>
+              📈 Menor a Mayor (€ → €€€) {sortPrice === 'ASC' ? '✓' : ''}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.sortBtn, sortPrice === 'DESC' && styles.sortBtnActiveDesc]}
+            onPress={() => setSortPrice(prev => prev === 'DESC' ? 'NONE' : 'DESC')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.sortBtnText, sortPrice === 'DESC' && styles.sortBtnTextActive]}>
+              📉 Mayor a Menor (€€€ → €) {sortPrice === 'DESC' ? '✓' : ''}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* LISTA */}
@@ -273,8 +315,75 @@ const styles = StyleSheet.create({
   secondaryFiltersRow: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 16,
+    marginBottom: 10,
     flexWrap: 'wrap',
+  },
+  sortContainer: {
+    backgroundColor: colors.surfaceCard,
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 16,
+    gap: 8,
+  },
+  sortHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  sortTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: colors.textMuted,
+    letterSpacing: 0.5,
+  },
+  clearSortBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+  },
+  clearSortText: {
+    fontSize: 10,
+    color: '#F87171',
+    fontWeight: '700',
+  },
+  sortButtonsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  sortBtn: {
+    flex: 1,
+    minWidth: 140,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: colors.surfaceHighlight,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sortBtnActiveAsc: {
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    borderColor: colors.success,
+  },
+  sortBtnActiveDesc: {
+    backgroundColor: 'rgba(37, 99, 235, 0.15)',
+    borderColor: colors.primary,
+  },
+  sortBtnText: {
+    fontSize: 12,
+    color: colors.textMuted,
+    fontWeight: '700',
+  },
+  sortBtnTextActive: {
+    color: colors.white,
+    fontWeight: '800',
   },
   secChip: {
     paddingHorizontal: 10,
