@@ -46,57 +46,9 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const activeSellers = vendedores.filter(v => v.estado !== 'CERRADO');
   const safeDerivados = derivadosIds || [];
   const pendientesMatches = matches.filter(c => !safeDerivados.includes(c.id));
-  const isAdmin = userRole === 'ADMIN';
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* BANNER DE BIENVENIDA Y ACCIONES RÁPIDAS */}
-      <View style={styles.welcomeBanner}>
-        <View style={styles.welcomeLeft}>
-          <Text style={styles.welcomeGreeting}>Panel de Control Comercial</Text>
-          <Text style={styles.welcomeText}>
-            Gestión de corretaje de licencias: Registro de perfiles, cálculo de compatibilidad y derivación directa al{' '}
-            <Text style={styles.friendHighlight}>{tramitador.nombre || 'Gestor Operativo'}</Text> para formalización de traspaso.
-          </Text>
-        </View>
-
-        {isAdmin ? (
-          <View style={styles.quickActionBtns}>
-            <View style={styles.quickActionMainRow}>
-              <TouchableOpacity
-                style={[styles.actionBtn, styles.btnSeller]}
-                onPress={onNewVendedor}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.actionBtnText}>➕ Nueva Licencia</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.actionBtn, styles.btnBuyer]}
-                onPress={onNewComprador}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.actionBtnText}>➕ Nuevo Comprador</Text>
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity
-              style={[styles.actionBtn, styles.btnTramitador]}
-              onPress={onOpenConfigTramitador}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.actionBtnText}>
-                👤 {tramitador.nombre && tramitador.nombre !== 'Gestor Operativo' ? `Gestor: ${tramitador.nombre}` : 'Contacto Gestor Operativo'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View style={styles.socioBadgeRow}>
-            <View style={styles.socioBadge}>
-              <Text style={styles.socioBadgeText}>👀 Conectado como Socio (Modo Solo Lectura)</Text>
-            </View>
-          </View>
-        )}
-      </View>
-
       {/* MÉTRICAS PRINCIPALES */}
       <View style={styles.statsGrid}>
         <StatsCard
@@ -187,91 +139,6 @@ const styles = StyleSheet.create({
     maxWidth: 1100,
     alignSelf: 'center',
     width: '100%',
-  },
-  welcomeBanner: {
-    backgroundColor: colors.surfaceCard,
-    borderRadius: 14,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: colors.border,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  welcomeLeft: {
-    flex: 1,
-    minWidth: 260,
-  },
-  welcomeGreeting: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.text,
-  },
-  welcomeText: {
-    fontSize: 12,
-    color: colors.textMuted,
-    marginTop: 4,
-    lineHeight: 18,
-  },
-  friendHighlight: {
-    color: colors.success,
-    fontWeight: '800',
-  },
-  quickActionBtns: {
-    width: '100%',
-    gap: 8,
-    marginTop: 10,
-  },
-  quickActionMainRow: {
-    flexDirection: 'row',
-    gap: 8,
-    width: '100%',
-  },
-  actionBtn: {
-    flex: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  btnSeller: {
-    backgroundColor: colors.primary,
-  },
-  btnBuyer: {
-    backgroundColor: colors.success,
-  },
-  btnTramitador: {
-    backgroundColor: '#064E3B',
-    borderColor: '#10B981',
-    borderWidth: 1,
-    flex: undefined,
-    width: '100%',
-  },
-  actionBtnText: {
-    color: colors.white,
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  socioBadgeRow: {
-    marginTop: 4,
-  },
-  socioBadge: {
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
-    borderWidth: 1,
-    borderColor: colors.accent,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-  },
-  socioBadgeText: {
-    color: colors.accent,
-    fontSize: 12,
-    fontWeight: '700',
   },
   statsGrid: {
     flexDirection: 'row',

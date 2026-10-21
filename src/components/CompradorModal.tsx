@@ -22,6 +22,7 @@ import {
 } from '../types';
 import { colors } from '../theme/colors';
 import { calculateMatch } from '../services/matchEngine';
+import { sanitizeContactInput } from '../utils/contactUtils';
 
 interface CompradorModalProps {
   visible: boolean;
@@ -203,7 +204,7 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
       nombre: nombre.trim(),
       telefono: telefono.trim(),
       canalContacto,
-      contactoOrigen: canalContacto !== 'TELEFONO' ? contactoOrigen.trim() || undefined : undefined,
+      contactoOrigen: canalContacto !== 'TELEFONO' ? sanitizeContactInput(contactoOrigen) || undefined : undefined,
       fechaCreacion: compradorToEdit ? compradorToEdit.fechaCreacion : new Date().toISOString(),
       perfil,
       diaLibranzaDeseada: diasStr,
@@ -675,7 +676,7 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
                     onPress={() => setEstado('CERRADO')}
                   >
                     <Text style={[styles.selectorText, estado === 'CERRADO' && styles.selectorTextActive]}>
-                      Cerrado / Compró
+                      🏁 Concluido / Finalizado
                     </Text>
                   </TouchableOpacity>
                 </View>

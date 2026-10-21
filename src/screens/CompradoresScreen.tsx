@@ -34,12 +34,19 @@ export const CompradoresScreen: React.FC<CompradoresScreenProps> = ({
   const { width } = useWindowDimensions();
   const isTwoCols = width >= 768;
   const [search, setSearch] = useState('');
+  const [estadoTab, setEstadoTab] = useState<'ACTIVOS' | 'CONCLUIDOS' | 'TODOS'>('ACTIVOS');
   const [selectedDia, setSelectedDia] = useState<string>('TODOS');
   const [onlyHot, setOnlyHot] = useState<boolean>(false);
   const [sortPrice, setSortPrice] = useState<'NONE' | 'ASC' | 'DESC'>('NONE');
 
+  const activosCount = useMemo(() => compradores.filter(c => c.estado !== 'CERRADO').length, [compradores]);
+  const concluidosCount = useMemo(() => compradores.filter(c => c.estado === 'CERRADO').length, [compradores]);
+
   const filteredCompradores = useMemo(() => {
     const list = compradores.filter(c => {
+      if (estadoTab === 'ACTIVOS' && c.estado === 'CERRADO') return false;
+      if (estadoTab === 'CONCLUIDOS' && c.estado !== 'CERRADO') return false;
+
       if (selectedDia !== 'TODOS') {
         const dias = getCompradorDias(c);
         if (selectedDia === 'CUALQUIERA') {
@@ -68,7 +75,7 @@ export const CompradoresScreen: React.FC<CompradoresScreenProps> = ({
     }
 
     return list;
-  }, [compradores, search, selectedDia, onlyHot, sortPrice]);
+  }, [compradores, search, selectedDia, onlyHot, sortPrice, estadoTab]);
 
   const DIAS_OPCIONES = ['TODOS', 'CUALQUIERA', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'EUROTAXI', 'ELECTRICO_SIN_LIBRANZA'];
 
@@ -79,7 +86,7 @@ export const CompradoresScreen: React.FC<CompradoresScreenProps> = ({
         <View>
           <Text style={styles.title}>👥 Cartera de Compradores</Text>
           <Text style={styles.subtitle}>
-            {filteredCompradores.length} {filteredCompradores.length === 1 ? 'comprador' : 'compradores'} {selectedDia !== 'TODOS' ? `(Libranza ${selectedDia})` : ''} {sortPrice === 'ASC' ? '• 📈 Menor a mayor presupuesto' : sortPrice === 'DESC' ? '• 📉 Mayor a menor presupuesto' : ''}
+            {filteredCompradores.length} {filteredCompradores.length === 1 ? 'comprador' : 'compradores'} {estadoTab === 'CONCLUIDOS' ? '(🏁 Concluidos / Finalizados)' : estadoTab === 'ACTIVOS' ? '(🟢 Activos)' : ''} {selectedDia !== 'TODOS' ? `• Libranza ${selectedDia}` : ''} {sortPrice === 'ASC' ? '• 📈 Menor a mayor presupuesto' : sortPrice === 'DESC' ? '• 📉 Mayor a menor presupuesto' : ''}
           </Text>
         </View>
         {userRole === 'ADMIN' && (
@@ -91,6 +98,39 @@ export const CompradoresScreen: React.FC<CompradoresScreenProps> = ({
             <Text style={styles.addBtnText}>➕ Añadir Nuevo Comprador</Text>
           </TouchableOpacity>
         )}
+      </View>
+
+      {/* PESTAÑAS DE ESTADO: ACTIVOS vs CONCLUIDOS / FINALIZADOS */}
+      <View style={styles.statusTabsRow}>
+        <TouchableOpacity
+          style={[styles.statusTabBtn, estadoTab === 'ACTIVOS' && styles.statusTabBtnActive]}
+          onPress={() => setEstadoTab('ACTIVOS')}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.statusTabText, estadoTab === 'ACTIVOS' && styles.statusTabTextActive]}>
+            🟢 Activos ({activosCount})
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.statusTabBtn, estadoTab === 'CONCLUIDOS' && styles.statusTabBtnActiveConcluido]}
+          onPress={() => setEstadoTab('CONCLUIDOS')}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.statusTabText, estadoTab === 'CONCLUIDOS' && styles.statusTabTextActiveConcluido]}>
+            🏁 Concluidos / Finalizados ({concluidosCount})
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.statusTabBtn, estadoTab === 'TODOS' && styles.statusTabBtnActive]}
+          onPress={() => setEstadoTab('TODOS')}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.statusTabText, estadoTab === 'TODOS' && styles.statusTabTextActive]}>
+            Todos ({compradores.length})
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* BUSCADOR */}
@@ -437,5 +477,40 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textAlign: 'center',
     marginTop: 4,
+  },
+  statusTabsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+    flexWrap: 'wrap',
+  },
+  statusTabBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: colors.surfaceCard,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  statusTabBtnActive: {
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    borderColor: colors.success,
+  },
+  statusTabBtnActiveConcluido: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderColor: colors.danger,
+  },
+  statusTabText: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  statusTabTextActive: {
+    color: '#34D399',
+    fontWeight: '800',
+  },
+  statusTabTextActiveConcluido: {
+    color: colors.danger,
+    fontWeight: '800',
   },
 });

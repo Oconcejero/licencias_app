@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native'
 import { Vendedor, Comprador } from '../types';
 import { colors } from '../theme/colors';
 import { calculateMatch } from '../services/matchEngine';
+import { extractContactLink } from '../utils/contactUtils';
 
 interface VendedorCardProps {
   vendedor: Vendedor;
@@ -26,34 +27,30 @@ export const VendedorCard: React.FC<VendedorCardProps> = ({
     return res.score >= 50;
   });
 
-  const handleCall = () => {
-    if (!vendedor.telefono) {
-      alert(`Contacto de ${vendedor.canalContacto || 'chat'}. Aún no tienes su teléfono; pídeselo en la conversación para llamarle.`);
-      return;
-    }
-    Linking.openURL(`tel:${vendedor.telefono.replace(/\s+/g, '')}`);
-  };
+  const contactInfo = extractContactLink(vendedor.contactoOrigen || vendedor.telefono, vendedor.canalContacto);
+  const hasValidPhone = vendedor.telefono && !vendedor.telefono.toLowerCase().includes('http');
 
-  const handleWhatsApp = () => {
-    if (!vendedor.telefono) {
-      if (vendedor.contactoOrigen && vendedor.contactoOrigen.startsWith('http')) {
-        Linking.openURL(vendedor.contactoOrigen);
-        return;
-      }
-      alert(`Contacto de ${vendedor.canalContacto || 'chat'}. Pídele su número en la conversación para contactarle por WhatsApp.`);
-      return;
-    }
-    const cleanPhone = vendedor.telefono.replace(/[^\d+]/g, '');
-    Linking.openURL(`https://wa.me/${cleanPhone}`);
-  };
+  const isClosed = vendedor.estado === 'CERRADO';
+  const isNegotiating = vendedor.estado === 'EN_NEGOCIACION';
 
   return (
-    <View style={styles.card}>
-      <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
-        {/* Cabecera */}
+    <View style={[styles.card, isClosed && styles.cardClosed]}>
+      <TouchableOpacity onPress={onPress} activeOpacity={0.82} style={styles.cardTouchable}>
+        {/* Cabecera: Nombre y Precio */}
         <View style={styles.topRow}>
           <View style={styles.nameContainer}>
-            <Text style={styles.name}>{vendedor.nombre}</Text>
+            <View style={styles.nameRow}>
+              <Text style={[styles.name, isClosed && styles.nameClosed]}>{vendedor.nombre}</Text>
+              {isClosed ? (
+                <View style={styles.closedBadge}>
+                  <Text style={styles.closedBadgeText}>🏁 CONCLUIDO</Text>
+                </View>
+              ) : isNegotiating ? (
+                <View style={styles.negotiatingBadge}>
+                  <Text style={styles.negotiatingBadgeText}>🤝 NEGOCIACIÓN</Text>
+                </View>
+              ) : null}
+            </View>
           </View>
 
           <View style={styles.priceContainer}>
@@ -62,7 +59,7 @@ export const VendedorCard: React.FC<VendedorCardProps> = ({
                 <Text style={styles.price}>
                   {vendedor.precio.toLocaleString()} € <Text style={{ fontSize: 10, color: colors.textMuted }}>lic.</Text>
                 </Text>
-                <Text style={[styles.price, { fontSize: 13, color: colors.primary }]}>
+                <Text style={[styles.price, { fontSize: 13, color: colors.secondary }]}>
                   {vendedor.precioConCoche.toLocaleString()} € <Text style={{ fontSize: 9, color: colors.textMuted }}>+coche</Text>
                 </Text>
               </View>
@@ -80,146 +77,95 @@ export const VendedorCard: React.FC<VendedorCardProps> = ({
           </View>
         </View>
 
-        {/* Insignias a Ancho Completo */}
+        {/* Fila de Insignias Clave (Visual y Limpia) */}
         <View style={styles.badgesRow}>
+          {/* Libranza */}
           <View style={[styles.dayBadge, { backgroundColor: colors.libranza[vendedor.diaLibranza] || colors.primary }]}>
             <Text style={styles.dayText}>
               {vendedor.diaLibranza === 'EUROTAXI'
-                ? '♿ EUROTAXI (SIN LIBRANZA)'
+                ? '♿ EUROTAXI'
                 : vendedor.diaLibranza === 'ELECTRICO_SIN_LIBRANZA'
-                ? '⚡ ELÉCTRICO (SIN LIBRANZA)'
+                ? '⚡ ELÉCTRICO CERO'
                 : vendedor.diaLibranza === 'LIBRE_24H'
                 ? '24H LIBRE'
-                : `LIBRANZA ${vendedor.diaLibranza} • ${vendedor.turnoDescanso || 'PAR'}`}
-            </Text>
-          </View>
-          <View style={styles.perfilBadge}>
-            <Text style={styles.perfilText}>{vendedor.perfil}</Text>
-          </View>
-          {vendedor.canalContacto && vendedor.canalContacto !== 'TELEFONO' && (
-            <View style={[styles.canalBadge, { backgroundColor: colors.canales[vendedor.canalContacto] || colors.secondary }]}>
-              <Text style={styles.canalText}>
-                {vendedor.canalContacto === 'WALLAPOP' ? '🟠 WALLAPOP'
-                 : vendedor.canalContacto === 'MILANUNCIOS' ? '🟢 MILANUNCIOS'
-                 : vendedor.canalContacto === 'FACEBOOK' ? '🔵 FACEBOOK'
-                 : '💬 ' + vendedor.canalContacto}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Cargas y Condiciones Completas */}
-        <View style={styles.detailsGrid}>
-          {/* Teléfono / Contacto */}
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>📞 Contacto:</Text>
-            <View style={{ flex: 1, alignItems: 'flex-end' }}>
-              <Text style={[styles.detailValue, { fontWeight: '700', color: colors.text }]}>
-                {vendedor.telefono || 'Sin teléfono guardado'}
-              </Text>
-              {vendedor.contactoOrigen && (
-                <Text style={{ fontSize: 11, color: colors.accent, marginTop: 2 }}>
-                  🔗 {vendedor.contactoOrigen}
-                </Text>
-              )}
-            </View>
-          </View>
-
-          {/* Libranza y Turno */}
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>📅 Libranza y Turno:</Text>
-            <Text style={[styles.detailValue, { color: colors.text, fontWeight: '700' }]}>
-              {vendedor.diaLibranza} • Turno {vendedor.turnoDescanso || 'PAR'}
-            </Text>
-          </View>
-
-          {/* Carga Licencia */}
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>⚖️ Carga Licencia:</Text>
-            <Text style={[styles.detailValue, vendedor.cargaLicencia === 'SIN_CARGA' ? styles.greenValue : styles.orangeValue]}>
-              {vendedor.cargaLicencia === 'SIN_CARGA'
-                ? '100% Libre de cargas'
-                : `Con préstamo (${vendedor.detalleCargaLicencia || 'Pendiente liquidar'})`}
+                : `${vendedor.diaLibranza} • ${vendedor.turnoDescanso || 'PAR'}`}
             </Text>
           </View>
 
           {/* Vehículo */}
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>🚗 Vehículo:</Text>
-            <View style={{ flex: 1, alignItems: 'flex-end' }}>
-              <Text style={styles.detailValue}>
-                {vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES'
-                  ? `Flexible: solo lic. o con ${vendedor.vehiculo?.modelo || 'coche'} (${vendedor.vehiculo?.anoMatriculacion || ''})`
-                  : vendedor.vendeConCoche && vendedor.vehiculo
-                  ? `Pack coche: ${vendedor.vehiculo.modelo} (${vendedor.vehiculo.anoMatriculacion || ''} - ${vendedor.vehiculo.kilometros || '0'} km)`
-                  : 'Solo licencia (sin coche)'}
+          <View style={styles.attrPill}>
+            <Text style={styles.attrPillText}>
+              {vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES'
+                ? '🚗 Con o sin coche'
+                : vendedor.vendeConCoche && vendedor.vehiculo
+                ? `🚗 ${vendedor.vehiculo.modelo}`
+                : '📄 Solo licencia'}
+            </Text>
+          </View>
+
+          {/* Carga */}
+          <View style={[styles.attrPill, vendedor.cargaLicencia === 'SIN_CARGA' ? styles.pillGreen : styles.pillOrange]}>
+            <Text style={[styles.attrPillText, vendedor.cargaLicencia === 'SIN_CARGA' ? styles.pillGreenText : styles.pillOrangeText]}>
+              {vendedor.cargaLicencia === 'SIN_CARGA' ? '⚖️ Libre de cargas' : '⚖️ Con préstamo'}
+            </Text>
+          </View>
+
+          {/* Perfil */}
+          <View style={styles.perfilBadge}>
+            <Text style={styles.perfilText}>{vendedor.perfil}</Text>
+          </View>
+        </View>
+
+        {/* Fila de Contacto Limpio (Sin textos largos de Wallapop ni enlaces rotos) */}
+        <View style={styles.contactRow}>
+          {contactInfo.hasUrl && contactInfo.url ? (
+            <TouchableOpacity
+              style={[styles.linkBtn, { backgroundColor: contactInfo.badgeBg || colors.primary }]}
+              onPress={(e) => {
+                e?.stopPropagation?.();
+                if (contactInfo.url) Linking.openURL(contactInfo.url);
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.linkBtnText}>
+                {contactInfo.icon} {contactInfo.platformLabel} ↗
               </Text>
-              {vendedor.vehiculo?.exentoLibranza && (
-                <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700', marginTop: 2 }}>
-                  ⚡ {vendedor.vehiculo.detalleExencion || 'Exento de descanso (CERO)'}
-                </Text>
-              )}
-              {vendedor.vehiculo?.carga === 'PRESTAMO' && (
-                <Text style={{ color: colors.warning, fontSize: 11, fontWeight: '700', marginTop: 2 }}>
-                  🚗 Deuda coche: {vendedor.vehiculo.detalleCarga || 'con reserva de dominio'}
-                </Text>
-              )}
+            </TouchableOpacity>
+          ) : null}
+
+          {hasValidPhone ? (
+            <View style={styles.phoneChip}>
+              <Text style={styles.phoneChipText}>📱 {vendedor.telefono}</Text>
             </View>
-          </View>
-
-          {/* Condición Venta */}
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>⏱️ Condición venta:</Text>
-            <Text style={[styles.detailValue, vendedor.condicionVenta !== 'INMEDIATA' ? styles.orangeValue : styles.greenValue]}>
-              {vendedor.condicionVenta === 'INMEDIATA'
-                ? 'Inmediata para firma y traspaso'
-                : vendedor.condicionVenta === 'JUBILACION'
-                ? `Tras jubilación (${vendedor.fechaJubilacion || 'Prevista'})`
-                : vendedor.detalleCondicion || 'Condición especial'}
-            </Text>
-          </View>
-
-          {/* Fecha de registro */}
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>🗓️ Registrado:</Text>
-            <Text style={[styles.detailValue, { color: colors.textMuted }]}>
-              {new Date(vendedor.fechaCreacion).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-            </Text>
-          </View>
-
-          {/* Notas */}
-          {vendedor.notas ? (
-            <View style={{ marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: colors.borderLight }}>
-              <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                📝 <Text style={{ fontWeight: '700' }}>Notas:</Text> {vendedor.notas}
+          ) : !contactInfo.hasUrl ? (
+            <View style={styles.chatChip}>
+              <Text style={styles.chatChipText}>
+                💬 {vendedor.canalContacto && vendedor.canalContacto !== 'TELEFONO' ? vendedor.canalContacto : 'Sin teléfono'}
               </Text>
             </View>
           ) : null}
+
+          <Text style={styles.tapDetailHint}>Toca para ver detalles completos ›</Text>
         </View>
       </TouchableOpacity>
 
-      {/* Footer de acción y matches */}
+      {/* Footer: Matches y SOLO botones de Editar y Borrar */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.matchesBadge} onPress={onPress}>
+        <TouchableOpacity style={styles.matchesBadge} onPress={onPress} activeOpacity={0.75}>
           <Text style={styles.matchesText}>
             🎯 {matchingBuyers.length} {matchingBuyers.length === 1 ? 'Comprador encaja' : 'Compradores encajan'}
           </Text>
         </TouchableOpacity>
 
+        {/* Solo Editar y Borrar */}
         <View style={styles.actionBtns}>
-          <TouchableOpacity style={styles.iconBtn} onPress={handleCall}>
-            <Text style={styles.btnIconText}>📞</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.iconBtn, styles.waBtn]} onPress={handleWhatsApp}>
-            <Text style={styles.btnIconText}>💬</Text>
-          </TouchableOpacity>
           {onEdit && (
-            <TouchableOpacity style={styles.iconBtn} onPress={onEdit}>
+            <TouchableOpacity style={styles.iconBtn} onPress={onEdit} activeOpacity={0.7} accessibilityLabel="Editar">
               <Text style={styles.btnIconText}>✏️</Text>
             </TouchableOpacity>
           )}
           {onDelete && (
-            <TouchableOpacity style={[styles.iconBtn, styles.delBtn]} onPress={onDelete}>
+            <TouchableOpacity style={[styles.iconBtn, styles.delBtn]} onPress={onDelete} activeOpacity={0.7} accessibilityLabel="Eliminar">
               <Text style={styles.btnIconText}>🗑️</Text>
             </TouchableOpacity>
           )}
@@ -235,166 +181,238 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: 16,
-    marginBottom: 14,
+    padding: 14,
+    marginBottom: 12,
+  },
+  cardClosed: {
+    opacity: 0.75,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+    backgroundColor: '#161F2E',
+  },
+  cardTouchable: {
+    width: '100%',
   },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 10,
+    gap: 8,
   },
   nameContainer: {
     flex: 1,
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
   name: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '800',
     color: colors.text,
   },
-  badgesRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    flexWrap: 'wrap',
-    marginBottom: 12,
-  },
-  dayBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  dayText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: colors.white,
-    letterSpacing: 0.5,
-  },
-  perfilBadge: {
-    backgroundColor: colors.surfaceHighlight,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  perfilText: {
-    fontSize: 10,
+  nameClosed: {
     color: colors.textMuted,
-    fontWeight: '600',
   },
-  canalBadge: {
-    paddingHorizontal: 7,
-    paddingVertical: 3,
+  closedBadge: {
+    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
     borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.danger,
   },
-  canalText: {
-    fontSize: 9,
+  closedBadgeText: {
+    color: colors.danger,
+    fontSize: 10,
     fontWeight: '800',
-    color: colors.white,
-    letterSpacing: 0.5,
+  },
+  negotiatingBadge: {
+    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.accent,
+  },
+  negotiatingBadgeText: {
+    color: colors.accent,
+    fontSize: 10,
+    fontWeight: '800',
   },
   priceContainer: {
     alignItems: 'flex-end',
   },
   price: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 20,
+    fontWeight: '900',
     color: colors.secondary,
+  },
+  fixed: {
+    fontSize: 11,
+    color: colors.textMuted,
+    fontWeight: '600',
+    marginTop: 1,
   },
   negotiable: {
     fontSize: 11,
     color: colors.accent,
     fontWeight: '700',
-    marginTop: 2,
+    marginTop: 1,
   },
-  fixed: {
-    fontSize: 11,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  detailsGrid: {
-    backgroundColor: colors.surface,
-    padding: 12,
-    borderRadius: 10,
-    gap: 6,
-    marginBottom: 12,
-  },
-  detailItem: {
+  badgesRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     flexWrap: 'wrap',
+    gap: 6,
+    alignItems: 'center',
+    marginBottom: 10,
   },
-  detailLabel: {
-    fontSize: 12,
-    color: colors.textMuted,
+  dayBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
-  detailValue: {
-    fontSize: 12,
-    fontWeight: '600',
+  dayText: {
+    color: colors.white,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  attrPill: {
+    backgroundColor: '#0F172A',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  attrPillText: {
     color: colors.text,
+    fontSize: 11,
+    fontWeight: '600',
   },
-  greenValue: {
-    color: colors.success,
+  pillGreen: {
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    borderColor: 'rgba(16, 185, 129, 0.3)',
   },
-  orangeValue: {
+  pillGreenText: {
+    color: '#34D399',
+  },
+  pillOrange: {
+    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+    borderColor: 'rgba(245, 158, 11, 0.3)',
+  },
+  pillOrangeText: {
     color: colors.accent,
   },
-  notesText: {
-    fontSize: 11,
+  perfilBadge: {
+    backgroundColor: '#334155',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  perfilText: {
     color: colors.textMuted,
-    fontStyle: 'italic',
-    marginTop: 4,
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  contactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
-    paddingTop: 4,
+    borderTopColor: 'rgba(51, 65, 85, 0.4)',
+    marginBottom: 8,
+  },
+  linkBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+  },
+  linkBtnText: {
+    color: colors.white,
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  phoneChip: {
+    backgroundColor: '#0F172A',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  phoneChipText: {
+    color: colors.text,
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  chatChip: {
+    backgroundColor: '#0F172A',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  chatChipText: {
+    color: colors.textMuted,
+    fontSize: 11,
+  },
+  tapDetailHint: {
+    marginLeft: 'auto',
+    fontSize: 11,
+    color: colors.textSubtle,
+    fontStyle: 'italic',
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingTop: 8,
+    marginTop: 2,
     borderTopWidth: 1,
     borderTopColor: colors.borderLight,
-    paddingTop: 10,
-    marginTop: 10,
-    flexWrap: 'wrap',
-    gap: 8,
   },
   matchesBadge: {
     backgroundColor: 'rgba(37, 99, 235, 0.15)',
-    borderColor: colors.primary,
     borderWidth: 1,
+    borderColor: colors.primary,
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingVertical: 6,
     borderRadius: 8,
   },
   matchesText: {
-    color: '#93C5FD',
+    color: colors.secondary,
     fontSize: 12,
     fontWeight: '700',
   },
   actionBtns: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 8,
   },
   iconBtn: {
-    backgroundColor: colors.surfaceHighlight,
-    width: 32,
-    height: 32,
-    borderRadius: 6,
-    justifyContent: 'center',
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#334155',
     alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: colors.border,
   },
-  waBtn: {
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-    borderColor: colors.success,
-  },
   delBtn: {
     backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    borderColor: colors.danger,
+    borderColor: 'rgba(239, 68, 68, 0.4)',
   },
   btnIconText: {
-    fontSize: 14,
+    fontSize: 16,
   },
 });

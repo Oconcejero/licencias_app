@@ -13,6 +13,7 @@ import { colors } from '../theme/colors';
 import { calculateMatch } from '../services/matchEngine';
 import { shareService } from '../services/shareService';
 import { ExportCardModal } from './ExportCardModal';
+import { extractContactLink } from '../utils/contactUtils';
 
 interface DetailModalProps {
   visible: boolean;
@@ -25,6 +26,8 @@ interface DetailModalProps {
   tramitadorTelefono?: string;
   onEditVendedor?: (v: Vendedor) => void;
   onEditComprador?: (c: Comprador) => void;
+  onToggleEstadoVendedor?: (v: Vendedor) => void;
+  onToggleEstadoComprador?: (c: Comprador) => void;
   onSendMatchToFriend?: (cruce: CruceMatch) => void;
   onOpenConfigTramitador?: () => void;
 }
@@ -40,6 +43,8 @@ export const DetailModal: React.FC<DetailModalProps> = ({
   tramitadorTelefono = '',
   onEditVendedor,
   onEditComprador,
+  onToggleEstadoVendedor,
+  onToggleEstadoComprador,
   onSendMatchToFriend,
   onOpenConfigTramitador,
 }) => {
@@ -47,26 +52,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({
 
   if (!vendedor && !comprador) return null;
 
-  const handleCall = (phone: string, canal?: string) => {
-    if (!phone) {
-      alert(`Contacto de ${canal || 'chat'}. Aún no tienes su teléfono; pídeselo en la conversación para llamarle.`);
-      return;
-    }
-    Linking.openURL(`tel:${phone.replace(/\s+/g, '')}`);
-  };
-
-  const handleWhatsApp = (phone: string, text: string, canal?: string, link?: string) => {
-    if (!phone) {
-      if (link && link.startsWith('http')) {
-        Linking.openURL(link);
-        return;
-      }
-      alert(`Contacto de ${canal || 'chat'}. Pídele su número de WhatsApp en la conversación para continuar el trámite.`);
-      return;
-    }
-    const cleanPhone = phone.replace(/[^\d+]/g, '');
-    Linking.openURL(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`);
-  };
 
   const handleSendSingleToFriend = () => {
     if (!tramitadorTelefono && onOpenConfigTramitador) {
@@ -158,49 +143,68 @@ export const DetailModal: React.FC<DetailModalProps> = ({
             </View>
 
             {/* VENDEDOR EXPEDIENTE */}
-            {vendedor && (
+            {vendedor && (() => {
+              const contactInfo = extractContactLink(vendedor.contactoOrigen || vendedor.telefono, vendedor.canalContacto);
+              const hasValidPhone = vendedor.telefono && !vendedor.telefono.toLowerCase().includes('http');
+              const isClosed = vendedor.estado === 'CERRADO';
+
+              return (
               <View style={styles.profileSection}>
-                <View style={styles.profileHeader}>
+                <View style={[styles.profileHeader, isClosed && styles.profileHeaderClosed]}>
                   <View style={styles.profileInfoRow}>
                     <View style={{ flex: 1 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                         <Text style={styles.name}>{vendedor.nombre}</Text>
+                        {isClosed ? (
+                          <View style={styles.closedPill}>
+                            <Text style={styles.closedPillText}>🏁 CONCLUIDO / FINALIZADO</Text>
+                          </View>
+                        ) : vendedor.estado === 'EN_NEGOCIACION' ? (
+                          <View style={styles.negotiatingPill}>
+                            <Text style={styles.negotiatingPillText}>🤝 EN NEGOCIACIÓN</Text>
+                          </View>
+                        ) : null}
                         {vendedor.canalContacto && vendedor.canalContacto !== 'TELEFONO' && (
                           <View style={[styles.dayPill, { backgroundColor: colors.canales[vendedor.canalContacto] || colors.secondary }]}>
                             <Text style={styles.dayPillText}>{vendedor.canalContacto}</Text>
                           </View>
                         )}
                       </View>
-                      {vendedor.telefono ? (
+
+                      {hasValidPhone ? (
                         <Text style={styles.phone}>📞 {vendedor.telefono}</Text>
-                      ) : (
-                        <Text style={[styles.phone, { color: colors.accent, fontWeight: '700' }]}>
-                          💬 {vendedor.contactoOrigen ? `${vendedor.contactoOrigen}` : `Chat ${vendedor.canalContacto || ''} (Teléfono pendiente)`}
+                      ) : null}
+
+                      {contactInfo.hasUrl && contactInfo.url ? (
+                        <TouchableOpacity
+                          style={[styles.linkBtn, { backgroundColor: contactInfo.badgeBg || colors.primary, marginTop: 6, alignSelf: 'flex-start' }]}
+                          onPress={() => Linking.openURL(contactInfo.url!)}
+                          activeOpacity={0.8}
+                        >
+                          <Text style={styles.linkBtnText}>
+                            {contactInfo.icon} {contactInfo.platformLabel} ↗
+                          </Text>
+                        </TouchableOpacity>
+                      ) : !hasValidPhone ? (
+                        <Text style={[styles.phone, { color: colors.textMuted, marginTop: 4 }]}>
+                          💬 Chat {vendedor.canalContacto || ''} (Sin teléfono guardado)
                         </Text>
-                      )}
+                      ) : null}
                     </View>
                   </View>
 
                   <View style={styles.actionRow}>
-                    <TouchableOpacity
-                      style={styles.btnAction}
-                      onPress={() => handleCall(vendedor.telefono, vendedor.canalContacto)}
-                    >
-                      <Text style={styles.btnActionText}>📞 Llamar</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.btnAction, styles.waBtn]}
-                      onPress={() => handleWhatsApp(
-                        vendedor.telefono,
-                        `Hola ${vendedor.nombre}, te contacto sobre la venta de tu licencia con libranza ${vendedor.diaLibranza}.`,
-                        vendedor.canalContacto,
-                        vendedor.contactoOrigen
-                      )}
-                    >
-                      <Text style={styles.btnActionText}>
-                        {vendedor.telefono ? '💬 WhatsApp' : vendedor.contactoOrigen?.startsWith('http') ? '💬 Abrir Chat' : '💬 WhatsApp'}
-                      </Text>
-                    </TouchableOpacity>
+                    {onToggleEstadoVendedor && (
+                      <TouchableOpacity
+                        style={[styles.btnAction, isClosed ? styles.btnReopen : styles.btnCloseDeal]}
+                        onPress={() => onToggleEstadoVendedor(vendedor)}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={styles.btnActionText}>
+                          {isClosed ? '🔄 Reabrir a Disponible' : '🏁 Marcar como Concluido'}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
                     {onEditVendedor && (
                       <TouchableOpacity
                         style={styles.btnAction}
@@ -208,8 +212,9 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                           onClose();
                           onEditVendedor(vendedor);
                         }}
+                        activeOpacity={0.8}
                       >
-                        <Text style={styles.btnActionText}>✏️ Editar</Text>
+                        <Text style={styles.btnActionText}>✏️ Editar Expediente</Text>
                       </TouchableOpacity>
                     )}
                   </View>
@@ -353,12 +358,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                               <Text style={styles.candFriendText}>📤 Derivar Cruce a Gestión</Text>
                             </TouchableOpacity>
                           )}
-                          <TouchableOpacity
-                            style={styles.candBtn}
-                            onPress={() => handleCall(c.telefono)}
-                          >
-                            <Text style={styles.candBtnText}>📞 Llamar</Text>
-                          </TouchableOpacity>
                         </View>
                       </View>
                     ))
@@ -367,52 +366,72 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                   )}
                 </View>
               </View>
-            )}
+              );
+            })()}
 
             {/* COMPRADOR EXPEDIENTE */}
-            {comprador && (
+            {comprador && (() => {
+              const contactInfo = extractContactLink(comprador.contactoOrigen || comprador.telefono, comprador.canalContacto);
+              const hasValidPhone = comprador.telefono && !comprador.telefono.toLowerCase().includes('http');
+              const isClosed = comprador.estado === 'CERRADO';
+
+              return (
               <View style={styles.profileSection}>
-                <View style={styles.profileHeader}>
+                <View style={[styles.profileHeader, isClosed && styles.profileHeaderClosed]}>
                   <View style={styles.profileInfoRow}>
                     <View style={{ flex: 1 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                         <Text style={styles.name}>{comprador.nombre}</Text>
+                        {isClosed ? (
+                          <View style={styles.closedPill}>
+                            <Text style={styles.closedPillText}>🏁 CONCLUIDO / FINALIZADO</Text>
+                          </View>
+                        ) : comprador.estado === 'EN_NEGOCIACION' ? (
+                          <View style={styles.negotiatingPill}>
+                            <Text style={styles.negotiatingPillText}>🤝 EN NEGOCIACIÓN</Text>
+                          </View>
+                        ) : null}
                         {comprador.canalContacto && comprador.canalContacto !== 'TELEFONO' && (
                           <View style={[styles.dayPill, { backgroundColor: colors.canales[comprador.canalContacto] || colors.secondary }]}>
                             <Text style={styles.dayPillText}>{comprador.canalContacto}</Text>
                           </View>
                         )}
                       </View>
-                      {comprador.telefono ? (
+
+                      {hasValidPhone ? (
                         <Text style={styles.phone}>📞 {comprador.telefono}</Text>
-                      ) : (
-                        <Text style={[styles.phone, { color: colors.accent, fontWeight: '700' }]}>
-                          💬 {comprador.contactoOrigen ? `${comprador.contactoOrigen}` : `Chat ${comprador.canalContacto || ''} (Teléfono pendiente)`}
+                      ) : null}
+
+                      {contactInfo.hasUrl && contactInfo.url ? (
+                        <TouchableOpacity
+                          style={[styles.linkBtn, { backgroundColor: contactInfo.badgeBg || colors.primary, marginTop: 6, alignSelf: 'flex-start' }]}
+                          onPress={() => Linking.openURL(contactInfo.url!)}
+                          activeOpacity={0.8}
+                        >
+                          <Text style={styles.linkBtnText}>
+                            {contactInfo.icon} {contactInfo.platformLabel} ↗
+                          </Text>
+                        </TouchableOpacity>
+                      ) : !hasValidPhone ? (
+                        <Text style={[styles.phone, { color: colors.textMuted, marginTop: 4 }]}>
+                          💬 Chat {comprador.canalContacto || ''} (Sin teléfono guardado)
                         </Text>
-                      )}
+                      ) : null}
                     </View>
                   </View>
 
                   <View style={styles.actionRow}>
-                    <TouchableOpacity
-                      style={styles.btnAction}
-                      onPress={() => handleCall(comprador.telefono, comprador.canalContacto)}
-                    >
-                      <Text style={styles.btnActionText}>📞 Llamar</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.btnAction, styles.waBtn]}
-                      onPress={() => handleWhatsApp(
-                        comprador.telefono,
-                        `Hola ${comprador.nombre}, te escribo con respecto a la búsqueda de licencia de taxi.`,
-                        comprador.canalContacto,
-                        comprador.contactoOrigen
-                      )}
-                    >
-                      <Text style={styles.btnActionText}>
-                        {comprador.telefono ? '💬 WhatsApp' : comprador.contactoOrigen?.startsWith('http') ? '💬 Abrir Chat' : '💬 WhatsApp'}
-                      </Text>
-                    </TouchableOpacity>
+                    {onToggleEstadoComprador && (
+                      <TouchableOpacity
+                        style={[styles.btnAction, isClosed ? styles.btnReopen : styles.btnCloseDeal]}
+                        onPress={() => onToggleEstadoComprador(comprador)}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={styles.btnActionText}>
+                          {isClosed ? '🔄 Reabrir a Disponible' : '🏁 Marcar como Concluido'}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
                     {onEditComprador && (
                       <TouchableOpacity
                         style={styles.btnAction}
@@ -420,8 +439,9 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                           onClose();
                           onEditComprador(comprador);
                         }}
+                        activeOpacity={0.8}
                       >
-                        <Text style={styles.btnActionText}>✏️ Editar</Text>
+                        <Text style={styles.btnActionText}>✏️ Editar Expediente</Text>
                       </TouchableOpacity>
                     )}
                   </View>
@@ -533,12 +553,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                               <Text style={styles.candFriendText}>📤 Derivar Cruce a Gestión</Text>
                             </TouchableOpacity>
                           )}
-                          <TouchableOpacity
-                            style={styles.candBtn}
-                            onPress={() => handleCall(v.telefono)}
-                          >
-                            <Text style={styles.candBtnText}>📞 Llamar</Text>
-                          </TouchableOpacity>
                         </View>
                       </View>
                     ))
@@ -547,7 +561,8 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                   )}
                 </View>
               </View>
-            )}
+              );
+            })()}
           </ScrollView>
 
           <View style={styles.footer}>
@@ -724,7 +739,7 @@ const styles = StyleSheet.create({
   },
   btnAction: {
     flex: 1,
-    minWidth: 90,
+    minWidth: 120,
     minHeight: 36,
     backgroundColor: colors.surfaceHighlight,
     paddingHorizontal: 10,
@@ -734,6 +749,56 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  btnReopen: {
+    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+    borderColor: colors.primary,
+  },
+  btnCloseDeal: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderColor: colors.danger,
+  },
+  profileHeaderClosed: {
+    borderColor: 'rgba(239, 68, 68, 0.4)',
+    backgroundColor: '#161F2E',
+  },
+  closedPill: {
+    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.danger,
+  },
+  closedPillText: {
+    color: colors.danger,
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  negotiatingPill: {
+    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.accent,
+  },
+  negotiatingPillText: {
+    color: colors.accent,
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  linkBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  linkBtnText: {
+    color: colors.white,
+    fontSize: 11,
+    fontWeight: '800',
   },
   waBtn: {
     backgroundColor: 'rgba(16, 185, 129, 0.15)',

@@ -21,6 +21,7 @@ import {
   ModalidadVentaCoche,
 } from '../types';
 import { colors } from '../theme/colors';
+import { sanitizeContactInput } from '../utils/contactUtils';
 
 interface VendedorModalProps {
   visible: boolean;
@@ -56,7 +57,6 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
   const [detalleCargaLicencia, setDetalleCargaLicencia] = useState('');
 
   // Vehículo
-  const [vendeConCoche, setVendeConCoche] = useState(false);
   const [modalidadVentaCoche, setModalidadVentaCoche] = useState<ModalidadVentaCoche>('SOLO_LICENCIA');
   const [modeloVehiculo, setModeloVehiculo] = useState('');
   const [anoVehiculo, setAnoVehiculo] = useState('');
@@ -93,7 +93,6 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
       
       const mod = vendedorToEdit.modalidadVentaCoche || (vendedorToEdit.vendeConCoche ? 'CON_COCHE' : 'SOLO_LICENCIA');
       setModalidadVentaCoche(mod);
-      setVendeConCoche(mod !== 'SOLO_LICENCIA');
 
       if (vendedorToEdit.vehiculo) {
         setModeloVehiculo(vendedorToEdit.vehiculo.modelo);
@@ -131,7 +130,6 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
       setTurnoDescanso('PAR');
       setCargaLicencia('SIN_CARGA');
       setDetalleCargaLicencia('');
-      setVendeConCoche(false);
       setModalidadVentaCoche('SOLO_LICENCIA');
       setModeloVehiculo('');
       setAnoVehiculo('');
@@ -174,7 +172,7 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
       nombre: nombre.trim(),
       telefono: telefono.trim(),
       canalContacto,
-      contactoOrigen: canalContacto !== 'TELEFONO' ? contactoOrigen.trim() || undefined : undefined,
+      contactoOrigen: canalContacto !== 'TELEFONO' ? sanitizeContactInput(contactoOrigen) || undefined : undefined,
       fechaCreacion: vendedorToEdit ? vendedorToEdit.fechaCreacion : new Date().toISOString(),
       perfil,
       diaLibranza,
@@ -484,10 +482,7 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
               <View style={styles.selectorRow}>
                 <TouchableOpacity
                   style={[styles.selectorBtn, modalidadVentaCoche === 'SOLO_LICENCIA' && styles.selectorBtnActive]}
-                  onPress={() => {
-                    setModalidadVentaCoche('SOLO_LICENCIA');
-                    setVendeConCoche(false);
-                  }}
+                  onPress={() => setModalidadVentaCoche('SOLO_LICENCIA')}
                 >
                   <Text style={[styles.selectorText, modalidadVentaCoche === 'SOLO_LICENCIA' && styles.selectorTextActive]}>
                     Solo Licencia
@@ -496,10 +491,7 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
 
                 <TouchableOpacity
                   style={[styles.selectorBtn, modalidadVentaCoche === 'CON_COCHE' && styles.selectorBtnActive]}
-                  onPress={() => {
-                    setModalidadVentaCoche('CON_COCHE');
-                    setVendeConCoche(true);
-                  }}
+                  onPress={() => setModalidadVentaCoche('CON_COCHE')}
                 >
                   <Text style={[styles.selectorText, modalidadVentaCoche === 'CON_COCHE' && styles.selectorTextActive]}>
                     Con Coche (Pack)
@@ -508,10 +500,7 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
 
                 <TouchableOpacity
                   style={[styles.selectorBtn, modalidadVentaCoche === 'AMBAS_OPCIONES' && styles.selectorBtnActive]}
-                  onPress={() => {
-                    setModalidadVentaCoche('AMBAS_OPCIONES');
-                    setVendeConCoche(true);
-                  }}
+                  onPress={() => setModalidadVentaCoche('AMBAS_OPCIONES')}
                 >
                   <Text style={[styles.selectorText, modalidadVentaCoche === 'AMBAS_OPCIONES' && styles.selectorTextActive]}>
                     ✨ Ambas Opciones
@@ -802,7 +791,7 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
                     onPress={() => setEstado('CERRADO')}
                   >
                     <Text style={[styles.selectorText, estado === 'CERRADO' && styles.selectorTextActive]}>
-                      Cerrado / Vendida
+                      🏁 Concluido / Finalizado
                     </Text>
                   </TouchableOpacity>
                 </View>

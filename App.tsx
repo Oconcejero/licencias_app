@@ -141,6 +141,20 @@ export default function App() {
     }
   };
 
+  const handleToggleEstadoVendedor = async (vendedor: Vendedor) => {
+    const nuevoEstado = vendedor.estado === 'CERRADO' ? 'DISPONIBLE' : 'CERRADO';
+    const updated = { ...vendedor, estado: nuevoEstado as any };
+    await handleSaveVendedor(updated);
+    setDetailVendedor(updated);
+  };
+
+  const handleToggleEstadoComprador = async (comprador: Comprador) => {
+    const nuevoEstado = comprador.estado === 'CERRADO' ? 'DISPONIBLE' : 'CERRADO';
+    const updated = { ...comprador, estado: nuevoEstado as any };
+    await handleSaveComprador(updated);
+    setDetailComprador(updated);
+  };
+
   // Enviar a mi amigo por WhatsApp
   const handleSendToFriend = (cruce: CruceMatch) => {
     if (!tramitador.telefono) {
@@ -335,6 +349,8 @@ export default function App() {
             setCompradorToEdit(c);
             setCompradorModalVisible(true);
           } : undefined}
+          onToggleEstadoVendedor={isAdmin ? handleToggleEstadoVendedor : undefined}
+          onToggleEstadoComprador={isAdmin ? handleToggleEstadoComprador : undefined}
           onSendMatchToFriend={handleSendToFriend}
           onOpenConfigTramitador={() => setTramitadorModalVisible(true)}
         />

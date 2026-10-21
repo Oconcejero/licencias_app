@@ -34,12 +34,18 @@ export const VendedoresScreen: React.FC<VendedoresScreenProps> = ({
   const { width } = useWindowDimensions();
   const isTwoCols = width >= 768;
   const [search, setSearch] = useState('');
+  const [estadoTab, setEstadoTab] = useState<'ACTIVOS' | 'CONCLUIDOS' | 'TODOS'>('ACTIVOS');
   const [selectedDia, setSelectedDia] = useState<string>('TODOS');
   const [filterCoche, setFilterCoche] = useState<'TODOS' | 'CON_COCHE' | 'SIN_COCHE'>('TODOS');
   const [sortPrice, setSortPrice] = useState<'NONE' | 'ASC' | 'DESC'>('NONE');
 
+  const activosCount = useMemo(() => vendedores.filter(v => v.estado !== 'CERRADO').length, [vendedores]);
+  const concluidosCount = useMemo(() => vendedores.filter(v => v.estado === 'CERRADO').length, [vendedores]);
+
   const filteredVendedores = useMemo(() => {
     const list = vendedores.filter(v => {
+      if (estadoTab === 'ACTIVOS' && v.estado === 'CERRADO') return false;
+      if (estadoTab === 'CONCLUIDOS' && v.estado !== 'CERRADO') return false;
       if (selectedDia !== 'TODOS' && v.diaLibranza !== selectedDia) return false;
       if (filterCoche === 'CON_COCHE' && !v.vendeConCoche) return false;
       if (filterCoche === 'SIN_COCHE' && v.vendeConCoche) return false;
@@ -71,7 +77,7 @@ export const VendedoresScreen: React.FC<VendedoresScreenProps> = ({
     }
 
     return list;
-  }, [vendedores, search, selectedDia, filterCoche, sortPrice]);
+  }, [vendedores, search, selectedDia, filterCoche, sortPrice, estadoTab]);
 
   const DIAS_OPCIONES = ['TODOS', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'EUROTAXI', 'ELECTRICO_SIN_LIBRANZA'];
 
@@ -82,7 +88,7 @@ export const VendedoresScreen: React.FC<VendedoresScreenProps> = ({
         <View>
           <Text style={styles.title}>🚕 Cartera de Vendedores (Licencias)</Text>
           <Text style={styles.subtitle}>
-            {filteredVendedores.length} {filteredVendedores.length === 1 ? 'licencia' : 'licencias'} {selectedDia !== 'TODOS' ? `(Libranza ${selectedDia})` : ''} {sortPrice === 'ASC' ? '• 📈 Menor a mayor' : sortPrice === 'DESC' ? '• 📉 Mayor a menor' : ''}
+            {filteredVendedores.length} {filteredVendedores.length === 1 ? 'licencia' : 'licencias'} {estadoTab === 'CONCLUIDOS' ? '(🏁 Concluidas / Finalizadas)' : estadoTab === 'ACTIVOS' ? '(🟢 Activas)' : ''} {selectedDia !== 'TODOS' ? `• Libranza ${selectedDia}` : ''} {sortPrice === 'ASC' ? '• 📈 Menor a mayor' : sortPrice === 'DESC' ? '• 📉 Mayor a menor' : ''}
           </Text>
         </View>
         {userRole === 'ADMIN' && (
@@ -94,6 +100,39 @@ export const VendedoresScreen: React.FC<VendedoresScreenProps> = ({
             <Text style={styles.addBtnText}>➕ Añadir Nueva Licencia (Vendedor)</Text>
           </TouchableOpacity>
         )}
+      </View>
+
+      {/* PESTAÑAS DE ESTADO: ACTIVOS vs CONCLUIDOS / FINALIZADOS */}
+      <View style={styles.statusTabsRow}>
+        <TouchableOpacity
+          style={[styles.statusTabBtn, estadoTab === 'ACTIVOS' && styles.statusTabBtnActive]}
+          onPress={() => setEstadoTab('ACTIVOS')}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.statusTabText, estadoTab === 'ACTIVOS' && styles.statusTabTextActive]}>
+            🟢 Activas ({activosCount})
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.statusTabBtn, estadoTab === 'CONCLUIDOS' && styles.statusTabBtnActiveConcluido]}
+          onPress={() => setEstadoTab('CONCLUIDOS')}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.statusTabText, estadoTab === 'CONCLUIDOS' && styles.statusTabTextActiveConcluido]}>
+            🏁 Concluidas / Finalizadas ({concluidosCount})
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.statusTabBtn, estadoTab === 'TODOS' && styles.statusTabBtnActive]}
+          onPress={() => setEstadoTab('TODOS')}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.statusTabText, estadoTab === 'TODOS' && styles.statusTabTextActive]}>
+            Todas ({vendedores.length})
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* BUSCADOR */}
@@ -450,5 +489,40 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textAlign: 'center',
     marginTop: 4,
+  },
+  statusTabsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+    flexWrap: 'wrap',
+  },
+  statusTabBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: colors.surfaceCard,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  statusTabBtnActive: {
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    borderColor: colors.success,
+  },
+  statusTabBtnActiveConcluido: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderColor: colors.danger,
+  },
+  statusTabText: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  statusTabTextActive: {
+    color: '#34D399',
+    fontWeight: '800',
+  },
+  statusTabTextActiveConcluido: {
+    color: colors.danger,
+    fontWeight: '800',
   },
 });
