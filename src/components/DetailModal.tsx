@@ -53,20 +53,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({
   if (!vendedor && !comprador) return null;
 
 
-  const handleSendSingleToFriend = () => {
-    if (!tramitadorTelefono && onOpenConfigTramitador) {
-      onOpenConfigTramitador();
-      return;
-    }
-    if (vendedor) {
-      const text = shareService.generateVendedorReport(vendedor);
-      shareService.sendWhatsApp(tramitadorTelefono, text);
-    } else if (comprador) {
-      const text = shareService.generateCompradorReport(comprador);
-      shareService.sendWhatsApp(tramitadorTelefono, text);
-    }
-  };
-
   // Si estamos viendo un VENDEDOR: buscar todos los compradores que le encajan
   const matchingBuyers = vendedor
     ? allCompradores
@@ -105,40 +91,15 @@ export const DetailModal: React.FC<DetailModalProps> = ({
           </View>
 
           <ScrollView style={styles.scrollArea}>
-            {/* ACCIONES SUPERIORES DE EXPORTACIÓN Y TRAMITACIÓN */}
+            {/* BOTÓN COMPACTO DE EXPORTACIÓN */}
             <View style={styles.topActionsContainer}>
               <TouchableOpacity
-                style={styles.flyerActionBtn}
+                style={styles.exportCompactBtn}
                 onPress={() => setShowExportModal(true)}
                 activeOpacity={0.85}
               >
-                <Text style={styles.flyerActionIcon}>🖼️</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.flyerActionTitle}>
-                    Ficha Visual (Flyer Digital) / Exportar WhatsApp
-                  </Text>
-                  <Text style={styles.flyerActionSub}>
-                    Genera imagen PNG de alta calidad para pegar en WhatsApp (Ctrl+V) o copia el texto limpio
-                  </Text>
-                </View>
-                <Text style={styles.flyerActionArrow}>→</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.sendFriendBtn}
-                onPress={handleSendSingleToFriend}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.sendFriendIcon}>📤</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.sendFriendTitle}>
-                    Derivar directamente a {tramitadorNombre || 'Gestor'} (WhatsApp)
-                  </Text>
-                  <Text style={styles.sendFriendSub}>
-                    Envía este expediente limpio por WhatsApp a su teléfono
-                  </Text>
-                </View>
-                <Text style={styles.sendFriendArrow}>→</Text>
+                <Text style={styles.exportCompactIcon}>📸</Text>
+                <Text style={styles.exportCompactText}>EXPORTAR FICHA</Text>
               </TouchableOpacity>
             </View>
 
@@ -224,20 +185,24 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                 <View style={styles.specsGrid}>
                   <View style={styles.specBox}>
                     <Text style={styles.specLabel}>Precio</Text>
-                    {vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES' && vendedor.precioConCoche ? (
+                    {vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES' || (vendedor.precioConCoche && vendedor.precioConCoche !== vendedor.precio) ? (
                       <View>
                         <Text style={styles.specValue}>
-                          {vendedor.precio.toLocaleString()} € <Text style={{ fontSize: 11, color: colors.textMuted }}>(Solo lic.)</Text>
+                          {vendedor.precio.toLocaleString('es-ES')} € <Text style={{ fontSize: 10, color: colors.textMuted }}>(Sin coche)</Text>
                         </Text>
-                        <Text style={[styles.specValue, { color: colors.primary, fontSize: 13, marginTop: 2 }]}>
-                          {vendedor.precioConCoche.toLocaleString()} € <Text style={{ fontSize: 10, color: colors.textMuted }}>(Con coche)</Text>
+                        <Text style={[styles.specValue, { color: colors.secondary, fontSize: 13, marginTop: 2 }]}>
+                          {(vendedor.precioConCoche || vendedor.precio).toLocaleString('es-ES')} € <Text style={{ fontSize: 10, color: colors.textMuted }}>(Con coche)</Text>
                         </Text>
                       </View>
                     ) : (
-                      <Text style={styles.specValue}>
-                        {vendedor.precio.toLocaleString()} €
-                        {vendedor.modalidadVentaCoche === 'CON_COCHE' ? ' (Pack)' : ''}
-                      </Text>
+                      <View>
+                        <Text style={styles.specValue}>
+                          {vendedor.precio.toLocaleString('es-ES')} €
+                        </Text>
+                        <Text style={{ fontSize: 11, color: '#38BDF8', fontWeight: '700', marginTop: 1 }}>
+                          {vendedor.vendeConCoche || vendedor.modalidadVentaCoche === 'CON_COCHE' ? 'Con coche' : 'Solo licencia'}
+                        </Text>
+                      </View>
                     )}
                     <Text style={vendedor.precioNegociable ? styles.greenPill : styles.subtlePill}>
                       {vendedor.precioNegociable ? 'Negociable' : 'No negociable'}
@@ -340,24 +305,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                               ? '📄 Solo licencia'
                               : 'Coche indiferente'}
                           </Text>
-                        </View>
-
-                        <View style={styles.candidateFooter}>
-                          {onSendMatchToFriend && (
-                            <TouchableOpacity
-                              style={[styles.candBtn, styles.candFriendBtn]}
-                              onPress={() =>
-                                onSendMatchToFriend({
-                                  id: `${vendedor.id}_${c.id}`,
-                                  vendedor,
-                                  comprador: c,
-                                  match,
-                                })
-                              }
-                            >
-                              <Text style={styles.candFriendText}>📤 Derivar Cruce a Gestión</Text>
-                            </TouchableOpacity>
-                          )}
                         </View>
                       </View>
                     ))
@@ -536,24 +483,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                             {v.precioNegociable ? '(Negociable)' : '(Fijo)'}
                           </Text>
                         </View>
-
-                        <View style={styles.candidateFooter}>
-                          {onSendMatchToFriend && (
-                            <TouchableOpacity
-                              style={[styles.candBtn, styles.candFriendBtn]}
-                              onPress={() =>
-                                onSendMatchToFriend({
-                                  id: `${v.id}_${comprador.id}`,
-                                  vendedor: v,
-                                  comprador,
-                                  match,
-                                })
-                              }
-                            >
-                              <Text style={styles.candFriendText}>📤 Derivar Cruce a Gestión</Text>
-                            </TouchableOpacity>
-                          )}
-                        </View>
                       </View>
                     ))
                   ) : (
@@ -640,64 +569,28 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   topActionsContainer: {
-    gap: 8,
     marginBottom: 14,
   },
-  flyerActionBtn: {
+  exportCompactBtn: {
     backgroundColor: '#1E1B4B',
     borderColor: '#6366F1',
     borderWidth: 1.5,
-    padding: 12,
-    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    justifyContent: 'center',
+    gap: 8,
   },
-  flyerActionIcon: {
-    fontSize: 22,
+  exportCompactIcon: {
+    fontSize: 16,
   },
-  flyerActionTitle: {
+  exportCompactText: {
     color: '#EEF2FF',
     fontSize: 13,
     fontWeight: '800',
-  },
-  flyerActionSub: {
-    color: '#C7D2FE',
-    fontSize: 11,
-    marginTop: 2,
-  },
-  flyerActionArrow: {
-    color: '#EEF2FF',
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  sendFriendBtn: {
-    backgroundColor: '#064E3B',
-    borderColor: '#10B981',
-    borderWidth: 1.5,
-    padding: 12,
-    borderRadius: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  sendFriendIcon: {
-    fontSize: 22,
-  },
-  sendFriendTitle: {
-    color: '#ECFDF5',
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  sendFriendSub: {
-    color: '#A7F3D0',
-    fontSize: 11,
-    marginTop: 2,
-  },
-  sendFriendArrow: {
-    color: '#ECFDF5',
-    fontSize: 18,
-    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   profileSection: {
     gap: 14,

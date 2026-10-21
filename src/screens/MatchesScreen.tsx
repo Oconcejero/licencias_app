@@ -22,7 +22,7 @@ interface MatchesScreenProps {
   onToggleDerivado: (matchId: string) => void;
 }
 
-type FilterType = 'TODOS' | 'PENDIENTES' | 'EXCELENTES' | 'SENALIZA_YA' | 'NEGOCIABLES';
+type FilterType = 'TODOS' | 'EXCELENTES' | 'SENALIZA_YA' | 'NEGOCIABLES';
 
 export const MatchesScreen: React.FC<MatchesScreenProps> = ({
   matches,
@@ -39,14 +39,9 @@ export const MatchesScreen: React.FC<MatchesScreenProps> = ({
   const [search, setSearch] = useState('');
   const [sortPrice, setSortPrice] = useState<'NONE' | 'ASC' | 'DESC'>('NONE');
 
-  const safeDerivados = useMemo(() => derivadosIds || [], [derivadosIds]);
-
   const filteredMatches = useMemo(() => {
     const list = matches.filter(c => {
-      const isDerivado = safeDerivados.includes(c.id);
-
       // Filtro de categoría
-      if (filter === 'PENDIENTES' && isDerivado) return false;
       if (filter === 'EXCELENTES' && c.match.score < 80) return false;
       if (filter === 'SENALIZA_YA' && !c.comprador.puedeSenalizarYa) return false;
       if (filter === 'NEGOCIABLES' && !c.vendedor.precioNegociable) return false;
@@ -83,9 +78,7 @@ export const MatchesScreen: React.FC<MatchesScreenProps> = ({
     }
 
     return list;
-  }, [matches, filter, search, safeDerivados, sortPrice]);
-
-  const pendientesCount = matches.filter(c => !safeDerivados.includes(c.id)).length;
+  }, [matches, filter, search, sortPrice]);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -124,15 +117,6 @@ export const MatchesScreen: React.FC<MatchesScreenProps> = ({
         >
           <Text style={[styles.filterText, filter === 'TODOS' && styles.filterTextActive]}>
             Todos ({matches.length})
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.filterChip, filter === 'PENDIENTES' && styles.filterChipActive, filter === 'PENDIENTES' && { backgroundColor: colors.accent }]}
-          onPress={() => setFilter('PENDIENTES')}
-        >
-          <Text style={[styles.filterText, filter === 'PENDIENTES' && styles.filterTextActive]}>
-            ⏳ Pendientes de Pasar ({pendientesCount})
           </Text>
         </TouchableOpacity>
 

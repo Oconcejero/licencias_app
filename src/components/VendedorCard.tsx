@@ -54,22 +54,29 @@ export const VendedorCard: React.FC<VendedorCardProps> = ({
           </View>
 
           <View style={styles.priceContainer}>
-            {vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES' && vendedor.precioConCoche ? (
+            {vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES' || (vendedor.precioConCoche && vendedor.precioConCoche !== vendedor.precio) ? (
               <View style={{ alignItems: 'flex-end' }}>
-                <Text style={styles.price}>
-                  {vendedor.precio.toLocaleString()} € <Text style={{ fontSize: 10, color: colors.textMuted }}>lic.</Text>
+                <Text style={styles.priceSmall}>
+                  {vendedor.precio.toLocaleString('es-ES')} € <Text style={styles.priceModeLabel}>Sin coche</Text>
                 </Text>
-                <Text style={[styles.price, { fontSize: 13, color: colors.secondary }]}>
-                  {vendedor.precioConCoche.toLocaleString()} € <Text style={{ fontSize: 9, color: colors.textMuted }}>+coche</Text>
+                <Text style={[styles.priceSmall, { marginTop: 2 }]}>
+                  {(vendedor.precioConCoche || vendedor.precio).toLocaleString('es-ES')} € <Text style={styles.priceModeLabel}>Con coche</Text>
                 </Text>
               </View>
+            ) : vendedor.vendeConCoche || vendedor.modalidadVentaCoche === 'CON_COCHE' ? (
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={styles.price}>
+                  {vendedor.precio.toLocaleString('es-ES')} €
+                </Text>
+                <Text style={styles.priceSubMode}>Con coche</Text>
+              </View>
             ) : (
-              <Text style={styles.price}>
-                {vendedor.precio.toLocaleString()} €
-                {vendedor.modalidadVentaCoche === 'CON_COCHE' ? (
-                  <Text style={{ fontSize: 11, color: colors.textMuted }}> (pack)</Text>
-                ) : null}
-              </Text>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={styles.price}>
+                  {vendedor.precio.toLocaleString('es-ES')} €
+                </Text>
+                <Text style={styles.priceSubMode}>Solo licencia</Text>
+              </View>
             )}
             <Text style={vendedor.precioNegociable ? styles.negotiable : styles.fixed}>
               {vendedor.precioNegociable ? 'Negociable' : 'Precio Fijo'}
@@ -246,18 +253,34 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   price: {
-    fontSize: 20,
-    fontWeight: '900',
+    fontSize: 16,
+    fontWeight: '800',
     color: colors.secondary,
   },
-  fixed: {
+  priceSmall: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: colors.secondary,
+  },
+  priceModeLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.textMuted,
+  },
+  priceSubMode: {
     fontSize: 11,
+    fontWeight: '700',
+    color: '#38BDF8',
+    marginTop: 1,
+  },
+  fixed: {
+    fontSize: 10,
     color: colors.textMuted,
     fontWeight: '600',
     marginTop: 1,
   },
   negotiable: {
-    fontSize: 11,
+    fontSize: 10,
     color: colors.accent,
     fontWeight: '700',
     marginTop: 1,

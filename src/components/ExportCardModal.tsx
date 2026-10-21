@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   ScrollView,
   Platform,
   Alert,
+  TextInput,
 } from 'react-native';
 import { Vendedor, Comprador, CruceMatch, getCompradorDias } from '../types';
 import { colors } from '../theme/colors';
@@ -32,16 +33,52 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'CARD' | 'TEXT'>('CARD');
   const [copiedStatus, setCopiedStatus] = useState<string | null>(null);
+  const [comisionText, setComisionText] = useState<string>('');
+  const comision = parseInt(comisionText.replace(/[^\d]/g, ''), 10) || 0;
 
-  // Generar el texto formateado
-  let messageText = '';
-  if (vendedor) {
-    messageText = shareService.generateVendedorReport(vendedor);
-  } else if (comprador) {
-    messageText = shareService.generateCompradorReport(comprador);
-  } else if (cruce) {
-    messageText = shareService.generateMatchReport(cruce);
-  }
+  useEffect(() => {
+    if (visible) {
+      setComisionText('');
+      setCopiedStatus(null);
+    }
+  }, [visible]);
+
+  // Vendedor ajustado con la comisión añadida (solo para la imagen/texto exportado)
+  const curVendedor = useMemo(() => {
+    if (!vendedor) return null;
+    if (!comision) return vendedor;
+    return {
+      ...vendedor,
+      precio: vendedor.precio + comision,
+      precioConCoche: vendedor.precioConCoche ? vendedor.precioConCoche + comision : undefined,
+    };
+  }, [vendedor, comision]);
+
+  // Cruce ajustado con la comisión añadida al precio del vendedor
+  const curCruce = useMemo(() => {
+    if (!cruce) return null;
+    if (!comision) return cruce;
+    return {
+      ...cruce,
+      vendedor: {
+        ...cruce.vendedor,
+        precio: cruce.vendedor.precio + comision,
+        precioConCoche: cruce.vendedor.precioConCoche ? cruce.vendedor.precioConCoche + comision : undefined,
+      },
+    };
+  }, [cruce, comision]);
+
+  // Generar el texto formateado con el precio ya ajustado
+  const messageText = useMemo(() => {
+    if (curVendedor) {
+      return shareService.generateVendedorReport(curVendedor);
+    } else if (comprador) {
+      return shareService.generateCompradorReport(comprador);
+    } else if (curCruce) {
+      return shareService.generateMatchReport(curCruce);
+    }
+    return '';
+  }, [curVendedor, comprador, curCruce]);
 
   // Título del modal
   const title = vendedor
@@ -117,19 +154,19 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
     ctx.lineTo(width - 60, 105);
     ctx.stroke();
 
-    if (vendedor) {
+    if (curVendedor) {
       // 1. Badge de Libranza
       const badgeY = 145;
       const diaTexto =
-        vendedor.diaLibranza === 'EUROTAXI'
+        curVendedor.diaLibranza === 'EUROTAXI'
           ? '♿ EUROTAXI • EXENTO DE LIBRANZA (7 DÍAS)'
-          : vendedor.diaLibranza === 'ELECTRICO_SIN_LIBRANZA'
+          : curVendedor.diaLibranza === 'ELECTRICO_SIN_LIBRANZA'
           ? '⚡ ELÉCTRICO CERO • EXENTO DE LIBRANZA'
-          : vendedor.diaLibranza === 'LIBRE_24H'
+          : curVendedor.diaLibranza === 'LIBRE_24H'
           ? '🟢 24H LIBRE • SIN DESCANSO OBLIGATORIO'
-          : `LIBRANZA ${vendedor.diaLibranza} • TURNO ${vendedor.turnoDescanso || 'PAR'}`;
+          : `LIBRANZA ${curVendedor.diaLibranza} • TURNO ${curVendedor.turnoDescanso || 'PAR'}`;
 
-      ctx.fillStyle = colors.libranza[vendedor.diaLibranza] || '#10B981';
+      ctx.fillStyle = colors.libranza[curVendedor.diaLibranza] || '#10B981';
       ctx.beginPath();
       ctx.roundRect(60, badgeY, 480, 48, 10);
       ctx.fill();
@@ -138,7 +175,7 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
       ctx.font = 'bold 20px system-ui, -apple-system, sans-serif';
       ctx.fillText(diaTexto, 80, badgeY + 32);
 
-      // 2. Bloque de Precio Gigante
+      // 2. Bloque de Precio Gigante (con comisión ya sumada si corresponde)
       const priceBoxY = 225;
       ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
       ctx.beginPath();
@@ -153,23 +190,23 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
 
       ctx.fillStyle = '#F59E0B';
       ctx.font = 'bold 50px system-ui, -apple-system, sans-serif';
-      ctx.fillText(`${vendedor.precio.toLocaleString('es-ES')} €`, 90, priceBoxY + 102);
+      ctx.fillText(`${curVendedor.precio.toLocaleString('es-ES')} €`, 90, priceBoxY + 102);
 
-      if (vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES' && vendedor.precioConCoche) {
+      if (curVendedor.modalidadVentaCoche === 'AMBAS_OPCIONES' && curVendedor.precioConCoche) {
         ctx.fillStyle = '#38BDF8';
         ctx.font = 'bold 20px system-ui, -apple-system, sans-serif';
         ctx.fillText(`(Solo Licencia)`, 400, priceBoxY + 102);
 
         ctx.fillStyle = '#10B981';
         ctx.font = 'bold 36px system-ui, -apple-system, sans-serif';
-        ctx.fillText(`•  ${vendedor.precioConCoche.toLocaleString('es-ES')} €`, 580, priceBoxY + 102);
+        ctx.fillText(`•  ${curVendedor.precioConCoche.toLocaleString('es-ES')} €`, 580, priceBoxY + 102);
         ctx.font = 'bold 20px system-ui, -apple-system, sans-serif';
         ctx.fillText(`(Con Vehículo)`, 860, priceBoxY + 102);
       } else {
         ctx.fillStyle = '#38BDF8';
         ctx.font = 'bold 20px system-ui, -apple-system, sans-serif';
         ctx.fillText(
-          vendedor.modalidadVentaCoche === 'CON_COCHE'
+          curVendedor.modalidadVentaCoche === 'CON_COCHE'
             ? '(Pack con Vehículo)'
             : '(Solo Licencia)',
           420,
@@ -177,10 +214,10 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
         );
       }
 
-      ctx.fillStyle = vendedor.precioNegociable ? '#10B981' : '#94A3B8';
+      ctx.fillStyle = curVendedor.precioNegociable ? '#10B981' : '#94A3B8';
       ctx.font = 'bold 16px system-ui, -apple-system, sans-serif';
       ctx.fillText(
-        vendedor.precioNegociable ? '✓ PRECIO NEGOCIABLE' : '• PRECIO FIJO',
+        curVendedor.precioNegociable ? '✓ PRECIO NEGOCIABLE' : '• PRECIO FIJO',
         90,
         priceBoxY + 132
       );
@@ -203,14 +240,14 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
       ctx.fillText('🚗 VEHÍCULO', 80, gridY + 35);
       ctx.fillStyle = '#FFFFFF';
       ctx.font = 'bold 19px system-ui, -apple-system, sans-serif';
-      const vehText = vendedor.vendeConCoche && vendedor.vehiculo
-        ? `${vendedor.vehiculo.modelo} (${vendedor.vehiculo.anoMatriculacion || 'Coche'})`
+      const vehText = curVendedor.vendeConCoche && curVendedor.vehiculo
+        ? `${curVendedor.vehiculo.modelo} (${curVendedor.vehiculo.anoMatriculacion || 'Coche'})`
         : 'Solo licencia (sin coche)';
       ctx.fillText(vehText, 80, gridY + 65);
       ctx.fillStyle = '#94A3B8';
       ctx.font = '14px system-ui, -apple-system, sans-serif';
-      const vehSub = vendedor.vendeConCoche && vendedor.vehiculo
-        ? `${vendedor.vehiculo.kilometros || '0'} km • ${vendedor.vehiculo.carga === 'SIN_CARGA' ? 'Sin deuda' : 'Con reserva'}`
+      const vehSub = curVendedor.vendeConCoche && curVendedor.vehiculo
+        ? `${curVendedor.vehiculo.kilometros || '0'} km • ${curVendedor.vehiculo.carga === 'SIN_CARGA' ? 'Sin deuda' : 'Con reserva'}`
         : 'El comprador aporta su vehículo';
       ctx.fillText(vehSub, 80, gridY + 92);
 
@@ -228,14 +265,14 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
       ctx.fillStyle = '#FFFFFF';
       ctx.font = 'bold 19px system-ui, -apple-system, sans-serif';
       ctx.fillText(
-        vendedor.cargaLicencia === 'SIN_CARGA' ? '100% Libre de Cargas' : 'Con Préstamo Bancario',
+        curVendedor.cargaLicencia === 'SIN_CARGA' ? '100% Libre de Cargas' : 'Con Préstamo Bancario',
         60 + colW + 50,
         gridY + 65
       );
       ctx.fillStyle = '#94A3B8';
       ctx.font = '14px system-ui, -apple-system, sans-serif';
       ctx.fillText(
-        vendedor.detalleCargaLicencia || 'Acreditación al día para traspaso',
+        curVendedor.detalleCargaLicencia || 'Acreditación al día para traspaso',
         60 + colW + 50,
         gridY + 92
       );
@@ -253,11 +290,11 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
       ctx.fillText('👤 TITULAR / VENDEDOR', 80, gridY + boxH + 55);
       ctx.fillStyle = '#FFFFFF';
       ctx.font = 'bold 19px system-ui, -apple-system, sans-serif';
-      ctx.fillText(`${vendedor.nombre} (${vendedor.perfil})`, 80, gridY + boxH + 85);
+      ctx.fillText(`${curVendedor.nombre} (${curVendedor.perfil})`, 80, gridY + boxH + 85);
       ctx.fillStyle = '#94A3B8';
       ctx.font = '14px system-ui, -apple-system, sans-serif';
       ctx.fillText(
-        vendedor.telefono ? `📞 ${vendedor.telefono}` : `💬 Canal: ${vendedor.canalContacto || 'Chat'}`,
+        curVendedor.telefono ? `📞 ${curVendedor.telefono}` : `💬 Canal: ${curVendedor.canalContacto || 'Chat'}`,
         80,
         gridY + boxH + 112
       );
@@ -276,14 +313,14 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
       ctx.fillStyle = '#FFFFFF';
       ctx.font = 'bold 19px system-ui, -apple-system, sans-serif';
       ctx.fillText(
-        vendedor.condicionVenta === 'INMEDIATA' ? 'Inmediata para Firma' : 'Tras Jubilación',
+        curVendedor.condicionVenta === 'INMEDIATA' ? 'Inmediata para Firma' : 'Tras Jubilación',
         60 + colW + 50,
         gridY + boxH + 85
       );
       ctx.fillStyle = '#94A3B8';
       ctx.font = '14px system-ui, -apple-system, sans-serif';
       ctx.fillText(
-        vendedor.notas ? `📝 ${vendedor.notas.slice(0, 45)}...` : 'Trámite notarial y municipal',
+        curVendedor.notas ? `📝 ${curVendedor.notas.slice(0, 45)}...` : 'Trámite notarial y municipal',
         60 + colW + 50,
         gridY + boxH + 112
       );
@@ -472,17 +509,17 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
         90,
         footerY + 70
       );
-    } else if (cruce) {
+    } else if (curCruce) {
       // 1. Badge de afinidad
       const badgeY = 145;
-      ctx.fillStyle = cruce.match.score >= 80 ? '#10B981' : '#F59E0B';
+      ctx.fillStyle = curCruce.match.score >= 80 ? '#10B981' : '#F59E0B';
       ctx.beginPath();
       ctx.roundRect(60, badgeY, 480, 48, 10);
       ctx.fill();
 
       ctx.fillStyle = '#FFFFFF';
       ctx.font = 'bold 20px system-ui, -apple-system, sans-serif';
-      ctx.fillText(`⚡ MATCH ${cruce.match.score}% ${cruce.match.nivel}`, 80, badgeY + 32);
+      ctx.fillText(`⚡ MATCH ${curCruce.match.score}% ${curCruce.match.nivel}`, 80, badgeY + 32);
 
       // 2. Bloque dual de precios
       const priceBoxY = 215;
@@ -497,7 +534,7 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
       ctx.font = 'bold 15px system-ui, -apple-system, sans-serif';
       ctx.fillText('OFERTA (VENDEDOR)  vs  DEMANDA (COMPRADOR)', 90, priceBoxY + 32);
 
-      const precioVendEval = cruce.match.precioEvaluado || cruce.vendedor.precio;
+      const precioVendEval = curCruce.match.precioEvaluado ? curCruce.match.precioEvaluado + comision : curCruce.vendedor.precio;
       ctx.fillStyle = '#F59E0B';
       ctx.font = 'bold 40px system-ui, -apple-system, sans-serif';
       ctx.fillText(`${precioVendEval.toLocaleString('es-ES')} €`, 90, priceBoxY + 80);
@@ -508,21 +545,21 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
 
       ctx.fillStyle = '#10B981';
       ctx.font = 'bold 40px system-ui, -apple-system, sans-serif';
-      ctx.fillText(`${cruce.comprador.precioMaximo.toLocaleString('es-ES')} €`, 450, priceBoxY + 80);
+      ctx.fillText(`${curCruce.comprador.precioMaximo.toLocaleString('es-ES')} €`, 450, priceBoxY + 80);
 
       // Subetiquetas de precios y coche
       ctx.fillStyle = '#CBD5E1';
       ctx.font = 'bold 13px system-ui, -apple-system, sans-serif';
-      const vendPriceSub = cruce.vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES'
-        ? `🚗 Con coche: ${(cruce.vendedor.precioConCoche || cruce.vendedor.precio).toLocaleString('es-ES')}€ | 📄 Sin coche: ${cruce.vendedor.precio.toLocaleString('es-ES')}€`
-        : cruce.vendedor.modalidadVentaCoche === 'CON_COCHE'
+      const vendPriceSub = curCruce.vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES'
+        ? `🚗 Con coche: ${(curCruce.vendedor.precioConCoche || curCruce.vendedor.precio).toLocaleString('es-ES')}€ | 📄 Sin coche: ${curCruce.vendedor.precio.toLocaleString('es-ES')}€`
+        : curCruce.vendedor.modalidadVentaCoche === 'CON_COCHE'
         ? '🚗 Pack con vehículo incluido'
         : '📄 Solo licencia (sin vehículo)';
       ctx.fillText(vendPriceSub, 90, priceBoxY + 112);
 
-      const compPrefSub = cruce.comprador.buscaConCoche === 'CON_COCHE'
+      const compPrefSub = curCruce.comprador.buscaConCoche === 'CON_COCHE'
         ? '🚗 Demanda: Pack con coche'
-        : cruce.comprador.buscaConCoche === 'SOLO_LICENCIA'
+        : curCruce.comprador.buscaConCoche === 'SOLO_LICENCIA'
         ? '📄 Demanda: Solo licencia'
         : 'Demanda: Coche indiferente';
       ctx.fillText(compPrefSub, 450, priceBoxY + 112);
@@ -530,7 +567,7 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
       ctx.fillStyle = '#38BDF8';
       ctx.font = 'bold 14px system-ui, -apple-system, sans-serif';
       ctx.fillText(
-        cruce.comprador.puedeSenalizarYa ? '🔥 Comprador listo para señalizar de inmediato' : '• Operación viable comercialmente',
+        curCruce.comprador.puedeSenalizarYa ? '🔥 Comprador listo para señalizar de inmediato' : '• Operación viable comercialmente',
         90,
         priceBoxY + 145
       );
@@ -550,13 +587,13 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
 
       ctx.fillStyle = '#38BDF8';
       ctx.font = 'bold 15px system-ui, -apple-system, sans-serif';
-      ctx.fillText('🚗 OFERTA: ' + cruce.vendedor.nombre, 80, gridY + 35);
+      ctx.fillText('🚗 OFERTA: ' + curCruce.vendedor.nombre, 80, gridY + 35);
       ctx.fillStyle = '#FFFFFF';
       ctx.font = 'bold 18px system-ui, -apple-system, sans-serif';
-      ctx.fillText(`Libranza: ${cruce.vendedor.diaLibranza} (${cruce.vendedor.turnoDescanso || 'PAR'})`, 80, gridY + 65);
+      ctx.fillText(`Libranza: ${curCruce.vendedor.diaLibranza} (${curCruce.vendedor.turnoDescanso || 'PAR'})`, 80, gridY + 65);
       ctx.fillStyle = '#94A3B8';
       ctx.font = '14px system-ui, -apple-system, sans-serif';
-      ctx.fillText(cruce.vendedor.telefono ? `📞 ${cruce.vendedor.telefono}` : 'Chat online', 80, gridY + 92);
+      ctx.fillText(curCruce.vendedor.telefono ? `📞 ${curCruce.vendedor.telefono}` : 'Chat online', 80, gridY + 92);
 
       // Caja 2: Comprador
       ctx.fillStyle = '#0F172A';
@@ -568,13 +605,13 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
 
       ctx.fillStyle = '#10B981';
       ctx.font = 'bold 15px system-ui, -apple-system, sans-serif';
-      ctx.fillText('👤 DEMANDA: ' + cruce.comprador.nombre, 60 + colW + 50, gridY + 35);
+      ctx.fillText('👤 DEMANDA: ' + curCruce.comprador.nombre, 60 + colW + 50, gridY + 35);
       ctx.fillStyle = '#FFFFFF';
       ctx.font = 'bold 18px system-ui, -apple-system, sans-serif';
-      ctx.fillText(`Busca: ${getCompradorDias(cruce.comprador).join(', ')}`, 60 + colW + 50, gridY + 65);
+      ctx.fillText(`Busca: ${getCompradorDias(curCruce.comprador).join(', ')}`, 60 + colW + 50, gridY + 65);
       ctx.fillStyle = '#94A3B8';
       ctx.font = '14px system-ui, -apple-system, sans-serif';
-      ctx.fillText(cruce.comprador.telefono ? `📞 ${cruce.comprador.telefono}` : 'Chat online', 60 + colW + 50, gridY + 92);
+      ctx.fillText(curCruce.comprador.telefono ? `📞 ${curCruce.comprador.telefono}` : 'Chat online', 60 + colW + 50, gridY + 92);
 
       // Caja 3 & 4: Claves del match
       ctx.fillStyle = '#0F172A';
@@ -589,7 +626,7 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
       ctx.fillText('⚡ MOTIVOS DEL ENCAJE', 80, gridY + boxH + 55);
       ctx.fillStyle = '#FFFFFF';
       ctx.font = '16px system-ui, -apple-system, sans-serif';
-      ctx.fillText(cruce.match.razones.slice(0, 2).map(r => `✓ ${r}`).join('   |   '), 80, gridY + boxH + 85);
+      ctx.fillText(curCruce.match.razones.slice(0, 2).map(r => `✓ ${r}`).join('   |   '), 80, gridY + boxH + 85);
 
       // Footer
       const footerY = 720;
@@ -693,6 +730,98 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
             </View>
           )}
 
+          {/* BLOQUE DE COMISIÓN (Para Vendedor o Cruce) */}
+          {(vendedor || cruce) && (
+            <View style={styles.comisionCard}>
+              <View style={styles.comisionHeader}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.comisionTitle}>💰 ¿Cuánto quieres añadir de comisión?</Text>
+                  <Text style={styles.comisionSubtitle}>
+                    Se sumará directamente al precio de la ficha exportada (la BD queda intacta).
+                  </Text>
+                </View>
+                {comision > 0 && (
+                  <View style={styles.comisionBadge}>
+                    <Text style={styles.comisionBadgeText}>+{comision.toLocaleString('es-ES')} €</Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.comisionRow}>
+                <View style={styles.comisionInputBox}>
+                  <TextInput
+                    style={styles.comisionInput}
+                    value={comisionText}
+                    onChangeText={setComisionText}
+                    placeholder="0"
+                    placeholderTextColor={colors.textMuted}
+                    keyboardType="numeric"
+                  />
+                  <Text style={styles.comisionEuro}>€</Text>
+                </View>
+
+                <View style={styles.quickChipsWrap}>
+                  <TouchableOpacity
+                    style={[styles.quickChip, comision === 1000 && styles.quickChipActive]}
+                    onPress={() => setComisionText('1000')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.quickChipText, comision === 1000 && styles.quickChipTextActive]}>+1.000 €</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.quickChip, comision === 2000 && styles.quickChipActive]}
+                    onPress={() => setComisionText('2000')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.quickChipText, comision === 2000 && styles.quickChipTextActive]}>+2.000 €</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.quickChip, comision === 3000 && styles.quickChipActive]}
+                    onPress={() => setComisionText('3000')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.quickChipText, comision === 3000 && styles.quickChipTextActive]}>+3.000 €</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.quickChip, comision === 5000 && styles.quickChipActive]}
+                    onPress={() => setComisionText('5000')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.quickChipText, comision === 5000 && styles.quickChipTextActive]}>+5.000 €</Text>
+                  </TouchableOpacity>
+
+                  {comision > 0 && (
+                    <TouchableOpacity
+                      style={styles.resetChip}
+                      onPress={() => setComisionText('')}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.resetChipText}>✕ Quitar</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+
+              {comision > 0 && curVendedor && (
+                <View style={styles.comisionFeedback}>
+                  <Text style={styles.comisionFeedbackText}>
+                    Precio original: <Text style={{ textDecorationLine: 'line-through', color: colors.textMuted }}>{vendedor?.precio.toLocaleString('es-ES')} €</Text>
+                    {' ➔ '}
+                    <Text style={{ fontWeight: '800', color: '#34D399' }}>
+                      Precio en ficha exportada: {curVendedor.precio.toLocaleString('es-ES')} €
+                    </Text>
+                    {curVendedor.modalidadVentaCoche === 'AMBAS_OPCIONES' && curVendedor.precioConCoche
+                      ? ` (Con coche: ${curVendedor.precioConCoche.toLocaleString('es-ES')} €)`
+                      : ''}
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+
           {/* Selector de pestañas */}
           <View style={styles.tabsRow}>
             <TouchableOpacity
@@ -717,12 +846,12 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
             {activeTab === 'CARD' ? (
               <View style={styles.cardPreviewContainer}>
                 {/* VISTA PREVIA DEL FLYER DIGITAL PARA VENDEDOR */}
-                {vendedor && (
+                {curVendedor && (
                   <View style={styles.flyerCard}>
                     {/* Cabecera flyer */}
                     <View style={styles.flyerHeader}>
                       <Text style={styles.flyerBrand}>🚖 TAXI MADRID • EXPEDIENTE OFICIAL</Text>
-                      <Text style={styles.flyerDate}>REF: #{vendedor.id?.slice(-6) || 'APC'}</Text>
+                      <Text style={styles.flyerDate}>REF: #{curVendedor.id?.slice(-6) || 'APC'}</Text>
                     </View>
 
                     {/* Badge de libranza */}
@@ -730,18 +859,18 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
                       style={[
                         styles.flyerLibranzaBadge,
                         {
-                          backgroundColor: colors.libranza[vendedor.diaLibranza] || colors.primary,
+                          backgroundColor: colors.libranza[curVendedor.diaLibranza] || colors.primary,
                         },
                       ]}
                     >
                       <Text style={styles.flyerLibranzaText}>
-                        {vendedor.diaLibranza === 'EUROTAXI'
+                        {curVendedor.diaLibranza === 'EUROTAXI'
                           ? '♿ EUROTAXI • EXENTO DE LIBRANZA (7 DÍAS)'
-                          : vendedor.diaLibranza === 'ELECTRICO_SIN_LIBRANZA'
+                          : curVendedor.diaLibranza === 'ELECTRICO_SIN_LIBRANZA'
                           ? '⚡ ELÉCTRICO CERO • EXENTO DE LIBRANZA'
-                          : vendedor.diaLibranza === 'LIBRE_24H'
+                          : curVendedor.diaLibranza === 'LIBRE_24H'
                           ? '🟢 24H LIBRE • SIN RESTRICCIÓN'
-                          : `LIBRANZA ${vendedor.diaLibranza} • TURNO ${vendedor.turnoDescanso || 'PAR'}`}
+                          : `LIBRANZA ${curVendedor.diaLibranza} • TURNO ${curVendedor.turnoDescanso || 'PAR'}`}
                       </Text>
                     </View>
 
@@ -750,28 +879,28 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
                       <Text style={styles.flyerPriceLabel}>VALORACIÓN / PRECIO DE SALIDA</Text>
                       <View style={styles.flyerPriceRow}>
                         <Text style={styles.flyerPriceValue}>
-                          {vendedor.precio.toLocaleString('es-ES')} €
+                          {curVendedor.precio.toLocaleString('es-ES')} €
                         </Text>
-                        {vendedor.modalidadVentaCoche === 'AMBAS_OPCIONES' && vendedor.precioConCoche ? (
+                        {curVendedor.modalidadVentaCoche === 'AMBAS_OPCIONES' && curVendedor.precioConCoche ? (
                           <View style={{ marginLeft: 16 }}>
                             <Text style={styles.flyerPriceSubValue}>
-                              • {vendedor.precioConCoche.toLocaleString('es-ES')} €
+                              • {curVendedor.precioConCoche.toLocaleString('es-ES')} €
                             </Text>
                             <Text style={styles.flyerPriceNote}>(Con Vehículo)</Text>
                           </View>
                         ) : (
                           <Text style={styles.flyerPriceNote}>
-                            {vendedor.modalidadVentaCoche === 'CON_COCHE' ? '(Pack con Coche)' : '(Solo Licencia)'}
+                            {curVendedor.modalidadVentaCoche === 'CON_COCHE' ? '(Pack con Coche)' : '(Solo Licencia)'}
                           </Text>
                         )}
                       </View>
                       <Text
                         style={[
                           styles.flyerNegotiable,
-                          { color: vendedor.precioNegociable ? colors.accent : colors.textMuted },
+                          { color: curVendedor.precioNegociable ? colors.accent : colors.textMuted },
                         ]}
                       >
-                        {vendedor.precioNegociable ? '✓ Precio Negociable' : '• Precio Fijo'}
+                        {curVendedor.precioNegociable ? '✓ Precio Negociable' : '• Precio Fijo'}
                       </Text>
                     </View>
 
@@ -780,13 +909,13 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
                       <View style={styles.flyerGridItem}>
                         <Text style={styles.flyerGridTitle}>🚗 VEHÍCULO</Text>
                         <Text style={styles.flyerGridMain}>
-                          {vendedor.vendeConCoche && vendedor.vehiculo
-                            ? `${vendedor.vehiculo.modelo} (${vendedor.vehiculo.anoMatriculacion || ''})`
+                          {curVendedor.vendeConCoche && curVendedor.vehiculo
+                            ? `${curVendedor.vehiculo.modelo} (${curVendedor.vehiculo.anoMatriculacion || ''})`
                             : 'Solo licencia (sin coche)'}
                         </Text>
                         <Text style={styles.flyerGridSub}>
-                          {vendedor.vendeConCoche && vendedor.vehiculo
-                            ? `${vendedor.vehiculo.kilometros || '0'} km • ${vendedor.vehiculo.carga === 'SIN_CARGA' ? 'Sin deuda' : 'Financiado'}`
+                          {curVendedor.vendeConCoche && curVendedor.vehiculo
+                            ? `${curVendedor.vehiculo.kilometros || '0'} km • ${curVendedor.vehiculo.carga === 'SIN_CARGA' ? 'Sin deuda' : 'Financiado'}`
                             : 'Comprador aporta vehículo'}
                         </Text>
                       </View>
@@ -794,30 +923,30 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
                       <View style={styles.flyerGridItem}>
                         <Text style={styles.flyerGridTitle}>⚖️ SITUACIÓN DE CARGAS</Text>
                         <Text style={styles.flyerGridMain}>
-                          {vendedor.cargaLicencia === 'SIN_CARGA' ? '100% Libre de Cargas' : 'Con Préstamo'}
+                          {curVendedor.cargaLicencia === 'SIN_CARGA' ? '100% Libre de Cargas' : 'Con Préstamo'}
                         </Text>
                         <Text style={styles.flyerGridSub}>
-                          {vendedor.detalleCargaLicencia || 'Acreditación al día'}
+                          {curVendedor.detalleCargaLicencia || 'Acreditación al día'}
                         </Text>
                       </View>
 
                       <View style={styles.flyerGridItem}>
                         <Text style={styles.flyerGridTitle}>👤 TITULAR / CONTACTO</Text>
                         <Text style={styles.flyerGridMain}>
-                          {vendedor.nombre} ({vendedor.perfil})
+                          {curVendedor.nombre} ({curVendedor.perfil})
                         </Text>
                         <Text style={styles.flyerGridSub}>
-                          {vendedor.telefono ? `📞 ${vendedor.telefono}` : `💬 Canal: ${vendedor.canalContacto || 'Chat'}`}
+                          {curVendedor.telefono ? `📞 ${curVendedor.telefono}` : `💬 Canal: ${curVendedor.canalContacto || 'Chat'}`}
                         </Text>
                       </View>
 
                       <View style={styles.flyerGridItem}>
                         <Text style={styles.flyerGridTitle}>⏱️ DISPONIBILIDAD</Text>
                         <Text style={styles.flyerGridMain}>
-                          {vendedor.condicionVenta === 'INMEDIATA' ? 'Inmediata para Firma' : 'Tras Jubilación'}
+                          {curVendedor.condicionVenta === 'INMEDIATA' ? 'Inmediata para Firma' : 'Tras Jubilación'}
                         </Text>
                         <Text style={styles.flyerGridSub} numberOfLines={1}>
-                          {vendedor.notas ? `📝 ${vendedor.notas}` : 'Traspaso municipal'}
+                          {curVendedor.notas ? `📝 ${curVendedor.notas}` : 'Traspaso municipal'}
                         </Text>
                       </View>
                     </View>
@@ -934,23 +1063,23 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
                 )}
 
                 {/* VISTA PREVIA DEL FLYER DIGITAL PARA MATCH */}
-                {cruce && (
+                {curCruce && (
                   <View style={styles.flyerCard}>
                     <View style={styles.flyerHeader}>
                       <Text style={styles.flyerBrand}>🚖 TAXI MADRID • CRUCE / MATCH COMERCIAL</Text>
-                      <Text style={styles.flyerDate}>AFINIDAD: {cruce.match.score}%</Text>
+                      <Text style={styles.flyerDate}>AFINIDAD: {curCruce.match.score}%</Text>
                     </View>
 
                     <View
                       style={[
                         styles.flyerLibranzaBadge,
                         {
-                          backgroundColor: cruce.match.score >= 80 ? colors.success : colors.accent,
+                          backgroundColor: curCruce.match.score >= 80 ? colors.success : colors.accent,
                         },
                       ]}
                     >
                       <Text style={styles.flyerLibranzaText}>
-                        ⚡ {cruce.match.score}% MATCH {cruce.match.nivel.toUpperCase()}
+                        ⚡ {curCruce.match.score}% MATCH {curCruce.match.nivel.toUpperCase()}
                       </Text>
                     </View>
 
@@ -958,20 +1087,20 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
                       <Text style={styles.flyerPriceLabel}>OFERTA (VENDEDOR) vs DEMANDA (COMPRADOR)</Text>
                       <View style={styles.flyerPriceRow}>
                         <Text style={[styles.flyerPriceValue, { fontSize: 26 }]}>
-                          {cruce.vendedor.precio.toLocaleString('es-ES')} €
+                          {curCruce.vendedor.precio.toLocaleString('es-ES')} €
                         </Text>
                         <Text style={{ color: colors.textMuted, marginHorizontal: 12, fontSize: 20 }}>↔</Text>
                         <Text style={[styles.flyerPriceValue, { fontSize: 26, color: colors.success }]}>
-                          {cruce.comprador.precioMaximo.toLocaleString('es-ES')} €
+                          {curCruce.comprador.precioMaximo.toLocaleString('es-ES')} €
                         </Text>
                       </View>
                       <Text
                         style={[
                           styles.flyerNegotiable,
-                          { color: cruce.comprador.puedeSenalizarYa ? colors.accent : colors.textMuted },
+                          { color: curCruce.comprador.puedeSenalizarYa ? colors.accent : colors.textMuted },
                         ]}
                       >
-                        {cruce.comprador.puedeSenalizarYa ? '🔥 Comprador listo para señalizar ya' : '• Operación viable'}
+                        {curCruce.comprador.puedeSenalizarYa ? '🔥 Comprador listo para señalizar ya' : '• Operación viable'}
                       </Text>
                     </View>
 
@@ -979,20 +1108,20 @@ export const ExportCardModal: React.FC<ExportCardModalProps> = ({
                       <View style={styles.flyerGridItem}>
                         <Text style={styles.flyerGridTitle}>🚗 OFERTA (VENDEDOR)</Text>
                         <Text style={styles.flyerGridMain}>
-                          {cruce.vendedor.nombre} ({cruce.vendedor.diaLibranza})
+                          {curCruce.vendedor.nombre} ({curCruce.vendedor.diaLibranza})
                         </Text>
                         <Text style={styles.flyerGridSub}>
-                          {cruce.vendedor.telefono || 'Canal online'}
+                          {curCruce.vendedor.telefono || 'Canal online'}
                         </Text>
                       </View>
 
                       <View style={styles.flyerGridItem}>
                         <Text style={styles.flyerGridTitle}>👤 DEMANDA (COMPRADOR)</Text>
                         <Text style={styles.flyerGridMain}>
-                          {cruce.comprador.nombre} ({getCompradorDias(cruce.comprador).join(', ')})
+                          {curCruce.comprador.nombre} ({getCompradorDias(curCruce.comprador).join(', ')})
                         </Text>
                         <Text style={styles.flyerGridSub}>
-                          {cruce.comprador.telefono || 'Canal online'}
+                          {curCruce.comprador.telefono || 'Canal online'}
                         </Text>
                       </View>
                     </View>
@@ -1361,5 +1490,125 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 13,
     fontWeight: '700',
+  },
+  comisionCard: {
+    backgroundColor: '#0F172A',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 10,
+  },
+  comisionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 8,
+  },
+  comisionTitle: {
+    color: '#F8FAFC',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  comisionSubtitle: {
+    color: colors.textMuted,
+    fontSize: 11,
+    marginTop: 2,
+  },
+  comisionBadge: {
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    borderWidth: 1,
+    borderColor: '#10B981',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  comisionBadgeText: {
+    color: '#34D399',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  comisionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  comisionInputBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surfaceCard,
+    borderWidth: 1.5,
+    borderColor: '#3B82F6',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    width: 110,
+    height: 36,
+  },
+  comisionInput: {
+    flex: 1,
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
+    padding: 0,
+  },
+  comisionEuro: {
+    color: colors.textMuted,
+    fontSize: 14,
+    fontWeight: '700',
+    marginLeft: 4,
+  },
+  quickChipsWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+    flex: 1,
+  },
+  quickChip: {
+    backgroundColor: colors.surfaceCard,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  quickChipActive: {
+    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+    borderColor: '#3B82F6',
+  },
+  quickChipText: {
+    color: colors.textMuted,
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  quickChipTextActive: {
+    color: '#60A5FA',
+    fontWeight: '800',
+  },
+  resetChip: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.4)',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  resetChipText: {
+    color: colors.danger,
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  comisionFeedback: {
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+    borderLeftWidth: 3,
+    borderLeftColor: '#10B981',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 4,
+  },
+  comisionFeedbackText: {
+    color: '#CBD5E1',
+    fontSize: 12,
   },
 });

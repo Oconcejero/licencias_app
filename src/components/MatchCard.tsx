@@ -70,43 +70,18 @@ export const MatchCard: React.FC<MatchCardProps> = ({
             onPress={() => setShowExportModal(true)}
             activeOpacity={0.8}
           >
-            <Text style={styles.flyerBtnText}>🖼️ Flyer Digital</Text>
+            <Text style={styles.flyerBtnText}>📸 Exportar Ficha</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {(comprador.puedeSenalizarYa || isDerivado) && (
+      {comprador.puedeSenalizarYa && (
         <View style={styles.secondaryBadgesRow}>
-          {comprador.puedeSenalizarYa && (
-            <View style={styles.hotPill}>
-              <Text style={styles.hotText}>🔥 SEÑALIZA YA</Text>
-            </View>
-          )}
-          {isDerivado && (
-            <View style={styles.derivadoBadge}>
-              <Text style={styles.derivadoText}>✓ DERIVADO A GESTIÓN</Text>
-            </View>
-          )}
+          <View style={styles.hotPill}>
+            <Text style={styles.hotText}>🔥 SEÑALIZA YA</Text>
+          </View>
         </View>
       )}
-
-      {/* BOTÓN ESTRELLA: DERIVAR A GESTOR POR WHATSAPP */}
-      <TouchableOpacity
-        style={[styles.friendBannerBtn, isDerivado && styles.friendBannerBtnDone]}
-        onPress={() => onSendToFriend(cruce)}
-        activeOpacity={0.85}
-      >
-        <Text style={styles.friendBtnIcon}>📤</Text>
-        <View style={styles.friendBtnContent}>
-          <Text style={styles.friendBtnTitle}>
-            {isDerivado ? `Reenviar ficha a ${tramitadorNombre || 'Gestor'} (WhatsApp)` : `Derivar operación a ${tramitadorNombre || 'Gestor'} (WhatsApp)`}
-          </Text>
-          <Text style={styles.friendBtnSubtitle}>
-            Ficha técnica estructurada con teléfonos de ambas partes para tramitación de traspaso
-          </Text>
-        </View>
-        <Text style={styles.friendBtnArrow}>→</Text>
-      </TouchableOpacity>
 
       {/* Bloque comparativo: Comprador ↔ Vendedor */}
       <View style={[styles.comparisonGrid, isMobile && styles.comparisonGridMobile]}>
