@@ -18,7 +18,8 @@
       "adaptiveIcon": {
         "backgroundColor": "#080E1C",
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundImage": "./assets/android-icon-background.png"
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.licencias.taxi"
