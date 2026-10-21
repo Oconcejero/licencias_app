@@ -791,7 +791,7 @@ export const VendedorModal: React.FC<VendedorModalProps> = ({
                     onPress={() => setEstado('CERRADO')}
                   >
                     <Text style={[styles.selectorText, estado === 'CERRADO' && styles.selectorTextActive]}>
-                      🏁 Concluido / Finalizado
+                      🏁 Finalizada
                     </Text>
                   </TouchableOpacity>
                 </View>

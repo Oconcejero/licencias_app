@@ -676,7 +676,7 @@ export const CompradorModal: React.FC<CompradorModalProps> = ({
                     onPress={() => setEstado('CERRADO')}
                   >
                     <Text style={[styles.selectorText, estado === 'CERRADO' && styles.selectorTextActive]}>
-                      🏁 Concluido / Finalizado
+                      🏁 Finalizado
                     </Text>
                   </TouchableOpacity>
                 </View>

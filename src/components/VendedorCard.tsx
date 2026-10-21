@@ -43,7 +43,7 @@ export const VendedorCard: React.FC<VendedorCardProps> = ({
               <Text style={[styles.name, isClosed && styles.nameClosed]}>{vendedor.nombre}</Text>
               {isClosed ? (
                 <View style={styles.closedBadge}>
-                  <Text style={styles.closedBadgeText}>🏁 CONCLUIDO</Text>
+                  <Text style={styles.closedBadgeText}>🏁 FINALIZADA</Text>
                 </View>
               ) : isNegotiating ? (
                 <View style={styles.negotiatingBadge}>

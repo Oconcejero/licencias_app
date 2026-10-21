@@ -34,18 +34,18 @@ export const CompradoresScreen: React.FC<CompradoresScreenProps> = ({
   const { width } = useWindowDimensions();
   const isTwoCols = width >= 768;
   const [search, setSearch] = useState('');
-  const [estadoTab, setEstadoTab] = useState<'ACTIVOS' | 'CONCLUIDOS' | 'TODOS'>('ACTIVOS');
+  const [estadoTab, setEstadoTab] = useState<'ACTIVOS' | 'FINALIZADOS' | 'TODOS'>('ACTIVOS');
   const [selectedDia, setSelectedDia] = useState<string>('TODOS');
   const [onlyHot, setOnlyHot] = useState<boolean>(false);
   const [sortPrice, setSortPrice] = useState<'NONE' | 'ASC' | 'DESC'>('NONE');
 
   const activosCount = useMemo(() => compradores.filter(c => c.estado !== 'CERRADO').length, [compradores]);
-  const concluidosCount = useMemo(() => compradores.filter(c => c.estado === 'CERRADO').length, [compradores]);
+  const finalizadosCount = useMemo(() => compradores.filter(c => c.estado === 'CERRADO').length, [compradores]);
 
   const filteredCompradores = useMemo(() => {
     const list = compradores.filter(c => {
       if (estadoTab === 'ACTIVOS' && c.estado === 'CERRADO') return false;
-      if (estadoTab === 'CONCLUIDOS' && c.estado !== 'CERRADO') return false;
+      if (estadoTab === 'FINALIZADOS' && c.estado !== 'CERRADO') return false;
 
       if (selectedDia !== 'TODOS') {
         const dias = getCompradorDias(c);
@@ -86,7 +86,7 @@ export const CompradoresScreen: React.FC<CompradoresScreenProps> = ({
         <View>
           <Text style={styles.title}>👥 Cartera de Compradores</Text>
           <Text style={styles.subtitle}>
-            {filteredCompradores.length} {filteredCompradores.length === 1 ? 'comprador' : 'compradores'} {estadoTab === 'CONCLUIDOS' ? '(🏁 Concluidos / Finalizados)' : estadoTab === 'ACTIVOS' ? '(🟢 Activos)' : ''} {selectedDia !== 'TODOS' ? `• Libranza ${selectedDia}` : ''} {sortPrice === 'ASC' ? '• 📈 Menor a mayor presupuesto' : sortPrice === 'DESC' ? '• 📉 Mayor a menor presupuesto' : ''}
+            {filteredCompradores.length} {filteredCompradores.length === 1 ? 'comprador' : 'compradores'} {estadoTab === 'FINALIZADOS' ? '(🏁 Finalizados)' : estadoTab === 'ACTIVOS' ? '(🟢 Activos)' : ''} {selectedDia !== 'TODOS' ? `• Libranza ${selectedDia}` : ''} {sortPrice === 'ASC' ? '• 📈 Menor a mayor presupuesto' : sortPrice === 'DESC' ? '• 📉 Mayor a menor presupuesto' : ''}
           </Text>
         </View>
         {userRole === 'ADMIN' && (
@@ -100,25 +100,25 @@ export const CompradoresScreen: React.FC<CompradoresScreenProps> = ({
         )}
       </View>
 
-      {/* PESTAÑAS DE ESTADO: ACTIVOS vs CONCLUIDOS / FINALIZADOS */}
+      {/* PESTAÑAS DE ESTADO: ACTIVOS / FINALIZADOS / TODOS EN UNA SOLA LÍNEA */}
       <View style={styles.statusTabsRow}>
         <TouchableOpacity
           style={[styles.statusTabBtn, estadoTab === 'ACTIVOS' && styles.statusTabBtnActive]}
           onPress={() => setEstadoTab('ACTIVOS')}
           activeOpacity={0.8}
         >
-          <Text style={[styles.statusTabText, estadoTab === 'ACTIVOS' && styles.statusTabTextActive]}>
-            🟢 Activos ({activosCount})
+          <Text style={[styles.statusTabText, estadoTab === 'ACTIVOS' && styles.statusTabTextActive]} numberOfLines={1}>
+            🟢 ACTIVOS ({activosCount})
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.statusTabBtn, estadoTab === 'CONCLUIDOS' && styles.statusTabBtnActiveConcluido]}
-          onPress={() => setEstadoTab('CONCLUIDOS')}
+          style={[styles.statusTabBtn, estadoTab === 'FINALIZADOS' && styles.statusTabBtnActiveFinalizado]}
+          onPress={() => setEstadoTab('FINALIZADOS')}
           activeOpacity={0.8}
         >
-          <Text style={[styles.statusTabText, estadoTab === 'CONCLUIDOS' && styles.statusTabTextActiveConcluido]}>
-            🏁 Concluidos / Finalizados ({concluidosCount})
+          <Text style={[styles.statusTabText, estadoTab === 'FINALIZADOS' && styles.statusTabTextActiveFinalizado]} numberOfLines={1}>
+            🏁 FINALIZADOS ({finalizadosCount})
           </Text>
         </TouchableOpacity>
 
@@ -127,8 +127,8 @@ export const CompradoresScreen: React.FC<CompradoresScreenProps> = ({
           onPress={() => setEstadoTab('TODOS')}
           activeOpacity={0.8}
         >
-          <Text style={[styles.statusTabText, estadoTab === 'TODOS' && styles.statusTabTextActive]}>
-            Todos ({compradores.length})
+          <Text style={[styles.statusTabText, estadoTab === 'TODOS' && styles.statusTabTextActive]} numberOfLines={1}>
+            TODOS ({compradores.length})
           </Text>
         </TouchableOpacity>
       </View>
@@ -481,22 +481,25 @@ const styles = StyleSheet.create({
   statusTabsRow: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 12,
-    flexWrap: 'wrap',
+    marginBottom: 14,
+    width: '100%',
   },
   statusTabBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    flex: 1,
+    paddingHorizontal: 4,
+    paddingVertical: 10,
     borderRadius: 8,
     backgroundColor: colors.surfaceCard,
     borderWidth: 1,
     borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   statusTabBtnActive: {
     backgroundColor: 'rgba(16, 185, 129, 0.15)',
     borderColor: colors.success,
   },
-  statusTabBtnActiveConcluido: {
+  statusTabBtnActiveFinalizado: {
     backgroundColor: 'rgba(239, 68, 68, 0.15)',
     borderColor: colors.danger,
   },
@@ -504,12 +507,13 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 12,
     fontWeight: '700',
+    textAlign: 'center',
   },
   statusTabTextActive: {
     color: '#34D399',
     fontWeight: '800',
   },
-  statusTabTextActiveConcluido: {
+  statusTabTextActiveFinalizado: {
     color: colors.danger,
     fontWeight: '800',
   },

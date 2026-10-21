@@ -157,7 +157,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                         <Text style={styles.name}>{vendedor.nombre}</Text>
                         {isClosed ? (
                           <View style={styles.closedPill}>
-                            <Text style={styles.closedPillText}>🏁 CONCLUIDO / FINALIZADO</Text>
+                            <Text style={styles.closedPillText}>🏁 FINALIZADA</Text>
                           </View>
                         ) : vendedor.estado === 'EN_NEGOCIACION' ? (
                           <View style={styles.negotiatingPill}>
@@ -201,7 +201,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                         activeOpacity={0.8}
                       >
                         <Text style={styles.btnActionText}>
-                          {isClosed ? '🔄 Reabrir a Disponible' : '🏁 Marcar como Concluido'}
+                          {isClosed ? '🔄 Reabrir a Disponible' : '🏁 Marcar como Finalizada'}
                         </Text>
                       </TouchableOpacity>
                     )}
@@ -384,7 +384,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                         <Text style={styles.name}>{comprador.nombre}</Text>
                         {isClosed ? (
                           <View style={styles.closedPill}>
-                            <Text style={styles.closedPillText}>🏁 CONCLUIDO / FINALIZADO</Text>
+                            <Text style={styles.closedPillText}>🏁 FINALIZADO</Text>
                           </View>
                         ) : comprador.estado === 'EN_NEGOCIACION' ? (
                           <View style={styles.negotiatingPill}>
@@ -428,7 +428,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                         activeOpacity={0.8}
                       >
                         <Text style={styles.btnActionText}>
-                          {isClosed ? '🔄 Reabrir a Disponible' : '🏁 Marcar como Concluido'}
+                          {isClosed ? '🔄 Reabrir a Disponible' : '🏁 Marcar como Finalizado'}
                         </Text>
                       </TouchableOpacity>
                     )}

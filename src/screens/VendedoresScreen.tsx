@@ -34,18 +34,18 @@ export const VendedoresScreen: React.FC<VendedoresScreenProps> = ({
   const { width } = useWindowDimensions();
   const isTwoCols = width >= 768;
   const [search, setSearch] = useState('');
-  const [estadoTab, setEstadoTab] = useState<'ACTIVOS' | 'CONCLUIDOS' | 'TODOS'>('ACTIVOS');
+  const [estadoTab, setEstadoTab] = useState<'ACTIVAS' | 'FINALIZADAS' | 'TODAS'>('ACTIVAS');
   const [selectedDia, setSelectedDia] = useState<string>('TODOS');
   const [filterCoche, setFilterCoche] = useState<'TODOS' | 'CON_COCHE' | 'SIN_COCHE'>('TODOS');
   const [sortPrice, setSortPrice] = useState<'NONE' | 'ASC' | 'DESC'>('NONE');
 
   const activosCount = useMemo(() => vendedores.filter(v => v.estado !== 'CERRADO').length, [vendedores]);
-  const concluidosCount = useMemo(() => vendedores.filter(v => v.estado === 'CERRADO').length, [vendedores]);
+  const finalizadasCount = useMemo(() => vendedores.filter(v => v.estado === 'CERRADO').length, [vendedores]);
 
   const filteredVendedores = useMemo(() => {
     const list = vendedores.filter(v => {
-      if (estadoTab === 'ACTIVOS' && v.estado === 'CERRADO') return false;
-      if (estadoTab === 'CONCLUIDOS' && v.estado !== 'CERRADO') return false;
+      if (estadoTab === 'ACTIVAS' && v.estado === 'CERRADO') return false;
+      if (estadoTab === 'FINALIZADAS' && v.estado !== 'CERRADO') return false;
       if (selectedDia !== 'TODOS' && v.diaLibranza !== selectedDia) return false;
       if (filterCoche === 'CON_COCHE' && !v.vendeConCoche) return false;
       if (filterCoche === 'SIN_COCHE' && v.vendeConCoche) return false;
@@ -88,7 +88,7 @@ export const VendedoresScreen: React.FC<VendedoresScreenProps> = ({
         <View>
           <Text style={styles.title}>🚕 Cartera de Vendedores (Licencias)</Text>
           <Text style={styles.subtitle}>
-            {filteredVendedores.length} {filteredVendedores.length === 1 ? 'licencia' : 'licencias'} {estadoTab === 'CONCLUIDOS' ? '(🏁 Concluidas / Finalizadas)' : estadoTab === 'ACTIVOS' ? '(🟢 Activas)' : ''} {selectedDia !== 'TODOS' ? `• Libranza ${selectedDia}` : ''} {sortPrice === 'ASC' ? '• 📈 Menor a mayor' : sortPrice === 'DESC' ? '• 📉 Mayor a menor' : ''}
+            {filteredVendedores.length} {filteredVendedores.length === 1 ? 'licencia' : 'licencias'} {estadoTab === 'FINALIZADAS' ? '(🏁 Finalizadas)' : estadoTab === 'ACTIVAS' ? '(🟢 Activas)' : ''} {selectedDia !== 'TODOS' ? `• Libranza ${selectedDia}` : ''} {sortPrice === 'ASC' ? '• 📈 Menor a mayor' : sortPrice === 'DESC' ? '• 📉 Mayor a menor' : ''}
           </Text>
         </View>
         {userRole === 'ADMIN' && (
@@ -102,35 +102,35 @@ export const VendedoresScreen: React.FC<VendedoresScreenProps> = ({
         )}
       </View>
 
-      {/* PESTAÑAS DE ESTADO: ACTIVOS vs CONCLUIDOS / FINALIZADOS */}
+      {/* PESTAÑAS DE ESTADO: ACTIVAS / FINALIZADAS / TODAS EN UNA SOLA LÍNEA */}
       <View style={styles.statusTabsRow}>
         <TouchableOpacity
-          style={[styles.statusTabBtn, estadoTab === 'ACTIVOS' && styles.statusTabBtnActive]}
-          onPress={() => setEstadoTab('ACTIVOS')}
+          style={[styles.statusTabBtn, estadoTab === 'ACTIVAS' && styles.statusTabBtnActive]}
+          onPress={() => setEstadoTab('ACTIVAS')}
           activeOpacity={0.8}
         >
-          <Text style={[styles.statusTabText, estadoTab === 'ACTIVOS' && styles.statusTabTextActive]}>
-            🟢 Activas ({activosCount})
+          <Text style={[styles.statusTabText, estadoTab === 'ACTIVAS' && styles.statusTabTextActive]} numberOfLines={1}>
+            🟢 ACTIVAS ({activosCount})
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.statusTabBtn, estadoTab === 'CONCLUIDOS' && styles.statusTabBtnActiveConcluido]}
-          onPress={() => setEstadoTab('CONCLUIDOS')}
+          style={[styles.statusTabBtn, estadoTab === 'FINALIZADAS' && styles.statusTabBtnActiveFinalizado]}
+          onPress={() => setEstadoTab('FINALIZADAS')}
           activeOpacity={0.8}
         >
-          <Text style={[styles.statusTabText, estadoTab === 'CONCLUIDOS' && styles.statusTabTextActiveConcluido]}>
-            🏁 Concluidas / Finalizadas ({concluidosCount})
+          <Text style={[styles.statusTabText, estadoTab === 'FINALIZADAS' && styles.statusTabTextActiveFinalizado]} numberOfLines={1}>
+            🏁 FINALIZADAS ({finalizadasCount})
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.statusTabBtn, estadoTab === 'TODOS' && styles.statusTabBtnActive]}
-          onPress={() => setEstadoTab('TODOS')}
+          style={[styles.statusTabBtn, estadoTab === 'TODAS' && styles.statusTabBtnActive]}
+          onPress={() => setEstadoTab('TODAS')}
           activeOpacity={0.8}
         >
-          <Text style={[styles.statusTabText, estadoTab === 'TODOS' && styles.statusTabTextActive]}>
-            Todas ({vendedores.length})
+          <Text style={[styles.statusTabText, estadoTab === 'TODAS' && styles.statusTabTextActive]} numberOfLines={1}>
+            TODAS ({vendedores.length})
           </Text>
         </TouchableOpacity>
       </View>
@@ -493,22 +493,25 @@ const styles = StyleSheet.create({
   statusTabsRow: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 12,
-    flexWrap: 'wrap',
+    marginBottom: 14,
+    width: '100%',
   },
   statusTabBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    flex: 1,
+    paddingHorizontal: 4,
+    paddingVertical: 10,
     borderRadius: 8,
     backgroundColor: colors.surfaceCard,
     borderWidth: 1,
     borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   statusTabBtnActive: {
     backgroundColor: 'rgba(16, 185, 129, 0.15)',
     borderColor: colors.success,
   },
-  statusTabBtnActiveConcluido: {
+  statusTabBtnActiveFinalizado: {
     backgroundColor: 'rgba(239, 68, 68, 0.15)',
     borderColor: colors.danger,
   },
@@ -516,12 +519,13 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 12,
     fontWeight: '700',
+    textAlign: 'center',
   },
   statusTabTextActive: {
     color: '#34D399',
     fontWeight: '800',
   },
-  statusTabTextActiveConcluido: {
+  statusTabTextActiveFinalizado: {
     color: colors.danger,
     fontWeight: '800',
   },
